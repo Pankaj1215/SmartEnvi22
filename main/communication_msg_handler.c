@@ -57,8 +57,9 @@ struct comm_gsm* cgsm_dev;
 int message_label_value_handler(char* label, char* value, char* reply_buff);
 
 #ifdef  P_TESTING
-extern char replybuff[500];  //
-extern int commandReceived_SendAck;
+ // extern char replybuff[500];  // old
+ extern char replybuff[150];  // Testing
+ extern int commandReceived_SendAck;
 #endif
 
 
@@ -181,7 +182,8 @@ int mainflux_msg_handler(char* msg, char* response)
 
                    // get_string_from_storage(NVS_MQTT_USERNAME, username); // Original Line
                     // if(strcmp(value, "all") == 0) // Original
-                   	if(strcmp(value, "Heater1") == 0)  // Testing
+                   //	if(strcmp(value, "Heater1") == 0)  // Testing
+                   	if(strcmp(value, "Heater2") == 0)  // Testing
                    	{
                    		is_message_for_me = 0;
                    		printf("Device ID Matched \n");
@@ -199,7 +201,8 @@ int mainflux_msg_handler(char* msg, char* response)
                     if(is_message_for_me != -1)
                     {
                         //TODO: call the msg handler callback here
-                        memset(replybuff, 0, 500);
+                       // memset(replybuff, 0, 500);  // Original
+                         memset(replybuff, 0, 150);  //Testing
                         message_label_value_handler(label, value, replybuff);
                         printf("reply buff [%s]\n", replybuff);
 
@@ -400,12 +403,20 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         printf("REMOTE_CMD_SET_TARGET_TEMP %s\r\n", value);
         app_set_target_temp(atoi(value));
         // sprintf(reply_buff, "%s: %d", "TARGET_TEMPSET TO",((int)atoi(value));
-        sprintf(reply_buff, "%s: %s", "TARGET_TEMP SET",value);  // New added for Teting
+       //  sprintf(reply_buff, "%s: %s", "TARGET_TEMP SET",value);  // New added for Teting
+       // sprintf(reply_buff, "\"%s\"= \"%s\"", "TARGET_TEMP SET",value);  // New added for Teting
+
+      // sprintf(reply_buff, "\%s\= \%s\", "TARGET_TEMP SET",value);  // New added for Teting
+       	sprintf(reply_buff, "%s=%s", "TARGET_TEMP SET",value);  // New added for Teting
 
     } else if (strcmp(label, REMOTE_CMD_GET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
         // sprintf(reply_buff, "%d", app_get_target_temp());   // Original Line
-        sprintf(reply_buff, "%s: %d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
+       // sprintf(reply_buff, "%s: %d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
+       // sprintf(reply_buff, "\"%s\": \"%s\"", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
+
+       // sprintf(reply_buff, "%s\= \%d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
+        sprintf(reply_buff, "%s=%d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
 
     } else if (strcmp(label, REMOTE_CMD_SET_TIMER_SETTING) == 0) {
         printf("REMOTE_CMD_SET_TIMER_SETTING %s\r\n", value);

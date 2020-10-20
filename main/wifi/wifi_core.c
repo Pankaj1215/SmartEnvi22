@@ -57,14 +57,16 @@ const int CONNECTED_BIT = BIT0;
 
 
 #ifdef P_TESTING
+// char replybuff[500];  //  newadded for ack
 
-char replybuff[500];   // Reply buffer used on communication_msg_handler.c
-int commandReceived_SendAck;
-
+char replybuff[150];  //  newadded for ack
+int commandReceived_SendAck;  //  newadded for ack
 
 #define subscribePublishTopic  // To activate the pub sub functionality code
-
-// #define TCP_Server_Code
+#define EXAMPLE_ESP_MAXIMUM_RETRY 5
+#define WIFI_CONNECTED_BIT BIT0
+#define WIFI_FAIL_BIT      BIT1
+#define TCP_Server_Code
 #ifdef TCP_Server_Code
 #include "tcpip_adapter.h"
 #include "protocol_examples_common.h"   // Need to add in the CMakeLists.txt
@@ -98,11 +100,13 @@ void initSoftAP();
 
 unsigned char uchTopic_Set_temp_subscribe_status = 0;
 unsigned char uchTopic_HeaterParameter_Publish_status = 1;  // By Default publish Heater Parameter
+unsigned char uchTopic_HeaterDetails_Publish_status = 1;
 
 unsigned char uchTopic_HeaterON_Publish_status = 0;
 unsigned char uchTopic_HeaterOFF_Publish_status = 0;
-
+static const char *TAG = "example";
 // unsigned char uchHeaterOnOffStatus = 0;
+static int s_retry_num = 0;
 int HeaterOnOffStatus = 0;
 int temperatureSetByCMD = 0;  // Added only for Testing
 unsigned char HeaterOnByCMD = 0;// By Default Heater OFF
@@ -130,6 +134,7 @@ int (*web_server_msg_handler)(char* msg, char* response, int res_len) = NULL;
 int (*wifi_conn_stat_callback)(int conn_stat) = NULL;
 int esp32_wifi_status = ESP32_WIFI_UNKNOWN;
 int web_server_status = WEB_SVR_STAT_UNKNOWN;
+char username[50],password[50],id[11],locID[20],name[20];
 wifi_config_t global_wifi_config;
 
 static uint8_t ap_mac[6];
@@ -315,9 +320,10 @@ void http_web_server()
     netconn_close(conn);
     netconn_delete(conn);
 }
-int event_handler(void *ctx, system_event_t *event)
+
+int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void* event_data)
 {
-    switch(event->event_id) {
+    switch(event_id) {
         //deprecated
         case SYSTEM_EVENT_WIFI_READY:
         case SYSTEM_EVENT_SCAN_DONE:
@@ -335,19 +341,32 @@ int event_handler(void *ctx, system_event_t *event)
                 wifi_conn_stat_callback(1);
             break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
-            /* This is a workaround as ESP32 WiFi libs don't currently
-               auto-reassociate. */
+            // This is a workaround as ESP32 WiFi libs don't currently
+             //  auto-reassociate.
+        	//added by dilpreet for tcp to check wifi is connected or not
             printf("disconnected\n");
             esp_wifi_connect();
             xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
             if (wifi_conn_stat_callback)
                 wifi_conn_stat_callback(0);
+            if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
+				esp_wifi_connect();
+				s_retry_num++;
+				printf("retry to connect to the AP\n");
+			} else {
+				xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
+			}
+            printf("connect to the AP fail");
             break;
         case SYSTEM_EVENT_STA_AUTHMODE_CHANGE:
             break;
         case SYSTEM_EVENT_STA_GOT_IP:
-            xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-            printf("connected\n");
+        	//added by dilpreet for tcp
+        	//event = (ip_event_got_ip_t*) event_data;
+			//ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&event->ip_info.ip));
+			s_retry_num = 0;
+			xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+			printf("connected\n");
             break;
             //case SYSTEM_EVENT_AP_STA_GOT_IP:  //no macro like this TODO
             //break;
@@ -376,8 +395,13 @@ int event_handler(void *ctx, system_event_t *event)
             // save SSID and password
             memset(&global_wifi_config, 0, sizeof(global_wifi_config));
             esp_wifi_get_config(WIFI_IF_STA, &global_wifi_config);
-            set_string_to_storage(NVS_LUCIDTRON_SSID_KEY, (char *)(global_wifi_config.sta.ssid));
-            set_string_to_storage(NVS_LUCIDTRON_PW_KEY, (char *)(global_wifi_config.sta.password));
+            //set_string_to_storage(NVS_LUCIDTRON_SSID_KEY, (char *)(global_wifi_config.sta.ssid));
+            //set_string_to_storage(NVS_LUCIDTRON_PW_KEY, (char *)(global_wifi_config.sta.password));
+
+            //changed location of eeprom and used location of flash which is used by tcp
+            strcpy(username,(char *)(global_wifi_config.sta.ssid));
+            strcpy(password,(char *)(global_wifi_config.sta.password));
+            writeEEPROM();
             esp_wifi_connect();
             break;
         case SYSTEM_EVENT_STA_WPS_ER_FAILED:
@@ -390,9 +414,36 @@ int event_handler(void *ctx, system_event_t *event)
         default:
             break;
     }
+    if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+		s_retry_num = 0;
+		xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+	}
     return ESP_OK;
 }
-
+//added this event_handler and commented previous
+//this event_handler checks if wifi is connected or not EXAMPLE_ESP_MAXIMUM_RETRY number of times
+// if it founds wifi then WIFI_CONNECTED_BIT is set and if wifi fails to connect then WIFI_FAIL_BIT is set
+/*
+static void event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void* event_data)
+{
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
+            esp_wifi_connect();
+            s_retry_num++;
+            printf("retry to connect to the AP\n");
+        } else {
+            xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
+        }
+        printf("connect to the AP fail");
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&event->ip_info.ip));
+        s_retry_num = 0;
+        xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+    }
+}*/
 int esp32_initialise_wifi(void)
 {
     //this init the high level protocol handler for the driver
@@ -656,7 +707,6 @@ static void http_get_task(void *pvParameters)
 
 #ifdef subscribePublishTopic
 
-static const char *TAG = "subpub";
 
  /* The examples use simple WiFi configuration that you can set via
     'make menuconfig'.
@@ -748,6 +798,8 @@ static const char *TAG = "subpub";
 
 
 
+
+#ifdef OLD_AWS_IOT_LOGIC_SENDANDRECIEVE
  void iot_subscribe_callback_handler(AWS_IoT_Client *pClient, char *topicName, uint16_t topicNameLen,
                                      IoT_Publish_Message_Params *params, void *pData) {
 
@@ -768,53 +820,19 @@ static const char *TAG = "subpub";
 	 memset(replybuffer,0,sizeof(replybuffer));
      memcpy(replybuffer,(char*) params-> payload,sizeof(replybuffer));
 
+#define Payloading_main_Firmware
+#ifdef Payloading_main_Firmware  // "{ \"cmd\": \"set\",\"set_target_temp\": \"30\" }"
 
-#define PAYLOAD_INDEX_RECIEVE_BUFFER
-#ifdef PAYLOAD_INDEX_RECIEVE_BUFFER
-     const char Delimiter = '}';  // ch - Delimiter
-     char *ret;
-     int endIndex = 0;
-
-     ret = strchr(replybuffer, Delimiter);
-
-    // printf("String after |%c| is - |%s|\n", Delimiter, ret);
-
-     endIndex = (ret - replybuffer);
-     //printf("%d \n ", (ret -replybuffer));
-     // printf("%d \n ", endIndex);
-
-     getSubString(replybuffer,payLoadBuufer,0,endIndex);
-     // printf("\n payLoadBuufer: %s \n", payLoadBuufer);
-     mainflux_msg_handler(payLoadBuufer, 0);
-#endif
-
-
-// Tested for  // {"target":"Heater1","cmd":"set","set_target_temp":"30"}
-
-//
-// #define COMMENT_PAYLOAD_MAIN_FIRMWARE_DEFINE
-#ifdef COMMENT_PAYLOAD_MAIN_FIRMWARE_DEFINE
-
-//#define Payloading_main_Firmware
-// #ifdef Payloading_main_Firmware
      // getSubString(replybuffer,payLoadBuufer,0,49);  // "{ \"cmd\": \"set\",\"set_target_temp\": \"30\" }"  -> Value received in tne buffer
-     //  getSubString(replybuffer,payLoadBuufer,0,37);  // "{"cmd":"set","set_target_temp":"30"}"
-     // getSubString(replybuffer,payLoadBuufer,0,35);  //{"cmd":"set","set_target_temp":"30"}
+   //  getSubString(replybuffer,payLoadBuufer,0,37);  // "{"cmd":"set","set_target_temp":"30"}"
+    // getSubString(replybuffer,payLoadBuufer,0,35);  //{"cmd":"set","set_target_temp":"30"}
      getSubString(replybuffer,payLoadBuufer,0,54);    //{"cmd":"set","set_target_temp":"30","target":"Heater1"}  // Working OK
 
      printf("\n payLoadBuufer: %s \n", payLoadBuufer);
      mainflux_msg_handler(payLoadBuufer, 0);
-// #endif
 #endif
-
-
-
-
-
-// #define INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
-#ifdef  INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
-
      // printf("\n replybuffer %s \n ", replybuffer);
+
      // getSubString(replybuffer,replySubBuffer,2, 5);  // eg {"Temp:30"};  // OK
     // getSubString(replybuffer,replySubBuffer,1, 4);  // eg  {Temp:30};    //OK // Last Tested AWS Working OK
      // getSubString(replybuffer,replySubBuffer,0, 3);  // eg  Temp:30;  // NotOk
@@ -878,8 +896,11 @@ static const char *TAG = "subpub";
 		  uchTopic_HeaterON_Publish_status = 0;
 		  uchTopic_HeaterOFF_Publish_status = 0;
       }
-#endif // INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
-}
+    // }// end of if
+ }
+
+#endif
+
 
 
 #define Wifi_sub_pub
@@ -912,11 +933,9 @@ static const char *TAG = "subpub";
  }
 
 
-
-
-// #define HeaterParameterSendingToAWS   // Old one logic for sending data to AWS .
-#define HeaterTopicData  // Latest for Testing Reply buffer
-
+// #define OLD_AWS_IOT_LOGIC_SENDANDRECIEVE
+#ifdef OLD_AWS_IOT_LOGIC_SENDANDRECIEVE
+#define HeaterParameterSendingToAWS
 
  void aws_iot_task(void *param) {
 
@@ -929,17 +948,14 @@ static const char *TAG = "subpub";
      IoT_Client_Init_Params mqttInitParams = iotClientInitParamsDefault;
      IoT_Client_Connect_Params connectParams = iotClientConnectParamsDefault;
 
-#ifdef HeaterTopicData
-     IoT_Publish_Message_Params HeaterMeassage;
-#endif
-
+//     IoT_Publish_Message_Params paramsQOS0;
+//     IoT_Publish_Message_Params paramsQOS1;
 
 #ifdef HeaterParameterSendingToAWS
      IoT_Publish_Message_Params HeaterParameter;
      IoT_Publish_Message_Params Set_Temp_Parameter;
      IoT_Publish_Message_Params HeaterOnOff;
 #endif
-
 
      ESP_LOGI(TAG, "AWS IoT SDK Version %d.%d.%d-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TAG);
 
@@ -1022,22 +1038,8 @@ static const char *TAG = "subpub";
          abort();
      }
 
-
-
-#ifdef HeaterTopicData
-	     const char *TOPIC1 = "HeaterTopic";  // testing for param key..
-	     const int TOPIC_LEN1 = strlen(TOPIC1);
-
-	         ESP_LOGI(TAG, "Subscribing...");
-	         rc = aws_iot_mqtt_subscribe(&client, TOPIC1, TOPIC_LEN1, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-	         if(SUCCESS != rc) {
-	             ESP_LOGE(TAG, "Error subscribing : %d ", rc);
-	             abort();
-	         }
-#endif
-
-
 #ifdef HeaterParameterSendingToAWS
+
      //const char *TOPIC1 = "HeaterParameter";  // original
      const char *TOPIC1 = "topic1";  // testing for param key..
      const int TOPIC_LEN1 = strlen(TOPIC1);
@@ -1068,19 +1070,24 @@ static const char *TAG = "subpub";
 		  ESP_LOGE(TAG, "Error subscribing : %d ", rc);
 		  abort();
 		}
+
+		//TOPIC for sending wifi details and heater details, location and heater ID
+		const char *TOPIC4_HeaterDetails= "HeaterDetails";
+		const int TOPIC_LEN4_HeaterDetails = strlen(TOPIC4_HeaterDetails);
+
+		ESP_LOGI(TAG, "Subscribing...");
+		rc = aws_iot_mqtt_subscribe(&client, TOPIC4_HeaterDetails, TOPIC_LEN4_HeaterDetails, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC4 = "HeaterDetails";
+		if(SUCCESS != rc) {
+		  ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+		  abort();
+		}
+
 #endif  // end of #ifdef HeaterParameterSendingToAWS
 
 
-#ifdef HeaterTopicData
-	   //  char cPayload1[100];
-	     char cPayload1[600];
-		HeaterMeassage.qos = QOS1;
-		HeaterMeassage.payload = (void *) cPayload1;
-		HeaterMeassage.isRetained = 0;
-#endif
-
 #ifdef HeaterParameterSendingToAWS
-     char cPayload1[100];
+
+     char cPayload1[300];
      HeaterParameter.qos = QOS1;
      HeaterParameter.payload = (void *) cPayload1;
      HeaterParameter.isRetained = 0;
@@ -1094,9 +1101,8 @@ static const char *TAG = "subpub";
 	 HeaterOnOff.qos = QOS1;
 	 HeaterOnOff.payload = (void *) cPayload3_HeaterOnOff;
 	 HeaterOnOff.isRetained = 0;
+
 #endif
-
-
 
      while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {
 
@@ -1109,36 +1115,31 @@ static const char *TAG = "subpub";
 
          ESP_LOGI(TAG, "Stack remaining for task '%s' is %d bytes", pcTaskGetTaskName(NULL), uxTaskGetStackHighWaterMark(NULL));
 
-         // vTaskDelay(1000 / portTICK_RATE_MS);  // Original Testing
-          vTaskDelay(3000 / portTICK_RATE_MS);  // Testing
-
-#ifdef HeaterTopicData
-
-          if(commandReceived_SendAck == 1){
-			memset(cPayload1,0,sizeof(cPayload1));
-			// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
-			// sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d  %s: %s", "Device ID", "Heater101","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0, "Reply", replybuff); // ONly for Testing
-			sprintf(cPayload1, "%s : %s %s : %s", "Device ID", "Heater1", "Reply", replybuff); // ONly for Testing
-
-			HeaterMeassage.payloadLen = strlen(cPayload1);
-			rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-			commandReceived_SendAck = 0;
-
-			memset(replybuff,0,sizeof(replybuff));
-          }
-#endif
-
-
+          vTaskDelay(1000 / portTICK_RATE_MS);  // Original Testing
+         // vTaskDelay(3000 / portTICK_RATE_MS);
 #ifdef HeaterParameterSendingToAWS
+
          if(uchTopic_HeaterParameter_Publish_status == 1)
 		  {
 			  // printf("\n I am in Topic_HeaterParameter_Publish\n ");
 				// uchTopic_Set_temp_subscribe_status = TRUE;
 				memset(cPayload1,0,sizeof(cPayload1));
 				// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
-				sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d", "Device ID", "Heater22","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0); // ONly for Testing
+				sprintf(cPayload1, "{\"%s\": \"%s\", \"%s\" : \"%d\",  \"%s\" : \"%d\", \"%s\" : \"%d\", \"%s\" : \"%d\", \"%s\" : \"%d\"}", "Device ID", "Heater1","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0); // in JSON
 				HeaterParameter.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterParameter);
+				// ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->cPayload1);
+				// uchTopic_Set_temp_subscribe_status = 0;
+		  }
+         if(uchTopic_HeaterDetails_Publish_status == 1)
+		  {
+			  // printf("\n I am in Topic_HeaterParameter_Publish\n ");
+				// uchTopic_Set_temp_subscribe_status = TRUE;
+				memset(cPayload1,0,sizeof(cPayload1));
+				// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
+				sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%d\"}", "Device ID", "Heater1","SSID", username,"Password", password, "Heater ID", name, "Location ",locID, "Ambient Temp",45); // ONly for Testing
+				HeaterParameter.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, TOPIC4_HeaterDetails, TOPIC_LEN4_HeaterDetails, &HeaterParameter);
 				// ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->cPayload1);
 				// uchTopic_Set_temp_subscribe_status = 0;
 		  }
@@ -1181,11 +1182,10 @@ static const char *TAG = "subpub";
 			 rc = aws_iot_mqtt_publish(&client, TOPIC3_HeaterOnOff, TOPIC_LEN3_HeaterOnOff, &HeaterOnOff);
 			 uchTopic_Set_temp_subscribe_status = 0;
 			 uchTopic_HeaterParameter_Publish_status  = 1;
-			 uchTopic_HeaterON_Publish_status = 0;
-			 uchTopic_HeaterOFF_Publish_status = 0;
+			  uchTopic_HeaterON_Publish_status = 0;
+			  uchTopic_HeaterOFF_Publish_status = 0;
 		  }
 #endif
-
          //  printf("After publish HeaterParameterSendingToAWS\n ");
          if (rc == MQTT_REQUEST_TIMEOUT_ERROR) {
              ESP_LOGW(TAG, "QOS1 publish ack not received.");
@@ -1195,33 +1195,463 @@ static const char *TAG = "subpub";
      ESP_LOGE(TAG, "An error occurred in the main loop.");
     // abort();  // Commented Abort for Tesing
  }
+#endif // AWS_IOT_TASK
 
 
-#ifdef Wifi_sub_pub
+#define NEW_AWS_IOT_LOGIC_SENDANDRECIEVE
+#ifdef NEW_AWS_IOT_LOGIC_SENDANDRECIEVE
 
-void initialise_wifi(void)
- {
-	printf("I am in initialise wifi \n ");
 
-     tcpip_adapter_init();
-     wifi_event_group = xEventGroupCreate();
-     ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
-     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-     ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-     ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+ void iot_subscribe_callback_handler(AWS_IoT_Client *pClient, char *topicName, uint16_t topicNameLen,
+                                     IoT_Publish_Message_Params *params, void *pData) {
 
-     wifi_config_t wifi_config = {
-         .sta = {
-             .ssid = EXAMPLE_WIFI_SSID,
-             .password = EXAMPLE_WIFI_PASS,
-         },
-     };
+	 char replybuffer[512];
+	 // char replySubBuffer[30];
+	 char replySubBuffer[6];  // Buffer for match of keyword eg Temp, HOON, HOFF
+	 char replySubBuffer2[30];
 
-     ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
-     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
-     ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
-     ESP_ERROR_CHECK( esp_wifi_start() );
- }
+	 char payLoadBuufer[55];
+
+	// char label[6];
+
+     ESP_LOGI(TAG, "Subscribe callback");
+     ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->payload);
+
+    // printf("\n params->payload) %s \n ", (char*) params-> payload);
+     // if(){
+	 memset(replybuffer,0,sizeof(replybuffer));
+     memcpy(replybuffer,(char*) params-> payload,sizeof(replybuffer));
+
+
+#define PAYLOAD_INDEX_RECIEVE_BUFFER
+#ifdef PAYLOAD_INDEX_RECIEVE_BUFFER
+     const char Delimiter = '}';  // ch - Delimiter
+     char *ret;
+     int endIndex = 0;
+
+     ret = strchr(replybuffer, Delimiter);
+
+    // printf("String after |%c| is - |%s|\n", Delimiter, ret);
+
+     endIndex = (ret - replybuffer);
+     //printf("%d \n ", (ret -replybuffer));
+     // printf("%d \n ", endIndex);
+
+     getSubString(replybuffer,payLoadBuufer,0,endIndex);
+     // printf("\n payLoadBuufer: %s \n", payLoadBuufer);
+     mainflux_msg_handler(payLoadBuufer, 0);
+#endif
+
+
+// Tested for  // {"target":"Heater1","cmd":"set","set_target_temp":"30"}
+//
+// #define COMMENT_PAYLOAD_MAIN_FIRMWARE_DEFINE
+#ifdef COMMENT_PAYLOAD_MAIN_FIRMWARE_DEFINE
+
+//#define Payloading_main_Firmware
+// #ifdef Payloading_main_Firmware
+     // getSubString(replybuffer,payLoadBuufer,0,49);  // "{ \"cmd\": \"set\",\"set_target_temp\": \"30\" }"  -> Value received in tne buffer
+     //  getSubString(replybuffer,payLoadBuufer,0,37);  // "{"cmd":"set","set_target_temp":"30"}"
+     // getSubString(replybuffer,payLoadBuufer,0,35);  //{"cmd":"set","set_target_temp":"30"}
+     getSubString(replybuffer,payLoadBuufer,0,54);    //{"cmd":"set","set_target_temp":"30","target":"Heater1"}  // Working OK
+
+     printf("\n payLoadBuufer: %s \n", payLoadBuufer);
+     mainflux_msg_handler(payLoadBuufer, 0);
+// #endif
+#endif
+
+
+// #define INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
+#ifdef  INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
+
+     // printf("\n replybuffer %s \n ", replybuffer);
+     // getSubString(replybuffer,replySubBuffer,2, 5);  // eg {"Temp:30"};  // OK
+    // getSubString(replybuffer,replySubBuffer,1, 4);  // eg  {Temp:30};    //OK // Last Tested AWS Working OK
+     // getSubString(replybuffer,replySubBuffer,0, 3);  // eg  Temp:30;  // NotOk
+
+     getSubString(replybuffer,replySubBuffer,13,16);  // eg  {"message": "Temp:30","topic": "console"}
+
+     // printf ("\n\n replySubBuffer is: %s", replySubBuffer);
+
+    if(strcmp(replySubBuffer,"Temp") == 0)
+      {
+		// getSubString(replybuffer,replySubBuffer2,7,8); // eg {"Temp:30"};  // ok
+		// getSubString(replybuffer,replySubBuffer2,6,7); // eg {Temp:30};      // ok  // Last Tested AWS Working OK
+		// getSubString(replybuffer,replySubBuffer2,5,6); // eg Temp:30;  // Not Ok
+
+		 getSubString(replybuffer,replySubBuffer2,18,19); // eg  {"message": "Temp:30","topic": "console"}
+
+		 //printf("String matched\n");
+		 printf("Value of temp is: %s\n",replySubBuffer2);
+		 temperatureSetByCMD = (atoi)(replySubBuffer2);
+	     printf("Value of temp is: %d\n",temperatureSetByCMD);
+		 memset(replySubBuffer2,0,sizeof(replySubBuffer2));
+	     memset(replySubBuffer,0,sizeof(replySubBuffer));
+	     uchTopic_Set_temp_subscribe_status = 1;    // Set Temp is subscribed.
+	     uchTopic_HeaterParameter_Publish_status  = 0;
+
+		  uchTopic_HeaterON_Publish_status = 0;
+		  uchTopic_HeaterOFF_Publish_status = 0;
+      }
+    else if(strcmp(replySubBuffer,"HEON") == 0)
+    {
+    	  heater_on();  // Heater ON by command..
+	     memset(replySubBuffer,0,sizeof(replySubBuffer));
+	     memset(replybuffer,0,sizeof(replybuffer));
+
+	     HeaterOnOffStatus = 1;
+
+	     uchTopic_Set_temp_subscribe_status = 0;    // Set Temp is subscribed.
+	     uchTopic_HeaterParameter_Publish_status  = 0;
+		  uchTopic_HeaterON_Publish_status = 1;
+		  uchTopic_HeaterOFF_Publish_status = 0;
+
+    }
+    else if(strcmp(replySubBuffer,"HEOF") == 0)
+     {
+
+    	  heater_off();  // Heater OFF by command..
+	       memset(replySubBuffer,0,sizeof(replySubBuffer));
+	       memset(replybuffer,0,sizeof(replybuffer));
+
+	       HeaterOnOffStatus = 0;
+
+    	     uchTopic_Set_temp_subscribe_status = 0;    // Set Temp is subscribed.
+    	     uchTopic_HeaterParameter_Publish_status  = 0;
+    		 uchTopic_HeaterON_Publish_status = 0;
+    		 uchTopic_HeaterOFF_Publish_status = 1;
+      }
+    else
+      {
+	     uchTopic_Set_temp_subscribe_status = 0;    // Set Temp is subscribed.
+	     uchTopic_HeaterParameter_Publish_status  = 1;
+		  uchTopic_HeaterON_Publish_status = 0;
+		  uchTopic_HeaterOFF_Publish_status = 0;
+      }
+#endif // INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
+}
+
+
+ // #define HeaterParameterSendingToAWS   // Old one logic for sending data to AWS .
+ #define HeaterTopicData  // Latest for Testing Reply buffer
+
+  void aws_iot_task(void *param) {
+
+ 	 char cPayload[100];
+      int32_t i = 0;
+
+      IoT_Error_t rc = FAILURE;
+
+      AWS_IoT_Client client;
+      IoT_Client_Init_Params mqttInitParams = iotClientInitParamsDefault;
+      IoT_Client_Connect_Params connectParams = iotClientConnectParamsDefault;
+
+ #ifdef HeaterTopicData
+      IoT_Publish_Message_Params HeaterMeassage;
+ #endif
+
+
+ #ifdef HeaterParameterSendingToAWS
+      IoT_Publish_Message_Params HeaterParameter;
+      IoT_Publish_Message_Params Set_Temp_Parameter;
+      IoT_Publish_Message_Params HeaterOnOff;
+ #endif
+
+
+      ESP_LOGI(TAG, "AWS IoT SDK Version %d.%d.%d-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TAG);
+
+      mqttInitParams.enableAutoReconnect = false; // We enable this later below
+      mqttInitParams.pHostURL = HostAddress;
+     // mqttInitParams.port = port;
+       mqttInitParams.port = 8883;  // testing only
+
+  #if defined(CONFIG_EXAMPLE_EMBEDDED_CERTS)
+      mqttInitParams.pRootCALocation = (const char *)aws_root_ca_pem_start;
+      mqttInitParams.pDeviceCertLocation = (const char *)certificate_pem_crt_start;
+      mqttInitParams.pDevicePrivateKeyLocation = (const char *)private_pem_key_start;
+
+  #elif defined(CONFIG_EXAMPLE_FILESYSTEM_CERTS)
+      mqttInitParams.pRootCALocation = ROOT_CA_PATH;
+      mqttInitParams.pDeviceCertLocation = DEVICE_CERTIFICATE_PATH;
+      mqttInitParams.pDevicePrivateKeyLocation = DEVICE_PRIVATE_KEY_PATH;
+  #endif
+
+      mqttInitParams.mqttCommandTimeout_ms = 20000;
+      mqttInitParams.tlsHandshakeTimeout_ms = 5000;
+      mqttInitParams.isSSLHostnameVerify = true;
+      mqttInitParams.disconnectHandler = disconnectCallbackHandler;
+      mqttInitParams.disconnectHandlerData = NULL;
+
+  #ifdef CONFIG_EXAMPLE_SDCARD_CERTS
+      ESP_LOGI(TAG, "Mounting SD card...");
+      sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+      sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+      esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+          .format_if_mount_failed = false,
+          .max_files = 3,
+      };
+      sdmmc_card_t* card;
+      esp_err_t ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
+      if (ret != ESP_OK) {
+          ESP_LOGE(TAG, "Failed to mount SD card VFAT filesystem. Error: %s", esp_err_to_name(ret));
+          abort();
+      }
+  #endif
+
+      rc = aws_iot_mqtt_init(&client, &mqttInitParams);
+      if(SUCCESS != rc) {
+          ESP_LOGE(TAG, "aws_iot_mqtt_init returned error : %d ", rc);
+          abort();
+      }
+
+
+      /* Wait for WiFI to show as connected */   // Commented fro testing only
+ //     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
+ //                         false, true, portMAX_DELAY);
+
+
+      connectParams.keepAliveIntervalInSec = 10;
+      connectParams.isCleanSession = true;
+      connectParams.MQTTVersion = MQTT_3_1_1;
+
+      /* Client ID is set in the menuconfig of the example */
+      connectParams.pClientID = CONFIG_AWS_EXAMPLE_CLIENT_ID;
+      connectParams.clientIDLen = (uint16_t) strlen(CONFIG_AWS_EXAMPLE_CLIENT_ID);
+      connectParams.isWillMsgPresent = false;
+
+      ESP_LOGI(TAG, "Connecting to AWS...");
+      do {
+          rc = aws_iot_mqtt_connect(&client, &connectParams);
+          if(SUCCESS != rc) {
+              ESP_LOGE(TAG, "Error(%d) connecting to %s:%d", rc, mqttInitParams.pHostURL, mqttInitParams.port);
+              vTaskDelay(1000 / portTICK_RATE_MS);
+          }
+      } while(SUCCESS != rc);
+
+      /*
+       * Enable Auto Reconnect functionality. Minimum and Maximum time of Exponential backoff are set in aws_iot_config.h
+       *  #AWS_IOT_MQTT_MIN_RECONNECT_WAIT_INTERVAL
+       *  #AWS_IOT_MQTT_MAX_RECONNECT_WAIT_INTERVAL
+       */
+      rc = aws_iot_mqtt_autoreconnect_set_status(&client, true);
+      if(SUCCESS != rc) {
+          ESP_LOGE(TAG, "Unable to set Auto Reconnect to true - %d", rc);
+          abort();
+      }
+
+
+
+ #ifdef HeaterTopicData
+ 	     const char *TOPIC1 = "HeaterTopic";  // testing for param key..
+ 	     const int TOPIC_LEN1 = strlen(TOPIC1);
+
+ 	         ESP_LOGI(TAG, "Subscribing...");
+ 	         rc = aws_iot_mqtt_subscribe(&client, TOPIC1, TOPIC_LEN1, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+ 	         if(SUCCESS != rc) {
+ 	             ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+ 	             abort();
+ 	         }
+ #endif
+
+
+ #ifdef HeaterParameterSendingToAWS
+      //const char *TOPIC1 = "HeaterParameter";  // original
+      const char *TOPIC1 = "topic1";  // testing for param key..
+      const int TOPIC_LEN1 = strlen(TOPIC1);
+
+          ESP_LOGI(TAG, "Subscribing...");
+          rc = aws_iot_mqtt_subscribe(&client, TOPIC1, TOPIC_LEN1, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+          if(SUCCESS != rc) {
+              ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+              abort();
+          }
+
+     	const char *TOPIC2 = "set_Temp";
+     	const int TOPIC_LEN2 = strlen(TOPIC2);
+
+ 		ESP_LOGI(TAG, "Subscribing...");
+ 		rc = aws_iot_mqtt_subscribe(&client, TOPIC2, TOPIC_LEN2, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC2 = "set_Temp";
+ 		if(SUCCESS != rc) {
+ 		  ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+ 		  abort();
+ 		}
+
+ 		const char *TOPIC3_HeaterOnOff= "Heater_ON_OFF";
+ 		const int TOPIC_LEN3_HeaterOnOff = strlen(TOPIC3_HeaterOnOff);
+
+ 		ESP_LOGI(TAG, "Subscribing...");
+ 		rc = aws_iot_mqtt_subscribe(&client, TOPIC3_HeaterOnOff, TOPIC_LEN3_HeaterOnOff, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC3 = "Heater_ON";
+ 		if(SUCCESS != rc) {
+ 		  ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+ 		  abort();
+ 		}
+ #endif  // end of #ifdef HeaterParameterSendingToAWS
+
+
+ #ifdef HeaterTopicData
+ 	   //  char cPayload1[100];
+ 	       char cPayload1[600];
+ 		// char cPayload1[900];
+ 		// char cPayload1[2000];
+
+ 		HeaterMeassage.qos = QOS1;
+ 		HeaterMeassage.payload = (void *) cPayload1;
+ 		HeaterMeassage.isRetained = 0;
+ #endif
+
+ #ifdef HeaterParameterSendingToAWS
+      char cPayload1[100];
+      HeaterParameter.qos = QOS1;
+      HeaterParameter.payload = (void *) cPayload1;
+      HeaterParameter.isRetained = 0;
+
+ 	 char cPayload2[30];
+ 	 Set_Temp_Parameter.qos = QOS1;
+ 	 Set_Temp_Parameter.payload = (void *) cPayload2;
+ 	 Set_Temp_Parameter.isRetained = 0;
+
+ 	 char cPayload3_HeaterOnOff[20];
+ 	 HeaterOnOff.qos = QOS1;
+ 	 HeaterOnOff.payload = (void *) cPayload3_HeaterOnOff;
+ 	 HeaterOnOff.isRetained = 0;
+ #endif
+
+
+      while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {
+
+          //Max time the yield function will wait for read messages
+          rc = aws_iot_mqtt_yield(&client, 100);
+          if(NETWORK_ATTEMPTING_RECONNECT == rc) {
+              // If the client is attempting to reconnect we will skip the rest of the loop.
+              continue;
+          }
+
+          ESP_LOGI(TAG, "Stack remaining for task '%s' is %d bytes", pcTaskGetTaskName(NULL), uxTaskGetStackHighWaterMark(NULL));
+
+          // vTaskDelay(1000 / portTICK_RATE_MS);  // Original Testing
+           vTaskDelay(3000 / portTICK_RATE_MS);  // Testing
+
+ #ifdef HeaterTopicData
+           if(commandReceived_SendAck == 1){
+ 			memset(cPayload1,0,sizeof(cPayload1));
+ 			// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
+ 			// sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d  %s: %s", "Device ID", "Heater101","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0, "Reply", replybuff); // ONly for Testing
+
+ 			// sprintf(cPayload1, "%s : %s %s : %s", "Device ID", "Heater1", "Reply", replybuff); // ONly for Testing
+ 			// sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","ssid", username,"password", password, "heaterID", name, "location ",locID, "reply", replybuff); // ONly for Testing  // Getting Restart on this
+
+ 			sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","reply", replybuff); // ONly for Testing  // Working
+
+ 			// sprintf(cPayload1, "{\"%s\" : \"%s\",\"%s\" : \"%s\, \"%s\" : \"%s\"}", "deviceId", "Heater2","location ",locID,"reply", replybuff); // ONly for Testing  // Working
+		    // sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\"}", "dId", "Heater2","sid", username,"pw", password, "hId", name, "lc",locID, "rp", replybuff); // ONly for Testing  // Getting Restart on this
+
+ 			HeaterMeassage.payloadLen = strlen(cPayload1);
+ 			rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
+ 			commandReceived_SendAck = 0;
+ 			memset(replybuff,0,sizeof(replybuff));
+ 			memset(cPayload1,0,sizeof(cPayload1));
+
+           }
+ #endif
+
+
+ #ifdef HeaterParameterSendingToAWS
+          if(uchTopic_HeaterParameter_Publish_status == 1)
+ 		  {
+ 			  // printf("\n I am in Topic_HeaterParameter_Publish\n ");
+ 				// uchTopic_Set_temp_subscribe_status = TRUE;
+ 				memset(cPayload1,0,sizeof(cPayload1));
+ 				// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
+ 				sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d", "Device ID", "Heater22","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0); // ONly for Testing
+ 				HeaterParameter.payloadLen = strlen(cPayload1);
+ 				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterParameter);
+ 				// ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->cPayload1);
+ 				// uchTopic_Set_temp_subscribe_status = 0;
+ 		  }
+ 		 if(uchTopic_Set_temp_subscribe_status == 1)
+ 			{
+ 				 // printf("\n I am in Set Temp paramter publish \n\n ");
+ 			     memset(cPayload2,0,sizeof(cPayload2));
+ 				sprintf(cPayload2, "%s : %d", "Temperature is set to ",temperatureSetByCMD);
+ 				Set_Temp_Parameter.payloadLen = strlen(cPayload2);
+ 				  rc = aws_iot_mqtt_publish(&client, TOPIC2, TOPIC_LEN2, &Set_Temp_Parameter);
+ 				  uchTopic_Set_temp_subscribe_status = 0;
+ 				  uchTopic_HeaterParameter_Publish_status  = 1;
+ 				  uchTopic_HeaterON_Publish_status = 0;
+ 				  uchTopic_HeaterOFF_Publish_status = 0;
+ 			}
+ 		 if(uchTopic_HeaterON_Publish_status == 1)
+ 		 {
+ 		   printf("\n I am in uchTopic_HeaterOn_Publish_status \n\n ");
+ 			memset(cPayload3_HeaterOnOff,0,sizeof(cPayload3_HeaterOnOff));
+
+ 			//sprintf(cPayload3_HeaterOnOff, "%s  : %d", "Heater ON",1);
+ 			 sprintf(cPayload3_HeaterOnOff, "%s : %d", "Heater ON",HeaterOnOffStatus);
+
+ 			HeaterOnOff.payloadLen = strlen(cPayload3_HeaterOnOff);
+ 			 rc = aws_iot_mqtt_publish(&client, TOPIC3_HeaterOnOff, TOPIC_LEN3_HeaterOnOff, &HeaterOnOff);
+ 			  uchTopic_Set_temp_subscribe_status = 0;
+ 			  uchTopic_HeaterParameter_Publish_status  = 1;
+ 			  uchTopic_HeaterON_Publish_status = 0;
+ 			  uchTopic_HeaterOFF_Publish_status = 0;
+ 		  }
+ 		 if(uchTopic_HeaterOFF_Publish_status == 1)
+ 		 {
+ 			 printf("\n I am in uchTopic_HeaterOFF_Publish_status \n\n ");
+ 			 memset(cPayload3_HeaterOnOff,0,sizeof(cPayload3_HeaterOnOff));
+
+ 			// sprintf(cPayload3_HeaterOnOff, "%s  : %d", "Heater OFF", 2);
+ 			 sprintf(cPayload3_HeaterOnOff, "%s : %d", "Heater OFF", HeaterOnOffStatus);
+
+ 			 HeaterOnOff.payloadLen = strlen(cPayload3_HeaterOnOff);
+ 			 rc = aws_iot_mqtt_publish(&client, TOPIC3_HeaterOnOff, TOPIC_LEN3_HeaterOnOff, &HeaterOnOff);
+ 			 uchTopic_Set_temp_subscribe_status = 0;
+ 			 uchTopic_HeaterParameter_Publish_status  = 1;
+ 			 uchTopic_HeaterON_Publish_status = 0;
+ 			 uchTopic_HeaterOFF_Publish_status = 0;
+ 		  }
+ #endif
+
+          //  printf("After publish HeaterParameterSendingToAWS\n ");
+          if (rc == MQTT_REQUEST_TIMEOUT_ERROR) {
+              ESP_LOGW(TAG, "QOS1 publish ack not received.");
+              rc = SUCCESS;
+          }
+      }
+      ESP_LOGE(TAG, "An error occurred in the main loop.");
+     // abort();  // Commented Abort for Tesing
+  }
+
+#endif
+
+
+
+//#define Addition_INITIALISE_WIFI_HANDLER
+#ifdef Addition_INITIALISE_WIFI_HANDLER
+  void initialise_wifi(void)
+   {
+  	printf("I am in initialise wifi \n ");
+
+       tcpip_adapter_init();
+       wifi_event_group = xEventGroupCreate();
+       ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
+       wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+       ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+       ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+
+       wifi_config_t wifi_config = {
+           .sta = {
+               .ssid = EXAMPLE_WIFI_SSID,
+               .password = EXAMPLE_WIFI_PASS,
+           },
+       };
+
+       ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
+       ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+       ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+       ESP_ERROR_CHECK( esp_wifi_start() );
+   }
+
 #endif//  end of #ifdef Wifi_sub_pub
 
 #endif  // end for subscribe and publish..
@@ -1234,10 +1664,6 @@ void initialise_wifi(void)
 
 #ifdef TCP_Server_Code
 nvs_handle_t my_handle;
-//char username[]={'O','n','e','P','l','u','s','N','o','r','d','\0'};
-//char password[]={'q','w','e','r','t','y','1','2','3','4','5','\0'};
-char u[50],p[50];
-char username[50],password[50],id[11],locID[20],name[20];
 
 //#define PORT CONFIG_EXAMPLE_PORT  // original Lines
 
@@ -1366,24 +1792,75 @@ static void tcp_server_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
+void initialise_wifi(void)
+{
+    tcpip_adapter_init();
+    wifi_event_group = xEventGroupCreate();
+    ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+    ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+    wifi_config_t wifi_config = {};
+    strcpy((char *)wifi_config.sta.ssid, username);
+    strcpy((char *)wifi_config.sta.password, password);
+    /*wifi_config_t wifi_config = {
+        .sta = {
+            .ssid = username,
+            .password = password,
+        },
+    };*/
+    ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
+    ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+    ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+    ESP_ERROR_CHECK( esp_wifi_start() );
+
+
+        /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
+         * happened. */
+    EventBits_t bits = xEventGroupWaitBits(wifi_event_group,
+                WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+                pdFALSE,
+                pdFALSE,
+                portMAX_DELAY);
+
+	/* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
+	 * happened. */
+	if (bits & WIFI_CONNECTED_BIT) {
+		ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
+		xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);   // aws iot task .. initiation..
+	} else if (bits & WIFI_FAIL_BIT) {
+		ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",username, password);
+		initSoftAP();
+		xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+	} else {
+		ESP_LOGE(TAG, "UNEXPECTED EVENT");
+	}
+
+	//ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
+	//ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
+	//vEventGroupDelete(s_wifi_event_group);
+}
+
 void tcpServer_main()
 {
-    //ESP_ERROR_CHECK(nvs_flash_init());
-    esp_err_t err = nvs_flash_init();
+	esp_err_t err = nvs_flash_init();
+	//ESP_ERROR_CHECK(nvs_flash_erase());
+	if (err != ESP_OK) printf("Error (%s) INITIALISING NVS!\n", esp_err_to_name(err));
+	//ESP_ERROR_CHECK(nvs_flash_init());
     tcpip_adapter_init();
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-
+    err=(esp_event_loop_create_default());
+    if (err != ESP_OK) printf("Error (%s) INITIALISING LOOP!\n", esp_err_to_name(err));
     /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
      * Read "Establishing Wi-Fi or Ethernet Connection" section in
      * examples/protocols/README.md for more information about this function.
      */
     //ESP_ERROR_CHECK(example_connect());
-    initSoftAP();
     initFlash();
-    //writeEEPROM();
-    readEEPROM();
-    if (err != ESP_OK) printf("Error (%s) reading data from NVS!\n", esp_err_to_name(err));
-    xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+	readEEPROM();
+	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
+	initialise_wifi();
 }
 
 
@@ -1403,10 +1880,10 @@ void initSoftAP()
 	if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0) {
 		wifi_config.ap.authmode = WIFI_AUTH_OPEN;
 	}
-		ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-		ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
-		ESP_ERROR_CHECK(esp_wifi_start());
+	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
+	ESP_ERROR_CHECK(esp_wifi_start());
 }
 void initFlash()
 {
@@ -1519,7 +1996,8 @@ void writeEEPROM()
 	err = nvs_commit(my_handle);
 	printf((err != ESP_OK) ? "Failed!\n" : "Done\n");
 
-	abort();
+	//abort();
+	esp_restart();
 	//nvs_close(my_handle);
 }
 void readEEPROM()
@@ -1542,7 +2020,7 @@ void readEEPROM()
 
 	err = nvs_get_blob(my_handle, "username", username,&size);
 	if(err==ESP_OK) printf("Username = %s",username);
-	else if(err==ESP_ERR_NVS_NOT_FOUND) printf("The value is not initialized yet!\n");
+	else if(err==ESP_ERR_NVS_NOT_FOUND){ printf("The value is not initialized yet!\n"); username[0]='a';}
 	else printf("Error (%s) reading!\n", esp_err_to_name(err));
 
 	printf("Reading WIFI PASSWORD from NVS ... ");

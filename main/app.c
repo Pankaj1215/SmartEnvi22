@@ -390,11 +390,11 @@ esp_err_t app_init(void) {
 
 #ifdef P_TESTING   // Added for Testing
 
-    //  tcpServer_main();
-    initialise_wifi();
+     tcpServer_main();
+    // initialise_wifi();
     printf("I am in main firmware \n ");
     // xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);   // aws iot task .. initiation..
-    xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
+   // xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
    // while(1);
 #endif
 
