@@ -58,9 +58,13 @@ const int CONNECTED_BIT = BIT0;
 
 #ifdef P_TESTING
 
+char replybuff[500];   // Reply buffer used on communication_msg_handler.c
+int commandReceived_SendAck;
+
+
 #define subscribePublishTopic  // To activate the pub sub functionality code
 
-#define TCP_Server_Code
+// #define TCP_Server_Code
 #ifdef TCP_Server_Code
 #include "tcpip_adapter.h"
 #include "protocol_examples_common.h"   // Need to add in the CMakeLists.txt
@@ -764,19 +768,53 @@ static const char *TAG = "subpub";
 	 memset(replybuffer,0,sizeof(replybuffer));
      memcpy(replybuffer,(char*) params-> payload,sizeof(replybuffer));
 
-#define Payloading_main_Firmware
-#ifdef Payloading_main_Firmware  // "{ \"cmd\": \"set\",\"set_target_temp\": \"30\" }"
 
+#define PAYLOAD_INDEX_RECIEVE_BUFFER
+#ifdef PAYLOAD_INDEX_RECIEVE_BUFFER
+     const char Delimiter = '}';  // ch - Delimiter
+     char *ret;
+     int endIndex = 0;
+
+     ret = strchr(replybuffer, Delimiter);
+
+    // printf("String after |%c| is - |%s|\n", Delimiter, ret);
+
+     endIndex = (ret - replybuffer);
+     //printf("%d \n ", (ret -replybuffer));
+     // printf("%d \n ", endIndex);
+
+     getSubString(replybuffer,payLoadBuufer,0,endIndex);
+     // printf("\n payLoadBuufer: %s \n", payLoadBuufer);
+     mainflux_msg_handler(payLoadBuufer, 0);
+#endif
+
+
+// Tested for  // {"target":"Heater1","cmd":"set","set_target_temp":"30"}
+
+//
+// #define COMMENT_PAYLOAD_MAIN_FIRMWARE_DEFINE
+#ifdef COMMENT_PAYLOAD_MAIN_FIRMWARE_DEFINE
+
+//#define Payloading_main_Firmware
+// #ifdef Payloading_main_Firmware
      // getSubString(replybuffer,payLoadBuufer,0,49);  // "{ \"cmd\": \"set\",\"set_target_temp\": \"30\" }"  -> Value received in tne buffer
-   //  getSubString(replybuffer,payLoadBuufer,0,37);  // "{"cmd":"set","set_target_temp":"30"}"
-    // getSubString(replybuffer,payLoadBuufer,0,35);  //{"cmd":"set","set_target_temp":"30"}
+     //  getSubString(replybuffer,payLoadBuufer,0,37);  // "{"cmd":"set","set_target_temp":"30"}"
+     // getSubString(replybuffer,payLoadBuufer,0,35);  //{"cmd":"set","set_target_temp":"30"}
      getSubString(replybuffer,payLoadBuufer,0,54);    //{"cmd":"set","set_target_temp":"30","target":"Heater1"}  // Working OK
 
      printf("\n payLoadBuufer: %s \n", payLoadBuufer);
      mainflux_msg_handler(payLoadBuufer, 0);
+// #endif
 #endif
-     // printf("\n replybuffer %s \n ", replybuffer);
 
+
+
+
+
+// #define INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
+#ifdef  INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
+
+     // printf("\n replybuffer %s \n ", replybuffer);
      // getSubString(replybuffer,replySubBuffer,2, 5);  // eg {"Temp:30"};  // OK
     // getSubString(replybuffer,replySubBuffer,1, 4);  // eg  {Temp:30};    //OK // Last Tested AWS Working OK
      // getSubString(replybuffer,replySubBuffer,0, 3);  // eg  Temp:30;  // NotOk
@@ -840,8 +878,8 @@ static const char *TAG = "subpub";
 		  uchTopic_HeaterON_Publish_status = 0;
 		  uchTopic_HeaterOFF_Publish_status = 0;
       }
-    // }// end of if
- }
+#endif // INITIAL_REPLY_BUFFER_TESTING_IOT_HANDLER
+}
 
 
 #define Wifi_sub_pub
@@ -875,7 +913,10 @@ static const char *TAG = "subpub";
 
 
 
-#define HeaterParameterSendingToAWS
+
+// #define HeaterParameterSendingToAWS   // Old one logic for sending data to AWS .
+#define HeaterTopicData  // Latest for Testing Reply buffer
+
 
  void aws_iot_task(void *param) {
 
@@ -888,14 +929,17 @@ static const char *TAG = "subpub";
      IoT_Client_Init_Params mqttInitParams = iotClientInitParamsDefault;
      IoT_Client_Connect_Params connectParams = iotClientConnectParamsDefault;
 
-//     IoT_Publish_Message_Params paramsQOS0;
-//     IoT_Publish_Message_Params paramsQOS1;
+#ifdef HeaterTopicData
+     IoT_Publish_Message_Params HeaterMeassage;
+#endif
+
 
 #ifdef HeaterParameterSendingToAWS
      IoT_Publish_Message_Params HeaterParameter;
      IoT_Publish_Message_Params Set_Temp_Parameter;
      IoT_Publish_Message_Params HeaterOnOff;
 #endif
+
 
      ESP_LOGI(TAG, "AWS IoT SDK Version %d.%d.%d-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TAG);
 
@@ -978,8 +1022,22 @@ static const char *TAG = "subpub";
          abort();
      }
 
-#ifdef HeaterParameterSendingToAWS
 
+
+#ifdef HeaterTopicData
+	     const char *TOPIC1 = "HeaterTopic";  // testing for param key..
+	     const int TOPIC_LEN1 = strlen(TOPIC1);
+
+	         ESP_LOGI(TAG, "Subscribing...");
+	         rc = aws_iot_mqtt_subscribe(&client, TOPIC1, TOPIC_LEN1, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+	         if(SUCCESS != rc) {
+	             ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+	             abort();
+	         }
+#endif
+
+
+#ifdef HeaterParameterSendingToAWS
      //const char *TOPIC1 = "HeaterParameter";  // original
      const char *TOPIC1 = "topic1";  // testing for param key..
      const int TOPIC_LEN1 = strlen(TOPIC1);
@@ -1010,12 +1068,18 @@ static const char *TAG = "subpub";
 		  ESP_LOGE(TAG, "Error subscribing : %d ", rc);
 		  abort();
 		}
-
 #endif  // end of #ifdef HeaterParameterSendingToAWS
 
 
-#ifdef HeaterParameterSendingToAWS
+#ifdef HeaterTopicData
+	   //  char cPayload1[100];
+	     char cPayload1[600];
+		HeaterMeassage.qos = QOS1;
+		HeaterMeassage.payload = (void *) cPayload1;
+		HeaterMeassage.isRetained = 0;
+#endif
 
+#ifdef HeaterParameterSendingToAWS
      char cPayload1[100];
      HeaterParameter.qos = QOS1;
      HeaterParameter.payload = (void *) cPayload1;
@@ -1030,8 +1094,9 @@ static const char *TAG = "subpub";
 	 HeaterOnOff.qos = QOS1;
 	 HeaterOnOff.payload = (void *) cPayload3_HeaterOnOff;
 	 HeaterOnOff.isRetained = 0;
-
 #endif
+
+
 
      while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {
 
@@ -1044,26 +1109,39 @@ static const char *TAG = "subpub";
 
          ESP_LOGI(TAG, "Stack remaining for task '%s' is %d bytes", pcTaskGetTaskName(NULL), uxTaskGetStackHighWaterMark(NULL));
 
-          vTaskDelay(1000 / portTICK_RATE_MS);  // Original Testing
-         // vTaskDelay(3000 / portTICK_RATE_MS);
+         // vTaskDelay(1000 / portTICK_RATE_MS);  // Original Testing
+          vTaskDelay(3000 / portTICK_RATE_MS);  // Testing
+
+#ifdef HeaterTopicData
+
+          if(commandReceived_SendAck == 1){
+			memset(cPayload1,0,sizeof(cPayload1));
+			// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
+			// sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d  %s: %s", "Device ID", "Heater101","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0, "Reply", replybuff); // ONly for Testing
+			sprintf(cPayload1, "%s : %s %s : %s", "Device ID", "Heater1", "Reply", replybuff); // ONly for Testing
+
+			HeaterMeassage.payloadLen = strlen(cPayload1);
+			rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
+			commandReceived_SendAck = 0;
+
+			memset(replybuff,0,sizeof(replybuff));
+          }
+#endif
 
 
 #ifdef HeaterParameterSendingToAWS
-
          if(uchTopic_HeaterParameter_Publish_status == 1)
 		  {
 			  // printf("\n I am in Topic_HeaterParameter_Publish\n ");
 				// uchTopic_Set_temp_subscribe_status = TRUE;
 				memset(cPayload1,0,sizeof(cPayload1));
 				// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
-				sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d", "Device ID", "Heater1","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0); // ONly for Testing
+				sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d", "Device ID", "Heater22","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0); // ONly for Testing
 				HeaterParameter.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterParameter);
 				// ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->cPayload1);
 				// uchTopic_Set_temp_subscribe_status = 0;
 		  }
-
-
 		 if(uchTopic_Set_temp_subscribe_status == 1)
 			{
 				 // printf("\n I am in Set Temp paramter publish \n\n ");
@@ -1076,8 +1154,6 @@ static const char *TAG = "subpub";
 				  uchTopic_HeaterON_Publish_status = 0;
 				  uchTopic_HeaterOFF_Publish_status = 0;
 			}
-
-
 		 if(uchTopic_HeaterON_Publish_status == 1)
 		 {
 		   printf("\n I am in uchTopic_HeaterOn_Publish_status \n\n ");
@@ -1093,8 +1169,6 @@ static const char *TAG = "subpub";
 			  uchTopic_HeaterON_Publish_status = 0;
 			  uchTopic_HeaterOFF_Publish_status = 0;
 		  }
-
-
 		 if(uchTopic_HeaterOFF_Publish_status == 1)
 		 {
 			 printf("\n I am in uchTopic_HeaterOFF_Publish_status \n\n ");
@@ -1107,10 +1181,9 @@ static const char *TAG = "subpub";
 			 rc = aws_iot_mqtt_publish(&client, TOPIC3_HeaterOnOff, TOPIC_LEN3_HeaterOnOff, &HeaterOnOff);
 			 uchTopic_Set_temp_subscribe_status = 0;
 			 uchTopic_HeaterParameter_Publish_status  = 1;
-			  uchTopic_HeaterON_Publish_status = 0;
-			  uchTopic_HeaterOFF_Publish_status = 0;
+			 uchTopic_HeaterON_Publish_status = 0;
+			 uchTopic_HeaterOFF_Publish_status = 0;
 		  }
-
 #endif
 
          //  printf("After publish HeaterParameterSendingToAWS\n ");
@@ -1119,7 +1192,6 @@ static const char *TAG = "subpub";
              rc = SUCCESS;
          }
      }
-
      ESP_LOGE(TAG, "An error occurred in the main loop.");
     // abort();  // Commented Abort for Tesing
  }

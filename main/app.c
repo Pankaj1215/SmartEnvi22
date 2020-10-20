@@ -342,9 +342,11 @@ esp_err_t app_init(void) {
         sched_weekend[i].temp_c = TEMPERATURE_CELSIUS_VAL_DEF;
         sched_weekend[i].temp_f = TEMPERATURE_FAHRENHEIT_VAL_DEF;
     }
+
     // load schedule from flash
     get_data_from_storage(STORAGE_KEY_SCHED_WEEKDAY, sched_weekday);
     get_data_from_storage(STORAGE_KEY_SCHED_WEEKEND, sched_weekend);
+
 /*
     // test
     for (int i = 0; i < AUTO_MODE_SCHED_NUM; i++) {
@@ -385,15 +387,17 @@ esp_err_t app_init(void) {
 //   initialize_communication_service();
 //    comm_wifi_dev = get_wifi_dev();
 
+
 #ifdef P_TESTING   // Added for Testing
 
-      tcpServer_main();
-    //  initialise_wifi();
-     printf("I am in main firmware \n ");
+    //  tcpServer_main();
+    initialise_wifi();
+    printf("I am in main firmware \n ");
     // xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);   // aws iot task .. initiation..
-     // xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
+    xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
    // while(1);
 #endif
+
 
     // wait for at least APP_WELCOME_SCREEN_DELAY_MS
     if ((xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) < APP_WELCOME_SCREEN_DELAY_MS)
@@ -641,6 +645,7 @@ static void standby_mode_task(app_data_t *data) {
        display_on();
 }
 
+
 static void manual_temperature_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = 0;
@@ -886,6 +891,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
        display_on();
 }
 
+
 static void temperature_offset_set_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = 0;
@@ -1031,6 +1037,7 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
     if (screen_off)
        display_on();
 }
+
 
 static void debug_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -1211,11 +1218,12 @@ static void debug_mode_task(app_data_t *data) {
 
         vTaskDelay(1 / portTICK_RATE_MS);
     }
-
     // exit with display on
     if (screen_off)
        display_on();
 }
+
+
 
 static void timer_increment_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -1551,6 +1559,7 @@ static void timer_increment_mode_task(app_data_t *data) {
        display_on();
 }
 
+
 static void auto_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = *btn;
@@ -1876,6 +1885,8 @@ static void auto_mode_task(app_data_t *data) {
     if (screen_off)
        display_on();
 }
+
+
 
 static void menu_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);

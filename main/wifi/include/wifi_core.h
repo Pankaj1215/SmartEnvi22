@@ -43,6 +43,9 @@
 
 #define P_TESTING     // Added only for Pankaj_07Oct2020
 
+// unsigned char commandReceived_SendAck = 0;
+
+
 /*!
  * \fn int wifi_version()
  * \brief returns the firmware wifi version

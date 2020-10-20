@@ -40,6 +40,8 @@
 #include "mqtt.h"
 #include "version.h"
 
+#include "wifi_core.h" // New Added for P_Testing included in wifi_core.h
+
 #define KEYMARK_OPENCBRACKET        '{'
 #define KEYMARK_QUOTE               '"'
 #define KEYMARK_COLON               ':'
@@ -54,6 +56,12 @@ struct comm_gsm* cgsm_dev;
 
 int message_label_value_handler(char* label, char* value, char* reply_buff);
 
+#ifdef  P_TESTING
+extern char replybuff[500];  //
+extern int commandReceived_SendAck;
+#endif
+
+
 int mainflux_msg_handler(char* msg, char* response)
 {
     int i = 0;
@@ -67,12 +75,14 @@ int mainflux_msg_handler(char* msg, char* response)
     int quote_ctr = 0;
     int comma_ctr = 0;
     int colon_ctr = 0;
-    char replybuff[500];
+
+   //  char replybuff[500];  // Original Line in longHorn Code commneted for making the reply buffer global.
+
     int messagetype = MSGTYPE_UNKNOWN;
     int is_message_for_me = -1;
     char username[MAX_STR_BUFF_SIZE];
 
-    printf("mainflux handler [%s]\n", msg);
+    // printf("mainflux handler [%s]\n", msg);
 
     //checking msg validity
     while(*(msg+i) != 0)
@@ -197,6 +207,10 @@ int mainflux_msg_handler(char* msg, char* response)
                         {
                             printf("publishing message [%s]\n", replybuff);
                            // mqtt_publish_message(replybuff, NULL);  // Original Line Commented for Testing only
+
+							#ifdef P_TESTING
+								commandReceived_SendAck = 1;
+							#endif
                         }
                     }
                     else
@@ -385,9 +399,14 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     } else if (strcmp(label, REMOTE_CMD_SET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_SET_TARGET_TEMP %s\r\n", value);
         app_set_target_temp(atoi(value));
+        // sprintf(reply_buff, "%s: %d", "TARGET_TEMPSET TO",((int)atoi(value));
+        sprintf(reply_buff, "%s: %s", "TARGET_TEMP SET",value);  // New added for Teting
+
     } else if (strcmp(label, REMOTE_CMD_GET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
-        sprintf(reply_buff, "%d", app_get_target_temp());
+        // sprintf(reply_buff, "%d", app_get_target_temp());   // Original Line
+        sprintf(reply_buff, "%s: %d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
+
     } else if (strcmp(label, REMOTE_CMD_SET_TIMER_SETTING) == 0) {
         printf("REMOTE_CMD_SET_TIMER_SETTING %s\r\n", value);
         app_set_timer(atoi(value));
