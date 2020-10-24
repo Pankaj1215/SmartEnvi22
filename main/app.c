@@ -260,8 +260,10 @@ esp_err_t app_init(void) {
 #ifdef Test_Storage
  test_storage();
 #endif
-    printf("I am in app init\n");
 
+// while(1){
+    printf("I am in app init\n");
+ //}
     esp_err_t ret = ESP_OK;
     time_t t_start_ms = 0;
 
@@ -291,8 +293,15 @@ esp_err_t app_init(void) {
     app_data->button_status = 0;
     app_data->ambient_temperature_celsius = -1;
     app_data->ambient_temperature_offset_celsius = TEMPERATURE_SENSOR_OFFSET_CELSIUS_DEF;
+
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+    app_data->manual_temperature_celsius = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_DEF;
+    app_data->manual_temperature_fahrenheit = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_DEF;
+#else
     app_data->manual_temperature_celsius = TEMPERATURE_CELSIUS_VAL_DEF;
     app_data->manual_temperature_fahrenheit = TEMPERATURE_FAHRENHEIT_VAL_DEF;
+#endif
+
     app_data->current_timer_setting_min = 0;
     app_data->last_timer_setting_min = LAST_TIMER_SETTING_MIN_DEF;
     app_data->is_child_lock_active = false;
@@ -334,13 +343,24 @@ esp_err_t app_init(void) {
         sched_weekday[i].en = false;
         sched_weekday[i].hour = 0;
         sched_weekday[i].minute = 0;
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+        sched_weekday[i].temp_c = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_DEF;
+        sched_weekday[i].temp_f = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_DEF;
+#else
         sched_weekday[i].temp_c = TEMPERATURE_CELSIUS_VAL_DEF;
         sched_weekday[i].temp_f = TEMPERATURE_FAHRENHEIT_VAL_DEF;
+#endif
         sched_weekend[i].en = false;
         sched_weekend[i].hour = 0;
         sched_weekend[i].minute = 0;
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+        sched_weekend[i].temp_c = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_DEF;
+        sched_weekend[i].temp_f = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_DEF;
+#else
         sched_weekend[i].temp_c = TEMPERATURE_CELSIUS_VAL_DEF;
         sched_weekend[i].temp_f = TEMPERATURE_FAHRENHEIT_VAL_DEF;
+#endif
+
     }
 
     // load schedule from flash
@@ -440,19 +460,19 @@ static void app_task(void *param) {
     *mode = APP_MODE_ON_STARTUP;
 
     // start task that reads ambient temperature
-   // xTaskCreate(temp_sensor_task, "tsensor_task", 4096, (void *)app_data, 12, NULL);
+     xTaskCreate(temp_sensor_task, "tsensor_task", 4096, (void *)app_data, 12, NULL);
 
     // start task that reads ambient light
-    // xTaskCreate(light_sensor_task, "lsensor_task", 4096, (void *)app_data, 12, NULL);
+     xTaskCreate(light_sensor_task, "lsensor_task", 4096, (void *)app_data, 12, NULL);
 
     // start task that controls pilot light
-   // xTaskCreate(pilot_light_task, "plight_task", 4096, (void *)app_data, 12, NULL);
+    xTaskCreate(pilot_light_task, "plight_task", 4096, (void *)app_data, 12, NULL);
 
     // start task that controls night light
-    // xTaskCreate(night_light_task, "nlight_task", 4096, (void *)app_data, 12, NULL);
+     xTaskCreate(night_light_task, "nlight_task", 4096, (void *)app_data, 12, NULL);
 
     // start task that controls display brightness
-   // xTaskCreate(display_brightness_task, "dbright_task", 4096, (void *)app_data, 12, NULL);
+    xTaskCreate(display_brightness_task, "dbright_task", 4096, (void *)app_data, 12, NULL);
 
     while (1) {
         switch (*mode) {
@@ -677,16 +697,33 @@ static void manual_temperature_mode_task(app_data_t *data) {
     // this is necessary to disregard button toggle while waiting for timer button released
     prev_btn = *btn;
 
+
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     // set maximum and minimum temperatures and temp pointer based on unit
     if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
-        temp_max = TEMPERATURE_CELSIUS_VAL_MAX;
-        temp_min = TEMPERATURE_CELSIUS_VAL_MIN;
+        temp_max = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX;
+        temp_min = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN;
         temp = &(data->manual_temperature_celsius);
     } else {
-        temp_max = TEMPERATURE_FAHRENHEIT_VAL_MAX;
-        temp_min = TEMPERATURE_FAHRENHEIT_VAL_MIN;
+        temp_max = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX;
+        temp_min = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MIN;  //
         temp = &(data->manual_temperature_fahrenheit);
     }
+#else
+    // set maximum and minimum temperatures and temp pointer based on unit   // Original Last Firmware release logic
+       if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
+           temp_max = TEMPERATURE_CELSIUS_VAL_MAX;
+           temp_min = TEMPERATURE_CELSIUS_VAL_MIN;
+           temp = &(data->manual_temperature_celsius);
+       } else {
+           temp_max = TEMPERATURE_FAHRENHEIT_VAL_MAX;
+           temp_min = TEMPERATURE_FAHRENHEIT_VAL_MIN;
+           temp = &(data->manual_temperature_fahrenheit);
+       }
+
+#endif
+
+
 
     while(*mode == APP_MODE_MANUAL_TEMPERATURE) {
         // turn off/on the heater based on temperature
@@ -1260,16 +1297,44 @@ static void timer_increment_mode_task(app_data_t *data) {
     *timer_min = data->last_timer_setting_min;
     t0_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
+
+
+//    // set maximum and minimum temperatures and temp pointer based on unit
+//    if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
+//        temp_max = TEMPERATURE_CELSIUS_VAL_MAX;
+//        temp_min = TEMPERATURE_CELSIUS_VAL_MIN;
+//        temp = &(data->manual_temperature_celsius);
+//    } else {
+//        temp_max = TEMPERATURE_FAHRENHEIT_VAL_MAX;
+//        temp_min = TEMPERATURE_FAHRENHEIT_VAL_MIN;
+//        temp = &(data->manual_temperature_fahrenheit);
+//    }
+
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     // set maximum and minimum temperatures and temp pointer based on unit
     if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
-        temp_max = TEMPERATURE_CELSIUS_VAL_MAX;
-        temp_min = TEMPERATURE_CELSIUS_VAL_MIN;
+        temp_max = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX;
+        temp_min = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN;
         temp = &(data->manual_temperature_celsius);
     } else {
-        temp_max = TEMPERATURE_FAHRENHEIT_VAL_MAX;
-        temp_min = TEMPERATURE_FAHRENHEIT_VAL_MIN;
+        temp_max = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX;
+        temp_min = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MIN;  //
         temp = &(data->manual_temperature_fahrenheit);
     }
+#else
+    // set maximum and minimum temperatures and temp pointer based on unit   // Original Last Firmware release logic
+       if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
+           temp_max = TEMPERATURE_CELSIUS_VAL_MAX;
+           temp_min = TEMPERATURE_CELSIUS_VAL_MIN;
+           temp = &(data->manual_temperature_celsius);
+       } else {
+           temp_max = TEMPERATURE_FAHRENHEIT_VAL_MAX;
+           temp_min = TEMPERATURE_FAHRENHEIT_VAL_MIN;
+           temp = &(data->manual_temperature_fahrenheit);
+       }
+
+#endif
+
 
     while(*mode == APP_MODE_TIMER_INCREMENT) {
         if (*timer_min == 0) {
@@ -2302,8 +2367,21 @@ static app_mode_t menu_calendar(app_data_t *data) {
     bool is_sched_changed = false;
 
     uint8_t *temp = NULL, *temp_c = NULL, *temp_f = NULL;
+
+      // Original Last firmware release
+//    uint8_t temp_max = data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? TEMPERATURE_CELSIUS_VAL_MAX : TEMPERATURE_FAHRENHEIT_VAL_MAX;
+//    uint8_t temp_min = data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? TEMPERATURE_CELSIUS_VAL_MIN : TEMPERATURE_FAHRENHEIT_VAL_MIN;
+
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+    uint8_t temp_max = data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX : TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX;
+    uint8_t temp_min = data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN : TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MIN;
+#else
     uint8_t temp_max = data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? TEMPERATURE_CELSIUS_VAL_MAX : TEMPERATURE_FAHRENHEIT_VAL_MAX;
     uint8_t temp_min = data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? TEMPERATURE_CELSIUS_VAL_MIN : TEMPERATURE_FAHRENHEIT_VAL_MIN;
+
+#endif
+
+
 
     while (!exit) {
         if (*btn == prev_btn) {
@@ -4217,9 +4295,23 @@ static void temp_sensor_task(void *param) {
 
     while(1) {
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
+
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+      if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX)
+      {
+    	  heater_off();
+    	  //Activate the Flag for Max Temperature Threshold Reached
+      }
+      if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN)
+      {
+    	  heater_on();
+    	  //Activate the Flag for Min Temperature Threshold Reached
+      }
+#endif
+
         printf("ambient_temp=%d\r\n", *ambient_temp_c);
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
-    }
+    }// end of while
 }
 
 static void light_sensor_task(void *param) {
@@ -4432,6 +4524,7 @@ int app_get_mode(void) {
 
 int app_get_ambient_temp(void) {
     if (app_data) {
+    	printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
         return app_data->ambient_temperature_celsius;
     }
 
@@ -4439,9 +4532,14 @@ int app_get_ambient_temp(void) {
 }
 
 int app_set_target_temp(int temp_c) {
-    if (app_data) {
-        if (temp_c >= TEMPERATURE_CELSIUS_VAL_MIN
-            && temp_c <= TEMPERATURE_CELSIUS_VAL_MAX) {
+    if (app_data)
+    {
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+        if (temp_c >= TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX)
+#else
+        if (temp_c >= TEMPERATURE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_CELSIUS_VAL_MAX)  	  // Original Last Firmware Line
+#endif
+        {
             app_data->manual_temperature_celsius = temp_c;
             app_data->manual_temperature_fahrenheit = celsius_to_fahr(temp_c);
 
@@ -4458,15 +4556,19 @@ int app_set_target_temp(int temp_c) {
     return -1;
 }
 
-int app_get_target_temp(void) {
-//    if (app_data) { // Original Lines
-//        return app_data->manual_temperature_celsius;
-//    }
 
-   // printf("From app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
-    printf("From app_get_target_temp: %d\n", 45);
-   // return 0x80000000;  // Original Line
-   return (45);
+int app_get_target_temp(void) {
+    if (app_data) { // Original Lines
+        printf("From app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
+        return app_data->manual_temperature_celsius;
+    }
+
+    printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
+
+	//printf("From app_get_target_temp: %d\n", 45);
+
+	 return 0x80000000;  // Original Line
+   // return (45);
 }
 
 int app_set_timer(int timer) {

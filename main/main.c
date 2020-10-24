@@ -119,7 +119,11 @@ void app_main(void) {
     lightsensor_init();
     heater_init();
     /* Hardware peripherals init end */
-
+//while(1)
+//{
+//	printf(" I am in Main \n ");
+//
+//}
     /* app proper */
     app_init();
 }

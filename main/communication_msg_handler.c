@@ -162,8 +162,8 @@ int mainflux_msg_handler(char* msg, char* response)
 
                 strncpy(label, labelstart, labelend - labelstart); 
                 strncpy(value, valuestart, valueend - valuestart); 
-                printf("label [%s]\n", label);
-                printf("value [%s]\n", value);
+               // printf("label [%s]\n", label);
+               // printf("value [%s]\n", value);
 
                 if(strcmp(label, "cmd") == 0)
                 {
@@ -177,7 +177,7 @@ int mainflux_msg_handler(char* msg, char* response)
 
                 if(strcmp(label, "target") == 0)
                 {
-                	printf("target label Matched \n");
+                	//printf("target label Matched \n");
                     memset(username, 0, MAX_STR_BUFF_SIZE); 
 
                    // get_string_from_storage(NVS_MQTT_USERNAME, username); // Original Line
@@ -186,7 +186,7 @@ int mainflux_msg_handler(char* msg, char* response)
                    	if(strcmp(value, "Heater2") == 0)  // Testing
                    	{
                    		is_message_for_me = 0;
-                   		printf("Device ID Matched \n");
+                   		//printf("Device ID Matched \n");
                    	}
                     else if(strcmp(value, username) == 0)
                         is_message_for_me = 0;
@@ -204,11 +204,11 @@ int mainflux_msg_handler(char* msg, char* response)
                        // memset(replybuff, 0, 500);  // Original
                          memset(replybuff, 0, 150);  //Testing
                         message_label_value_handler(label, value, replybuff);
-                        printf("reply buff [%s]\n", replybuff);
+                       // printf("reply buff [%s]\n", replybuff);
 
                         if(strlen(replybuff) > 0)
                         {
-                            printf("publishing message [%s]\n", replybuff);
+                           // printf("publishing message [%s]\n", replybuff);
                            // mqtt_publish_message(replybuff, NULL);  // Original Line Commented for Testing only
 
 							#ifdef P_TESTING
@@ -294,7 +294,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 
     space_char_decode(value);
 
-    printf("I am in message_label_value_handler \n ");
+   // printf("I am in message_label_value_handler \n ");
 
     //TODO: please revise if only, dont use if else if due to limit
     if (strcmp(label, "cmd") == 0) {
@@ -398,7 +398,9 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         app_set_mode(atoi(value));
     } else if (strcmp(label, REMOTE_CMD_GET_AMBIENT_TEMP) == 0) {
         printf("REMOTE_CMD_GET_AMBIENT_TEMP %s\r\n", value);
-        sprintf(reply_buff, "%d", app_get_ambient_temp());
+        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_ambient_temp());
+       // sprintf(reply_buff, "%d", app_get_ambient_temp());
+
     } else if (strcmp(label, REMOTE_CMD_SET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_SET_TARGET_TEMP %s\r\n", value);
         app_set_target_temp(atoi(value));
@@ -407,7 +409,11 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
        // sprintf(reply_buff, "\"%s\"= \"%s\"", "TARGET_TEMP SET",value);  // New added for Teting
 
       // sprintf(reply_buff, "\%s\= \%s\", "TARGET_TEMP SET",value);  // New added for Teting
-       	sprintf(reply_buff, "%s=%s", "TARGET_TEMP SET",value);  // New added for Teting
+       //	sprintf(reply_buff, "%s=%s", "TARGET_TEMP SET",value);  // New added for Teting  // Working one
+
+      // 	sprintf(reply_buff, "\"%s\" : \"%s\", \"%s\" : \"%s\",\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success");
+
+       	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success");
 
     } else if (strcmp(label, REMOTE_CMD_GET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
@@ -416,7 +422,9 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
        // sprintf(reply_buff, "\"%s\": \"%s\"", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
 
        // sprintf(reply_buff, "%s\= \%d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
-        sprintf(reply_buff, "%s=%d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
+       // sprintf(reply_buff, "%s=%d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting // Working OK
+
+        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_target_temp() );
 
     } else if (strcmp(label, REMOTE_CMD_SET_TIMER_SETTING) == 0) {
         printf("REMOTE_CMD_SET_TIMER_SETTING %s\r\n", value);

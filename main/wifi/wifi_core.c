@@ -62,6 +62,9 @@ const int CONNECTED_BIT = BIT0;
 char replybuff[150];  //  newadded for ack
 int commandReceived_SendAck;  //  newadded for ack
 
+int oneTimeRegistrationPacketToAWS = 0;
+
+
 #define subscribePublishTopic  // To activate the pub sub functionality code
 #define EXAMPLE_ESP_MAXIMUM_RETRY 5
 #define WIFI_CONNECTED_BIT BIT0
@@ -1205,23 +1208,28 @@ static void http_get_task(void *pvParameters)
  void iot_subscribe_callback_handler(AWS_IoT_Client *pClient, char *topicName, uint16_t topicNameLen,
                                      IoT_Publish_Message_Params *params, void *pData) {
 
-	 char replybuffer[512];
+	 // char replybuffer[512];  // W
+
+	 char replybuffer[300];  // Json
+
+	 // char replybuffer[900];   // Reply buffer size changed 900 as of payload size of that topic  // Stack OverFlow
+
+
 	 // char replySubBuffer[30];
 	 char replySubBuffer[6];  // Buffer for match of keyword eg Temp, HOON, HOFF
 	 char replySubBuffer2[30];
 
-	 char payLoadBuufer[55];
+     // char payLoadBuufer[55]; //w
+     char payLoadBuufer[150];
 
+	// char payLoadBuufer[500];  // Changed after resettig problem..
 	// char label[6];
 
      ESP_LOGI(TAG, "Subscribe callback");
      ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->payload);
 
-    // printf("\n params->payload) %s \n ", (char*) params-> payload);
-     // if(){
 	 memset(replybuffer,0,sizeof(replybuffer));
      memcpy(replybuffer,(char*) params-> payload,sizeof(replybuffer));
-
 
 #define PAYLOAD_INDEX_RECIEVE_BUFFER
 #ifdef PAYLOAD_INDEX_RECIEVE_BUFFER
@@ -1401,18 +1409,19 @@ static void http_get_task(void *pvParameters)
       rc = aws_iot_mqtt_init(&client, &mqttInitParams);
       if(SUCCESS != rc) {
           ESP_LOGE(TAG, "aws_iot_mqtt_init returned error : %d ", rc);
-          abort();
+         // abort(); // Commneted for testing
       }
 
 
       /* Wait for WiFI to show as connected */   // Commented fro testing only
- //     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
- //                         false, true, portMAX_DELAY);
+      xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
+                          false, true, portMAX_DELAY);
 
 
       connectParams.keepAliveIntervalInSec = 10;
       connectParams.isCleanSession = true;
       connectParams.MQTTVersion = MQTT_3_1_1;
+
 
       /* Client ID is set in the menuconfig of the example */
       connectParams.pClientID = CONFIG_AWS_EXAMPLE_CLIENT_ID;
@@ -1436,7 +1445,7 @@ static void http_get_task(void *pvParameters)
       rc = aws_iot_mqtt_autoreconnect_set_status(&client, true);
       if(SUCCESS != rc) {
           ESP_LOGE(TAG, "Unable to set Auto Reconnect to true - %d", rc);
-          abort();
+         // abort(); // Commneted for testing
       }
 
 
@@ -1449,7 +1458,7 @@ static void http_get_task(void *pvParameters)
  	         rc = aws_iot_mqtt_subscribe(&client, TOPIC1, TOPIC_LEN1, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
  	         if(SUCCESS != rc) {
  	             ESP_LOGE(TAG, "Error subscribing : %d ", rc);
- 	             abort();
+ 	            // abort();  // Commneted for testing
  	         }
  #endif
 
@@ -1490,7 +1499,9 @@ static void http_get_task(void *pvParameters)
 
  #ifdef HeaterTopicData
  	   //  char cPayload1[100];
- 	       char cPayload1[600];
+ 		 char cPayload1[300];
+
+ 	    // char cPayload1[600]; // W//  Normally works but with Json data packet received then esp restarts
  		// char cPayload1[900];
  		// char cPayload1[2000];
 
@@ -1528,8 +1539,8 @@ static void http_get_task(void *pvParameters)
 
           ESP_LOGI(TAG, "Stack remaining for task '%s' is %d bytes", pcTaskGetTaskName(NULL), uxTaskGetStackHighWaterMark(NULL));
 
-          // vTaskDelay(1000 / portTICK_RATE_MS);  // Original Testing
-           vTaskDelay(3000 / portTICK_RATE_MS);  // Testing
+           vTaskDelay(1000 / portTICK_RATE_MS);  // Original Testing
+          // vTaskDelay(3000 / portTICK_RATE_MS);  // Testing
 
  #ifdef HeaterTopicData
            if(commandReceived_SendAck == 1){
@@ -1540,7 +1551,9 @@ static void http_get_task(void *pvParameters)
  			// sprintf(cPayload1, "%s : %s %s : %s", "Device ID", "Heater1", "Reply", replybuff); // ONly for Testing
  			// sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","ssid", username,"password", password, "heaterID", name, "location ",locID, "reply", replybuff); // ONly for Testing  // Getting Restart on this
 
- 			sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","reply", replybuff); // ONly for Testing  // Working
+ 			// sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","reply", replybuff); // ONly for Testing  // Working
+
+ 			sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceID", "Heater2",replybuff); // ONly for Testing  // Working
 
  			// sprintf(cPayload1, "{\"%s\" : \"%s\",\"%s\" : \"%s\, \"%s\" : \"%s\"}", "deviceId", "Heater2","location ",locID,"reply", replybuff); // ONly for Testing  // Working
 		    // sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\"}", "dId", "Heater2","sid", username,"pw", password, "hId", name, "lc",locID, "rp", replybuff); // ONly for Testing  // Getting Restart on this
@@ -1552,7 +1565,19 @@ static void http_get_task(void *pvParameters)
  			memset(cPayload1,0,sizeof(cPayload1));
 
            }
- #endif
+
+
+           if(oneTimeRegistrationPacketToAWS==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+			  //  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing  // Getting Restart on this
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				oneTimeRegistrationPacketToAWS= 0;
+              }
+#endif
 
 
  #ifdef HeaterParameterSendingToAWS
@@ -1739,7 +1764,11 @@ static void tcp_server_task(void *pvParameters)
         }
         ESP_LOGI(TCP_SERVER_TAG, "Socket accepted");
         vTaskDelay(2000/portTICK_PERIOD_MS);
+
         err = send(sock, "found\r\n", 7, 0);
+
+
+
         if (err < 0) {
 			ESP_LOGE(TCP_SERVER_TAG, "Error occurred during sending: errno %d", errno);
 			//break;
@@ -1771,7 +1800,9 @@ static void tcp_server_task(void *pvParameters)
                 ESP_LOGI(TCP_SERVER_TAG, "Received %d bytes from %s:", len, addr_str);
                 ESP_LOGI(TCP_SERVER_TAG, "%s", rx_buffer);
 
-                saveDetails(rx_buffer);
+                saveDetails(rx_buffer);  // Then networking if net is down.. then we can test the data from app payload for setting the parameter in the esp.  //
+
+                // Test the message buffer for APP data to ESP when internet down.
 
                 int err = send(sock, rx_buffer, len, 0);
                 if (err < 0) {
@@ -1830,6 +1861,9 @@ void initialise_wifi(void)
 	if (bits & WIFI_CONNECTED_BIT) {
 		ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
 		xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);   // aws iot task .. initiation..
+
+		oneTimeRegistrationPacketToAWS = 1; // New added to sending First packet to AWS
+
 	} else if (bits & WIFI_FAIL_BIT) {
 		ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",username, password);
 		initSoftAP();
