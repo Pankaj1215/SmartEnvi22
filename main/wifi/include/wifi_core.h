@@ -26,6 +26,14 @@
 #ifndef __WIFI_CORE_H__
 #define __WIFI_CORE_H__
 
+
+#define SET_TEMP_ACK  1
+#define GET_TEMP_ACK  2
+
+
+
+
+
 #define ESP32_WIFI_UNKNOWN      0
 #define ESP32_WIFI_CLIENT       1
 #define ESP32_WIFI_AP           2

@@ -37,6 +37,8 @@
 #include "ota_update.h"
 #include "mqtt.h"
 
+
+
 //overall status of communication side
 int comm_device_status = DEV_ERR_NONE;
 
@@ -414,3 +416,15 @@ int ota_start(char* loc)
     return 0;
 }
 
+
+
+// wifi_mac_address function Added for testing Only..
+
+void wifi_mac_address(void)
+{
+	// struct comm_wifi comm_wifi_dev;
+    unsigned char *ap_mac = comm_wifi_dev.wifi_ap_get_mac();
+    sprintf(comm_wifi_dev.wifi_ap_ssid, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
+    printf("comm_wifi_dev.wifi_ap_ssid %s\n",comm_wifi_dev.wifi_ap_ssid );
+
+}

@@ -81,7 +81,6 @@
 #define fahr_to_celsius(f) ((f - 32) * 5 / 9)
 #define celsius_to_fahr(c) (c * 9 / 5 + 32)
 
-
 static void app_task(void *param);
 static void standby_mode_task(app_data_t *data);
 static void manual_temperature_mode_task(app_data_t *data);
@@ -109,7 +108,6 @@ static void ping_task(void *param);
 static void display_brightness_task(void *param);
 static int wifi_conn_stat(int stat);
 
-
 app_data_t *app_data = NULL;
 static struct comm_wifi *comm_wifi_dev = NULL;
 static wifi_ap_record_t ap_info;
@@ -117,17 +115,18 @@ static wifi_ap_record_t ap_info;
 auto_mode_sched_t sched_weekday[AUTO_MODE_SCHED_NUM];
 auto_mode_sched_t sched_weekend[AUTO_MODE_SCHED_NUM];
 
-
 #ifdef P_TESTING
 void aws_iot_task(void *pvParameters);   // ADDED FOR TESTING ..PS28aUG
 void initialise_wifi(void);  // Added for testing Wifi Testing _ P_16Sept2020
 void tcpServer_main();
-
+extern unsigned char maxTemperatureThresholdReachedWarning;
+extern unsigned char minTemperatureThresholdReachedWarning;
+bool daylightSaving=true;
 #endif
 
 
-
-static int timezone_offset_list_min[] = {
+// static int timezone_offset_list_min[] = { //  Original old Firmware..
+const int timezone_offset_list_min[] = {
     -720,        //UTC−12:00
     -660,        //UTC−11:00
     -600,        //UTC−10:00
@@ -168,84 +167,7 @@ static int timezone_offset_list_min[] = {
     840,         //UTC+14:00
 };
 #define TIMEZONE_OFFSET_LIST_SIZE (sizeof(timezone_offset_list_min)/sizeof(int))
-
 // #define Test_Storage
-
-#ifdef Test_Storage
-void test_storage(void);
-
-void test_storage(void)
-{
-  #define STORAGE_KEY_TEST_TEST_VLAUE  "Test_nVlaue"
-  #define STORAGE_KEY_TEST_TEST_LABEL  "Test_cLabel"
-  #define STORAGE_KEY_TEST_TEST_NAME   "Test_name"
-
-  int nVlaue = 20;
-  char cLabel = 'P';
-  char name[32] = "some";
-  char name1[64];
-
-  //ESP_ERROR_CHECK(nvs_flash_erase());  // Added_PS2020
-   // nvs_flash_erase();
-
-#define read_Flash
-//#define write_Flash
-
-#ifdef write_Flash
-
-   printf("Before erase \n");
-   erase_storage_all();
-   printf("After erase \n");
-
-
-    // set_integer_to_storage(STORAGE_KEY_TEMP_SENSOR_OFFSET_CELSIUS, 65);  // Working one.
-    // set_integer_to_storage(STORAGE_KEY_TEST_TEST_VLAUE, 80);
-    // set_integer_to_storage(STORAGE_KEY_TEST_TEST_LABEL, 'k');
-
-   // memcpy(name1,name,sizeof(name1));
-    //  set_string_to_storage(STORAGE_KEY_TEST_TEST_NAME, "Lome");
-   // set_string_to_storage(STORAGE_KEY_TEST_TEST_NAME, name1);
-    set_string_to_storage(NVS_LUCIDTRON_SSID_KEY, "AKSHAY");
-    set_string_to_storage(NVS_LUCIDTRON_PW_KEY, "Akshay4you");
-
-    printf("In writing \n ");
-#endif
-
-#ifdef read_Flash
-    // get_integer_from_storage(STORAGE_KEY_TEMP_SENSOR_OFFSET_CELSIUS, &(app_data->ambient_temperature_offset_celsius));  // Working one.
-    printf("Before STORAGE_KEY_TEST_TEST_VLAUE reading \n ");
-    get_integer_from_storage(STORAGE_KEY_TEST_TEST_VLAUE, &nVlaue);
-    printf("After STORAGE_KEY_TEST_TEST_VLAUE reading  \n ");
-
-    printf("Before STORAGE_KEY_TEST_TEST_LABEL reading \n ");
-    get_integer_from_storage(STORAGE_KEY_TEST_TEST_LABEL, &cLabel);
-    printf("After STORAGE_KEY_TEST_TEST_LABEL reading  \n ");
-
-//    printf("Before STORAGE_KEY_TEST_TEST_NAME reading \n ");
-//    get_string_from_storage(STORAGE_KEY_TEST_TEST_NAME, name);
-//    printf("After STORAGE_KEY_TEST_TEST_NAME reading  \n ");
-
-    printf("Before NVS_LUCIDTRON_SSID_KEY reading \n ");
-    get_string_from_storage(NVS_LUCIDTRON_SSID_KEY, name);  //
-    printf("After NVS_LUCIDTRON_SSID_KEY reading  \n ");
-
-    printf("Before NVS_LUCIDTRON_PW_KEY reading \n ");
-    get_string_from_storage(NVS_LUCIDTRON_PW_KEY, name1);
-    printf("After NVS_LUCIDTRON_PW_KEY reading  \n ");
-
-   // memcpy(name1,name,sizeof(name1));
-
-    printf("In reading \n ");
-    printf("nVlaue: %d\n", nVlaue);
-    printf("cLabel: %c\n", cLabel);
-    printf("name: %s\n", name);
-    printf("name1: %s\n", name1);
-#endif
-
-    vTaskDelay(3000 / portTICK_RATE_MS);
-    while(1);
-}// end of void test_storage(void)
-#endif
 
 static void print_fw_version(void)
 {
@@ -261,9 +183,6 @@ esp_err_t app_init(void) {
  test_storage();
 #endif
 
-// while(1){
-    printf("I am in app init\n");
- //}
     esp_err_t ret = ESP_OK;
     time_t t_start_ms = 0;
 
@@ -297,6 +216,7 @@ esp_err_t app_init(void) {
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     app_data->manual_temperature_celsius = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_DEF;
     app_data->manual_temperature_fahrenheit = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_DEF;
+    app_data->lastHeaterState = DEFAULT_LAST_HEATER_STATE;   // New Added for storing last status of Heater
 #else
     app_data->manual_temperature_celsius = TEMPERATURE_CELSIUS_VAL_DEF;
     app_data->manual_temperature_fahrenheit = TEMPERATURE_FAHRENHEIT_VAL_DEF;
@@ -311,6 +231,7 @@ esp_err_t app_init(void) {
     app_data->pilot_light_brightness = 0;
     app_data->night_light_cfg = NIGHT_LIGHT_VAL_DEF;
     app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
+
     app_data->settings.is_child_lock_en = true;
     app_data->settings.is_dim_pilot_light_en = false;
     app_data->settings.is_night_light_auto_brightness_en = false;
@@ -331,6 +252,19 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, &(app_data->manual_temperature_fahrenheit));
     get_integer_from_storage(STORAGE_KEY_LAST_TIMER_SETTING, &(app_data->last_timer_setting_min));
     get_integer_from_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int *) &(app_data->is_auto_time_date_en));
+
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+    printf("before app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+    get_integer_from_storage(STORAGE_KEY_LAST_HEATER_STATE, (int *) &(app_data->lastHeaterState));
+    printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+    if(app_data->lastHeaterState == 1)
+    	printf("After get integer Last heater state is ON \n");
+    else if (app_data->lastHeaterState == 0)
+    	printf("After get integer Last heater state is OFF \n");
+    else
+    	printf("Last heater status is unidentified \n");
+#endif
+
     get_integer_from_storage(STORAGE_KEY_TIMEZONE_OFFSET_INDEX, &(app_data->timezone_offset_idx));
     get_integer_from_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, &(app_data->night_light_cfg));
     get_data_from_storage(STORAGE_KEY_SETTINGS, &(app_data->settings));
@@ -360,7 +294,6 @@ esp_err_t app_init(void) {
         sched_weekend[i].temp_c = TEMPERATURE_CELSIUS_VAL_DEF;
         sched_weekend[i].temp_f = TEMPERATURE_FAHRENHEIT_VAL_DEF;
 #endif
-
     }
 
     // load schedule from flash
@@ -409,15 +342,11 @@ esp_err_t app_init(void) {
 
 
 #ifdef P_TESTING   // Added for Testing
-
      tcpServer_main();
     // initialise_wifi();
     printf("I am in main firmware \n ");
-    // xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);   // aws iot task .. initiation..
    // xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
-   // while(1);
 #endif
-
 
     // wait for at least APP_WELCOME_SCREEN_DELAY_MS
     if ((xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) < APP_WELCOME_SCREEN_DELAY_MS)
@@ -426,6 +355,26 @@ esp_err_t app_init(void) {
     // start NTP if enabled
     if (app_data->is_auto_time_date_en)
         ntp_init(NTP_SERVER);
+
+#ifdef P_TESTING   // Added for Testing  // This macro in only for testing purpose..when ever want to crosscheck the time and date..
+    int yr,mnt,day,hr,min,sec,retry=0;
+    printf("\nSNTP INITIALISING\n");
+    ntp_init(NTP_SERVER);
+    while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < 5) {
+            printf("Waiting for system time to be set... (%d/%d)", retry, 5);
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
+        }
+    clock_get_date_and_time(&yr,&mnt,&day,&hr, &min, &sec);
+    if(daylightSaving)
+    {
+    	if(hr==23)
+    		hr=0;
+    	else
+    		hr++;
+    }
+    printf("\nAUTO TIME: yr=%d mnt=%d day=%d hr=%d min=%d\r\n",yr,mnt,day, hr, min);
+#endif
+
 
     // start app task
     xTaskCreate(app_task, "app_task", 4096, (void *)app_data, 12, NULL);
@@ -545,6 +494,11 @@ static void standby_mode_task(app_data_t *data) {
 
     // turn off heater
     heater_off();
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+     app_data->lastHeaterState = false;
+     set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+     printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+#endif
 
     while(*mode == APP_MODE_STANDBY) {
         /* button
@@ -731,6 +685,12 @@ static void manual_temperature_mode_task(app_data_t *data) {
             if (!is_heater_on) {
                 heater_on();
                 is_heater_on = true;
+
+                #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+                    app_data->lastHeaterState = true;
+                    set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+               #endif
+
                 printf("MANUAL: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
             }
         } else {
@@ -743,6 +703,13 @@ static void manual_temperature_mode_task(app_data_t *data) {
                 if (is_heater_on) {
                     heater_off();
                     is_heater_on = false;
+
+					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+                    	app_data->lastHeaterState = false;
+                    	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+                    	printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+					#endif
+
                     printf("MANUAL heater off ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
                 }
             }
@@ -1297,19 +1264,6 @@ static void timer_increment_mode_task(app_data_t *data) {
     *timer_min = data->last_timer_setting_min;
     t0_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
-
-
-//    // set maximum and minimum temperatures and temp pointer based on unit
-//    if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
-//        temp_max = TEMPERATURE_CELSIUS_VAL_MAX;
-//        temp_min = TEMPERATURE_CELSIUS_VAL_MIN;
-//        temp = &(data->manual_temperature_celsius);
-//    } else {
-//        temp_max = TEMPERATURE_FAHRENHEIT_VAL_MAX;
-//        temp_min = TEMPERATURE_FAHRENHEIT_VAL_MIN;
-//        temp = &(data->manual_temperature_fahrenheit);
-//    }
-
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     // set maximum and minimum temperatures and temp pointer based on unit
     if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
@@ -1335,7 +1289,6 @@ static void timer_increment_mode_task(app_data_t *data) {
 
 #endif
 
-
     while(*mode == APP_MODE_TIMER_INCREMENT) {
         if (*timer_min == 0) {
             if (is_timer_expired) {
@@ -1353,6 +1306,13 @@ static void timer_increment_mode_task(app_data_t *data) {
             // turn off heater
             heater_off();
             is_heater_on = false;
+
+			#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+				 app_data->lastHeaterState = false;
+				 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+				 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+			#endif
+
         } else {
             is_timer_expired = false;
 
@@ -1368,6 +1328,11 @@ static void timer_increment_mode_task(app_data_t *data) {
                 if (!is_heater_on) {
                     heater_on();
                     is_heater_on = true;
+
+					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+						 app_data->lastHeaterState = true;
+						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+					#endif
                     printf("TIMER: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
                 }
             } else {
@@ -1380,6 +1345,13 @@ static void timer_increment_mode_task(app_data_t *data) {
                     if (is_heater_on) {
                         heater_off();
                         is_heater_on = false;
+
+						#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+							 app_data->lastHeaterState = false;
+							 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+							 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+						#endif
+
                         printf("TIMER: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
                     }
                 }
@@ -1615,10 +1587,8 @@ static void timer_increment_mode_task(app_data_t *data) {
             if (data->is_child_lock_active)
                 display_child_lock_icon(DISPLAY_COLOR);
         }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
-
     // exit with display on
     if (screen_off)
        display_on();
@@ -1817,6 +1787,12 @@ static void auto_mode_task(app_data_t *data) {
             if (!is_heater_on) {
                 heater_on();
                 is_heater_on = true;
+
+				#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+					 app_data->lastHeaterState = true;
+					 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+				#endif
+
                 printf("AUTO: heater on ambient=%d target=%d\r\n", *ambient_temp_c, auto_temp_c);
             }
         } else {
@@ -1829,6 +1805,14 @@ static void auto_mode_task(app_data_t *data) {
                 if (is_heater_on) {
                     heater_off();
                     is_heater_on = false;
+
+					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+                         printf("Heater Off \n ");
+						 app_data->lastHeaterState = false;
+						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+						 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+					#endif
+
                     printf("AUTO: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, auto_temp_c);
                 }
             }
@@ -3817,7 +3801,6 @@ static app_mode_t menu_settings(app_data_t *data) {
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE;
                             break;
                         }
-
                         update_display = true;
                     }
                 }
@@ -3880,10 +3863,8 @@ static app_mode_t menu_settings(app_data_t *data) {
                 display_menu((data->settings.is_night_light_auto_brightness_en) ? "Auto" : "Off", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
             }
-
             update_display = false;
         }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 
@@ -3898,6 +3879,8 @@ static app_mode_t menu_settings(app_data_t *data) {
     // return new mode
     return next_mode;
 }
+
+
 
 static app_mode_t menu_display_settings(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -4013,8 +3996,7 @@ static app_mode_t menu_display_settings(app_data_t *data) {
                                 if (data->display_settings.display_brightness > DISPLAY_BRIGHTNESS_MAX) {
                                     data->display_settings.display_brightness = DISPLAY_BRIGHTNESS_MAX;
                                 }
- 
-                            }
+                             }
                             break;
                         case MENU_DISPLAY_SETTINGS_BRIGHTNESS_AUTO_EN:
                             is_display_settings_changed = true;
@@ -4274,9 +4256,7 @@ static app_mode_t menu_update(app_data_t *data) {
                 display_update_installing_msg(DISPLAY_COLOR);
                 break;
             }
-
             }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 
@@ -4300,15 +4280,28 @@ static void temp_sensor_task(void *param) {
       if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX)
       {
     	  heater_off();
-    	  //Activate the Flag for Max Temperature Threshold Reached
+    	  printf("Heater Off \n ");
+		 app_data->lastHeaterState = false;
+		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+    	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
+    	  printf("ambient_temp_c %d\n",*ambient_temp_c);
+    	  printf("maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
+    	  printf("\n maxTemperatureThresholdReachedWarning \n\n ");
       }
       if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN)
       {
     	  heater_on();
-    	  //Activate the Flag for Min Temperature Threshold Reached
+          printf("Heater On \n ");
+		 app_data->lastHeaterState = true;
+		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+    	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
+    	  printf("ambient_temp_c %d\n",*ambient_temp_c);
+    	  printf("minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
+    	  printf("\n minTemperatureThresholdReachedWarning \n ");
       }
 #endif
-
         printf("ambient_temp=%d\r\n", *ambient_temp_c);
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
     }// end of while
@@ -4390,20 +4383,32 @@ static void night_light_task(void *param) {
                     // brighter in dark
                         nlight_br = NIGHT_LIGHT_BRIGHTNESS_MAX - (*ambient_light * (NIGHT_LIGHT_BRIGHTNESS_MAX - NIGHT_LIGHT_BRIGHTNESS_MIN) / NIGHT_LIGHT_BRIGHTNESS_MAX + NIGHT_LIGHT_BRIGHTNESS_MIN);
                     }
+
+                    // Hard code for testing..
+                   // *nlight_cfg = 16777215;   // Added only for testing..
+                   // nlight_br = 20 ;  // Added for Testing
+
                     int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;
                     int g_br = nlight_br * GET_LED_G_VAL(*nlight_cfg) / 100;
                     int b_br = nlight_br * GET_LED_B_VAL(*nlight_cfg) / 100;
                     // set night light color and brightness
-                    night_light_set_br(r_br, g_br, b_br);
+
+                    night_light_set_br(r_br, g_br, b_br);  // Original Line..
+                   // night_light_set_br(100, 100, 255);
+                   //  night_light_set_br(50, 255, 50);
 
                     t_set_brightness_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-                    printf("night light %d %d %d\r\n", r_br, g_br, b_br);
+                   // printf("\n\n*ambient_light %d \n ",*ambient_light);
+                   // printf("*nlight_cfg %d \n ",*nlight_cfg);
+                   // printf("nlight_br %d \n ",nlight_br);
+                   // printf("night light %d %d %d\r\n", r_br, g_br, b_br);
                 }
             }
             prev_nlight_auto_en = true;
         } else {
             if (prev_nlight_auto_en) {
                 night_light_off();
+                printf("night light off \n");
             }
 
             prev_nlight_auto_en = false;
@@ -4546,9 +4551,7 @@ int app_set_target_temp(int temp_c) {
             // update target temperature in flash
             set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, app_data->manual_temperature_celsius);
             set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit);
-
             printf("Temp set by command: %d \n ",temp_c );
-
             return 0;
         }
     }
@@ -4564,11 +4567,7 @@ int app_get_target_temp(void) {
     }
 
     printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
-
-	//printf("From app_get_target_temp: %d\n", 45);
-
 	 return 0x80000000;  // Original Line
-   // return (45);
 }
 
 int app_set_timer(int timer) {
@@ -4785,6 +4784,8 @@ bool app_is_night_light_auto_brightness_enabled(void) {
 
     return false;
 }
+
+//void
 
 int app_set_night_light_config(int cfg) {
     if (app_data) {

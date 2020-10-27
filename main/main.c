@@ -106,12 +106,31 @@
 #include "non_volatile_lib.h"
 #include "app.h"
 
+//#define P_Test_LED
+#ifdef P_Test_LED
+void Test_Led_RGB(void);
+
+ void Test_Led_RGB(void)
+ {
+	 night_light_off();
+	 while(1)
+	 {
+		 night_light_set_br(0, 0, 255);
+	 }
+
+ }
+#endif
+
 /* 
  *  Starting point of ESP32
  */ 
 void app_main(void) {
     /* Hardware peripherals init start */
     led_init();
+#ifdef P_Test_LED
+    Test_Led_RGB();
+#endif
+
     nvs_storage_init();
     display_init();
     button_init();

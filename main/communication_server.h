@@ -26,6 +26,9 @@
 #ifndef __COMMUNICATION_SERVER_H_
 #define __COMMUNICATION_SERVER_H_
 
+
+void wifi_mac_address(void); // Added only for testing..
+
 //#define IOT_SERVER_ADDRESS  "ec2-54-149-179-29.us-west-2.compute.amazonaws.com"
 #define IOT_SERVER_ADDRESS          "172.31.26.240"
 

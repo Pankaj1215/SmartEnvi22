@@ -42,6 +42,8 @@
 
 #include "wifi_core.h" // New Added for P_Testing included in wifi_core.h
 
+// int oneTimeRegistrationPacketToAWS = 0;
+
 #define KEYMARK_OPENCBRACKET        '{'
 #define KEYMARK_QUOTE               '"'
 #define KEYMARK_COLON               ':'
@@ -60,6 +62,13 @@ int message_label_value_handler(char* label, char* value, char* reply_buff);
  // extern char replybuff[500];  // old
  extern char replybuff[150];  // Testing
  extern int commandReceived_SendAck;
+ extern int oneTimeRegistrationPacketToAWS;
+extern unsigned char keepAliveFlag;
+//#define SET_TEMP_ACK  1
+//#define GET_TEMP_ACK  2
+
+extern unsigned char CommandAck;
+
 #endif
 
 
@@ -165,7 +174,8 @@ int mainflux_msg_handler(char* msg, char* response)
                // printf("label [%s]\n", label);
                // printf("value [%s]\n", value);
 
-                if(strcmp(label, "cmd") == 0)
+             //   if(strcmp(label, "cmd") == 0)   // Original
+             	if(strcmp(label, "type") == 0)
                 {
                     if(strcmp(value, "system") == 0)
                         messagetype = MSGTYPE_SYSTEM;
@@ -210,7 +220,6 @@ int mainflux_msg_handler(char* msg, char* response)
                         {
                            // printf("publishing message [%s]\n", replybuff);
                            // mqtt_publish_message(replybuff, NULL);  // Original Line Commented for Testing only
-
 							#ifdef P_TESTING
 								commandReceived_SendAck = 1;
 							#endif
@@ -404,27 +413,18 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     } else if (strcmp(label, REMOTE_CMD_SET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_SET_TARGET_TEMP %s\r\n", value);
         app_set_target_temp(atoi(value));
-        // sprintf(reply_buff, "%s: %d", "TARGET_TEMPSET TO",((int)atoi(value));
-       //  sprintf(reply_buff, "%s: %s", "TARGET_TEMP SET",value);  // New added for Teting
-       // sprintf(reply_buff, "\"%s\"= \"%s\"", "TARGET_TEMP SET",value);  // New added for Teting
 
-      // sprintf(reply_buff, "\%s\= \%s\", "TARGET_TEMP SET",value);  // New added for Teting
-       //	sprintf(reply_buff, "%s=%s", "TARGET_TEMP SET",value);  // New added for Teting  // Working one
-
-      // 	sprintf(reply_buff, "\"%s\" : \"%s\", \"%s\" : \"%s\",\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success");
-
-       	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success");
+       //	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success"); // Working one
+       	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success", "value", value);
+       	CommandAck = SET_TEMP_ACK;
 
     } else if (strcmp(label, REMOTE_CMD_GET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
-        // sprintf(reply_buff, "%d", app_get_target_temp());   // Original Line
-       // sprintf(reply_buff, "%s: %d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
-       // sprintf(reply_buff, "\"%s\": \"%s\"", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
-
-       // sprintf(reply_buff, "%s\= \%d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting
-       // sprintf(reply_buff, "%s=%d", "TARGET_TEMP GOT",app_get_target_temp());  // New added for Teting // Working OK
-
-        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_target_temp() );
+        // This for get set temperature command..
+       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_target_temp() );  // it is for sending our set tmepra
+        // This is for get ambient temperature..
+        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_ambient_temp());
+        CommandAck = GET_TEMP_ACK;
 
     } else if (strcmp(label, REMOTE_CMD_SET_TIMER_SETTING) == 0) {
         printf("REMOTE_CMD_SET_TIMER_SETTING %s\r\n", value);
@@ -505,7 +505,12 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     } else if (strcmp(label, REMOTE_CMD_OTA) == 0) {
         printf("REMOTE_CMD_OTA%s\r\n", value);
         app_ota_start(value);
-    } else {
+    }
+	 else if (strcmp(label, "dev_regis") == 0) {
+		printf("dev_registered successfully \n");
+		oneTimeRegistrationPacketToAWS= 0;
+		keepAliveFlag = 1;
+	}else {
         printf("unhandled label %s %s\r\n", label, value);
     }
 
