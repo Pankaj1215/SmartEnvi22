@@ -69,6 +69,8 @@ extern unsigned char keepAliveFlag;
 
 extern unsigned char CommandAck;
 
+extern char uniqueDeviceID[12];
+
 #endif
 
 
@@ -193,7 +195,7 @@ int mainflux_msg_handler(char* msg, char* response)
                    // get_string_from_storage(NVS_MQTT_USERNAME, username); // Original Line
                     // if(strcmp(value, "all") == 0) // Original
                    //	if(strcmp(value, "Heater1") == 0)  // Testing
-                   	if(strcmp(value, "Heater2") == 0)  // Testing
+                   	if(strcmp(value, uniqueDeviceID) == 0)  // Testing
                    	{
                    		is_message_for_me = 0;
                    		//printf("Device ID Matched \n");

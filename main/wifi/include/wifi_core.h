@@ -31,9 +31,6 @@
 #define GET_TEMP_ACK  2
 
 
-
-
-
 #define ESP32_WIFI_UNKNOWN      0
 #define ESP32_WIFI_CLIENT       1
 #define ESP32_WIFI_AP           2

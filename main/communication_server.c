@@ -43,6 +43,7 @@
 int comm_device_status = DEV_ERR_NONE;
 
 struct comm_wifi comm_wifi_dev;
+
 struct comm_bluetooth comm_bt_dev;
 struct comm_sigfox comm_sig_dev;
 struct comm_lora comm_lora_dev;

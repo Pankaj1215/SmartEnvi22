@@ -58,8 +58,15 @@
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
 
-
 #ifdef P_TESTING
+
+char uniqueDeviceID[12];
+struct comm_wifi comm_wifi_dev; // New Added for mac adress testing
+
+time_t keepAlive_ms = 0;
+unsigned char keepAliveSendDataToAWS = 0;
+#define KEEP_ALIVE_DATA__PACKET_DUR_MS 60000
+
 // char replybuff[500];  //  newadded for ack
 unsigned char maxTemperatureThresholdReachedWarning;
 unsigned char minTemperatureThresholdReachedWarning;
@@ -155,7 +162,7 @@ int esp32_wifi_status = ESP32_WIFI_UNKNOWN;
 int web_server_status = WEB_SVR_STAT_UNKNOWN;
 
 // char username[50],password[50],id[11],locID[20],name[20],timeZone[30];
-char username[32],password[64],id[11],locID[50],name[20],timeZone[30];
+char username[32],password[64],id[11],locID[50],name[20],timeZone[20]; // Time Zone size changed to 20 on 28Oct2020
 
 wifi_config_t global_wifi_config;
 
@@ -1364,9 +1371,6 @@ static void http_get_task(void *pvParameters)
 
   void aws_iot_task(void *param) {
 
- 	 char cPayload[100];
-      int32_t i = 0;
-
       IoT_Error_t rc = FAILURE;
 
       AWS_IoT_Client client;
@@ -1376,14 +1380,6 @@ static void http_get_task(void *pvParameters)
  #ifdef HeaterTopicData
       IoT_Publish_Message_Params HeaterMeassage;
  #endif
-
-
- #ifdef HeaterParameterSendingToAWS
-      IoT_Publish_Message_Params HeaterParameter;
-      IoT_Publish_Message_Params Set_Temp_Parameter;
-      IoT_Publish_Message_Params HeaterOnOff;
- #endif
-
 
       ESP_LOGI(TAG, "AWS IoT SDK Version %d.%d.%d-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TAG);
 
@@ -1432,15 +1428,13 @@ static void http_get_task(void *pvParameters)
       }
 
 
-      /* Wait for WiFI to show as connected */   // Commented fro testing only
-      xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
-                          false, true, portMAX_DELAY);
-
+//      /* Wait for WiFI to show as connected */   // Commented fro testing only
+//      xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
+//                          false, true, portMAX_DELAY);
 
       connectParams.keepAliveIntervalInSec = 10;
       connectParams.isCleanSession = true;
       connectParams.MQTTVersion = MQTT_3_1_1;
-
 
       /* Client ID is set in the menuconfig of the example */
       connectParams.pClientID = CONFIG_AWS_EXAMPLE_CLIENT_ID;
@@ -1469,20 +1463,7 @@ static void http_get_task(void *pvParameters)
       }
 
 
-
-
-
 #ifdef HeaterTopicData
-// 	     const char *TOPIC1 = "HeaterTopic";  // testing for param key..
-// 	     const int TOPIC_LEN1 = strlen(TOPIC1);
-//
-// 	         ESP_LOGI(TAG, "Subscribing...");
-// 	         rc = aws_iot_mqtt_subscribe(&client, TOPIC1, TOPIC_LEN1, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-// 	         if(SUCCESS != rc) {
-// 	             ESP_LOGE(TAG, "Error subscribing : %d ", rc);
-// 	            // abort();  // Commneted for testing
-// 	         }
-
 			const char *topicDevRegis = "dev_regis";  // testing for param key..
 			const int topicDevRegis_Len = strlen(topicDevRegis);
 
@@ -1546,85 +1527,13 @@ static void http_get_task(void *pvParameters)
 
  #endif
 
-
-//#ifdef HeaterTopicData
-// 	     const char *TOPIC1 = "HeaterTopic";  // testing for param key..
-// 	     const int TOPIC_LEN1 = strlen(TOPIC1);
-//
-// 	         ESP_LOGI(TAG, "Subscribing...");
-// 	         rc = aws_iot_mqtt_subscribe(&client, TOPIC1, TOPIC_LEN1, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-// 	         if(SUCCESS != rc) {
-// 	             ESP_LOGE(TAG, "Error subscribing : %d ", rc);
-// 	            // abort();  // Commneted for testing
-// 	         }
-// #endif
-
-
-
- #ifdef HeaterParameterSendingToAWS
-      //const char *TOPIC1 = "HeaterParameter";  // original
-      const char *TOPIC1 = "topic1";  // testing for param key..
-      const int TOPIC_LEN1 = strlen(TOPIC1);
-
-          ESP_LOGI(TAG, "Subscribing...");
-          rc = aws_iot_mqtt_subscribe(&client, TOPIC1, TOPIC_LEN1, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-          if(SUCCESS != rc) {
-              ESP_LOGE(TAG, "Error subscribing : %d ", rc);
-              abort();
-          }
-
-     	const char *TOPIC2 = "set_Temp";
-     	const int TOPIC_LEN2 = strlen(TOPIC2);
-
- 		ESP_LOGI(TAG, "Subscribing...");
- 		rc = aws_iot_mqtt_subscribe(&client, TOPIC2, TOPIC_LEN2, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC2 = "set_Temp";
- 		if(SUCCESS != rc) {
- 		  ESP_LOGE(TAG, "Error subscribing : %d ", rc);
- 		  abort();
- 		}
-
- 		const char *TOPIC3_HeaterOnOff= "Heater_ON_OFF";
- 		const int TOPIC_LEN3_HeaterOnOff = strlen(TOPIC3_HeaterOnOff);
-
- 		ESP_LOGI(TAG, "Subscribing...");
- 		rc = aws_iot_mqtt_subscribe(&client, TOPIC3_HeaterOnOff, TOPIC_LEN3_HeaterOnOff, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC3 = "Heater_ON";
- 		if(SUCCESS != rc) {
- 		  ESP_LOGE(TAG, "Error subscribing : %d ", rc);
- 		  abort();
- 		}
- #endif  // end of #ifdef HeaterParameterSendingToAWS
-
-
- #ifdef HeaterTopicData
+#ifdef HeaterTopicData
  	   //  char cPayload1[100];
  		 char cPayload1[300];
-
- 	    // char cPayload1[600]; // W//  Normally works but with Json data packet received then esp restarts
- 		// char cPayload1[900];
- 		// char cPayload1[2000];
-
  		HeaterMeassage.qos = QOS1;
  		HeaterMeassage.payload = (void *) cPayload1;
  		HeaterMeassage.isRetained = 0;
  #endif
-
- #ifdef HeaterParameterSendingToAWS
-      char cPayload1[100];
-      HeaterParameter.qos = QOS1;
-      HeaterParameter.payload = (void *) cPayload1;
-      HeaterParameter.isRetained = 0;
-
- 	 char cPayload2[30];
- 	 Set_Temp_Parameter.qos = QOS1;
- 	 Set_Temp_Parameter.payload = (void *) cPayload2;
- 	 Set_Temp_Parameter.isRetained = 0;
-
- 	 char cPayload3_HeaterOnOff[20];
- 	 HeaterOnOff.qos = QOS1;
- 	 HeaterOnOff.payload = (void *) cPayload3_HeaterOnOff;
- 	 HeaterOnOff.isRetained = 0;
- #endif
-
 
       while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {
 
@@ -1646,8 +1555,14 @@ static void http_get_task(void *pvParameters)
 			if(oneTimeRegistrationPacketToAWS==1)
 			{
 				memset(cPayload1,0,sizeof(cPayload1));
+
+				printf("One Time Registration \n");
 				//  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing  // Getting Restart on this
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // working one..
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID,"deviceName",name ,"ssid", username , "accounId", id, "locationId ",locID ); // Testing for unique ID..// Working
+
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID,"deviceName",name ,"ssid", username , "accounId", id, "locationId ",locID, "timeZone",timeZone); // Adding TimeZone..
+
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, topicDevRegis, topicDevRegis_Len, &HeaterMeassage);
 				memset(replybuff,0,sizeof(replybuff));
@@ -1657,7 +1572,10 @@ static void http_get_task(void *pvParameters)
 			 if(commandReceived_SendAck == 1)
 			 {
 				memset(cPayload1,0,sizeof(cPayload1));
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceID", "Heater2",replybuff); // ONly for Testing  // Working
+				printf("commandReceived_SendAck \n");
+
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceID", "Heater2",replybuff); //  Working one ..
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceID", uniqueDeviceID, replybuff); //  Testing Unique
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 
 				switch(CommandAck)
@@ -1676,16 +1594,27 @@ static void http_get_task(void *pvParameters)
 				memset(cPayload1,0,sizeof(cPayload1));
 		     }
 
-
 			 if(keepAliveFlag==1)
 			 {
+				int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+				if ((cur_ms - keepAlive_ms) >= KEEP_ALIVE_DATA__PACKET_DUR_MS) {
+					keepAlive_ms = cur_ms;
+					keepAliveSendDataToAWS = 1;
+				  }
+			 }
+			 if(keepAliveSendDataToAWS==1)
+			 {
+				printf("I am sendig Kepp Alive packet \n");
 				memset(cPayload1,0,sizeof(cPayload1));
 				//  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","msg","EveryThingIsFine"); // ONly for Testing  // Getting Restart on this
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","msg","EveryThingIsFine"); // WorkingOne..
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID,"type","everythingFineHere"); // WorkingOne..
+
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, topicKeepAlive, topicKeepAlive_Len, &HeaterMeassage);
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
+				keepAliveSendDataToAWS =0;
 			  }
 
 //
@@ -1711,198 +1640,7 @@ static void http_get_task(void *pvParameters)
 //			 }
 
 #endif
-
-
-
-// #define OLD_Working_AWS
-#ifdef OLD_Working_AWS
-
-#ifdef HeaterTopicData
-          if(commandReceived_SendAck == 1){
-			memset(cPayload1,0,sizeof(cPayload1));
-			// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
-			// sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d  %s: %s", "Device ID", "Heater101","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0, "Reply", replybuff); // ONly for Testing
-
-			// sprintf(cPayload1, "%s : %s %s : %s", "Device ID", "Heater1", "Reply", replybuff); // ONly for Testing
-			// sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","ssid", username,"password", password, "heaterID", name, "location ",locID, "reply", replybuff); // ONly for Testing  // Getting Restart on this
-
-			// sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","reply", replybuff); // ONly for Testing  // Working
-
-			sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceID", "Heater2",replybuff); // ONly for Testing  // Working
-
-			// sprintf(cPayload1, "{\"%s\" : \"%s\",\"%s\" : \"%s\, \"%s\" : \"%s\"}", "deviceId", "Heater2","location ",locID,"reply", replybuff); // ONly for Testing  // Working
-		    // sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\"}", "dId", "Heater2","sid", username,"pw", password, "hId", name, "lc",locID, "rp", replybuff); // ONly for Testing  // Getting Restart on this
-
-			HeaterMeassage.payloadLen = strlen(cPayload1);
-			rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-			commandReceived_SendAck = 0;
-			memset(replybuff,0,sizeof(replybuff));
-			memset(cPayload1,0,sizeof(cPayload1));
-
-          }
-
-          if(oneTimeRegistrationPacketToAWS==1){
-				memset(cPayload1,0,sizeof(cPayload1));
-			  //  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing  // Getting Restart on this
-				HeaterMeassage.payloadLen = strlen(cPayload1);
-				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-				memset(replybuff,0,sizeof(replybuff));
-				memset(cPayload1,0,sizeof(cPayload1));
-				// oneTimeRegistrationPacketToAWS= 0;
-             }
-
-          if(maxTemperatureThresholdReachedWarning==1){
-				memset(cPayload1,0,sizeof(cPayload1));
-			  //  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
-				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing  // Getting Restart on this
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\"\n}", "deviceID", "Heater2","type", "alert","warning", "Max Temperature Threshold Range Reached - Heater OFF");
-				HeaterMeassage.payloadLen = strlen(cPayload1);
-				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-				memset(replybuff,0,sizeof(replybuff));
-				memset(cPayload1,0,sizeof(cPayload1));
-				maxTemperatureThresholdReachedWarning= 0;
-             }
-
-          if(minTemperatureThresholdReachedWarning==1){
-				memset(cPayload1,0,sizeof(cPayload1));
-				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\"\n}", "deviceID", "Heater2","type", "alert","warning", "Anti Freezing ON - Heater ON");
-
-				HeaterMeassage.payloadLen = strlen(cPayload1);
-				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-				memset(replybuff,0,sizeof(replybuff));
-				memset(cPayload1,0,sizeof(cPayload1));
-				minTemperatureThresholdReachedWarning= 0;
-             }
-#endif
-#endif
-
-//
-// #ifdef HeaterTopicData
-//           if(commandReceived_SendAck == 1){
-// 			memset(cPayload1,0,sizeof(cPayload1));
-// 			// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
-// 			// sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d  %s: %s", "Device ID", "Heater101","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0, "Reply", replybuff); // ONly for Testing
-//
-// 			// sprintf(cPayload1, "%s : %s %s : %s", "Device ID", "Heater1", "Reply", replybuff); // ONly for Testing
-// 			// sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","ssid", username,"password", password, "heaterID", name, "location ",locID, "reply", replybuff); // ONly for Testing  // Getting Restart on this
-//
-// 			// sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\"}", "deviceID", "Heater2","reply", replybuff); // ONly for Testing  // Working
-//
-// 			sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceID", "Heater2",replybuff); // ONly for Testing  // Working
-//
-// 			// sprintf(cPayload1, "{\"%s\" : \"%s\",\"%s\" : \"%s\, \"%s\" : \"%s\"}", "deviceId", "Heater2","location ",locID,"reply", replybuff); // ONly for Testing  // Working
-//		    // sprintf(cPayload1, "{\"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\", \"%s\" : \"%s\"}", "dId", "Heater2","sid", username,"pw", password, "hId", name, "lc",locID, "rp", replybuff); // ONly for Testing  // Getting Restart on this
-//
-// 			HeaterMeassage.payloadLen = strlen(cPayload1);
-// 			rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-// 			commandReceived_SendAck = 0;
-// 			memset(replybuff,0,sizeof(replybuff));
-// 			memset(cPayload1,0,sizeof(cPayload1));
-//
-//           }
-//
-//           if(oneTimeRegistrationPacketToAWS==1){
-//				memset(cPayload1,0,sizeof(cPayload1));
-//			  //  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
-//				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing  // Getting Restart on this
-//				HeaterMeassage.payloadLen = strlen(cPayload1);
-//				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-//				memset(replybuff,0,sizeof(replybuff));
-//				memset(cPayload1,0,sizeof(cPayload1));
-//				// oneTimeRegistrationPacketToAWS= 0;
-//              }
-//
-//           if(maxTemperatureThresholdReachedWarning==1){
-//				memset(cPayload1,0,sizeof(cPayload1));
-//			  //  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
-//				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing  // Getting Restart on this
-//				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\"\n}", "deviceID", "Heater2","type", "alert","warning", "Max Temperature Threshold Range Reached - Heater OFF");
-//				HeaterMeassage.payloadLen = strlen(cPayload1);
-//				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-//				memset(replybuff,0,sizeof(replybuff));
-//				memset(cPayload1,0,sizeof(cPayload1));
-//				maxTemperatureThresholdReachedWarning= 0;
-//              }
-//
-//           if(minTemperatureThresholdReachedWarning==1){
-//				memset(cPayload1,0,sizeof(cPayload1));
-//				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing
-//				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\"\n}", "deviceID", "Heater2","type", "alert","warning", "Anti Freezing ON - Heater ON");
-//
-//				HeaterMeassage.payloadLen = strlen(cPayload1);
-//				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterMeassage);
-//				memset(replybuff,0,sizeof(replybuff));
-//				memset(cPayload1,0,sizeof(cPayload1));
-//				minTemperatureThresholdReachedWarning= 0;
-//              }
-//#endif
-
-
-
-
-
-
-
- #ifdef HeaterParameterSendingToAWS
-          if(uchTopic_HeaterParameter_Publish_status == 1)
- 		  {
- 			  // printf("\n I am in Topic_HeaterParameter_Publish\n ");
- 				// uchTopic_Set_temp_subscribe_status = TRUE;
- 				memset(cPayload1,0,sizeof(cPayload1));
- 				// sprintf(cPayload1, "%s : %d  %s : %d %s : %d %s : %d %s : %d", "Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0);  // working one
- 				sprintf(cPayload1, "%s : %s %s : %d  %s : %d %s : %d %s : %d %s : %d", "Device ID", "Heater22","Ambient Temp", 40,"Set Temp", temperatureSetByCMD, "Heater Status", HeaterOnOffStatus, "Timer",1, "Schedule", 0); // ONly for Testing
- 				HeaterParameter.payloadLen = strlen(cPayload1);
- 				rc = aws_iot_mqtt_publish(&client, TOPIC1, TOPIC_LEN1, &HeaterParameter);
- 				// ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->cPayload1);
- 				// uchTopic_Set_temp_subscribe_status = 0;
- 		  }
- 		 if(uchTopic_Set_temp_subscribe_status == 1)
- 			{
- 				 // printf("\n I am in Set Temp paramter publish \n\n ");
- 			     memset(cPayload2,0,sizeof(cPayload2));
- 				sprintf(cPayload2, "%s : %d", "Temperature is set to ",temperatureSetByCMD);
- 				Set_Temp_Parameter.payloadLen = strlen(cPayload2);
- 				  rc = aws_iot_mqtt_publish(&client, TOPIC2, TOPIC_LEN2, &Set_Temp_Parameter);
- 				  uchTopic_Set_temp_subscribe_status = 0;
- 				  uchTopic_HeaterParameter_Publish_status  = 1;
- 				  uchTopic_HeaterON_Publish_status = 0;
- 				  uchTopic_HeaterOFF_Publish_status = 0;
- 			}
- 		 if(uchTopic_HeaterON_Publish_status == 1)
- 		 {
- 		   printf("\n I am in uchTopic_HeaterOn_Publish_status \n\n ");
- 			memset(cPayload3_HeaterOnOff,0,sizeof(cPayload3_HeaterOnOff));
-
- 			//sprintf(cPayload3_HeaterOnOff, "%s  : %d", "Heater ON",1);
- 			 sprintf(cPayload3_HeaterOnOff, "%s : %d", "Heater ON",HeaterOnOffStatus);
-
- 			HeaterOnOff.payloadLen = strlen(cPayload3_HeaterOnOff);
- 			 rc = aws_iot_mqtt_publish(&client, TOPIC3_HeaterOnOff, TOPIC_LEN3_HeaterOnOff, &HeaterOnOff);
- 			  uchTopic_Set_temp_subscribe_status = 0;
- 			  uchTopic_HeaterParameter_Publish_status  = 1;
- 			  uchTopic_HeaterON_Publish_status = 0;
- 			  uchTopic_HeaterOFF_Publish_status = 0;
- 		  }
- 		 if(uchTopic_HeaterOFF_Publish_status == 1)
- 		 {
- 			 printf("\n I am in uchTopic_HeaterOFF_Publish_status \n\n ");
- 			 memset(cPayload3_HeaterOnOff,0,sizeof(cPayload3_HeaterOnOff));
-
- 			// sprintf(cPayload3_HeaterOnOff, "%s  : %d", "Heater OFF", 2);
- 			 sprintf(cPayload3_HeaterOnOff, "%s : %d", "Heater OFF", HeaterOnOffStatus);
-
- 			 HeaterOnOff.payloadLen = strlen(cPayload3_HeaterOnOff);
- 			 rc = aws_iot_mqtt_publish(&client, TOPIC3_HeaterOnOff, TOPIC_LEN3_HeaterOnOff, &HeaterOnOff);
- 			 uchTopic_Set_temp_subscribe_status = 0;
- 			 uchTopic_HeaterParameter_Publish_status  = 1;
- 			 uchTopic_HeaterON_Publish_status = 0;
- 			 uchTopic_HeaterOFF_Publish_status = 0;
- 		  }
- #endif
-
-          //  printf("After publish HeaterParameterSendingToAWS\n ");
+		//  printf("After publish HeaterParameterSendingToAWS\n ");
           if (rc == MQTT_REQUEST_TIMEOUT_ERROR) {
               ESP_LOGW(TAG, "QOS1 publish ack not received.");
               rc = SUCCESS;
@@ -2090,7 +1828,6 @@ static void tcp_server_task(void *pvParameters)
 
 void initialise_wifi(void)
 {
-
     tcpip_adapter_init();
     wifi_event_group = xEventGroupCreate();
 
@@ -2173,6 +1910,12 @@ void tcpServer_main()
     esp_efuse_mac_get_default(ap_mac);
     printf("\nMAC ADRESS = %02x:%02x:%02x:%02x:%02x:%02x \n\n",ap_mac[0],ap_mac[1],ap_mac[2],ap_mac[3],ap_mac[4],ap_mac[5]);
 
+    sprintf(comm_wifi_dev.wifi_ap_ssid, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
+
+    printf("comm_wifi_dev.wifi_ap_ssid %s \n ",comm_wifi_dev.wifi_ap_ssid);
+    strcpy(uniqueDeviceID, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+    printf("uniqueDeviceID in TCP_server_main   %s\n", uniqueDeviceID);
+
    // initFlash();  //
 	readEEPROM();
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
@@ -2185,39 +1928,33 @@ void initSoftAP()
 {
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
-// #define DEVICE_UNIQUE_ID
-#ifdef DEVICE_UNIQUE_ID
-	// wifi_mac_address();
-	struct comm_wifi comm_wifi_dev;
-    unsigned char *ap_mac = comm_wifi_dev.wifi_ap_get_mac();
-    sprintf(comm_wifi_dev.wifi_ap_ssid, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
-    printf(" comm_wifi_dev.wifi_ap_ssid %s\n",comm_wifi_dev.wifi_ap_ssid );
-#endif
-
-
-//	wifi_config_t wifi_config = {
-//	.ap = {
-////		.ssid = EXAMPLE_ESP_WIFI_SSID,
-//	   .ssid_len = 11,
-//	//	.password = EXAMPLE_ESP_WIFI_PASS,
-//		.max_connection = 2,
-//		.authmode = WIFI_AUTH_WPA_WPA2_PSK
-//		},
-//	};
-//
-//    strcpy((char *)wifi_config.ap.ssid, "Tenda_543658");
-//    strcpy((char *)wifi_config.ap.password, "qwerty12345");
-	// wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-
     wifi_config_t wifi_config = {
-		.ap = {
-			.ssid = EXAMPLE_ESP_WIFI_SSID,
-			.ssid_len = strlen(EXAMPLE_ESP_WIFI_SSID),
-			.password = EXAMPLE_ESP_WIFI_PASS,
-			.max_connection = 2,
-			.authmode = WIFI_AUTH_WPA_WPA2_PSK
-			},
-		};
+  		.ap = {
+  			.password = EXAMPLE_ESP_WIFI_PASS,
+  			.max_connection = 2,
+  			.authmode = WIFI_AUTH_WPA_WPA2_PSK
+  			},
+  		};
+
+    strcpy((char *)wifi_config.ap.ssid, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+    strcpy(uniqueDeviceID, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+
+    printf("(char *)wifi_config.ap.ssid:  %s\n", (char *)wifi_config.ap.ssid);
+    printf("uniqueDeviceID in initSoftAP  %s\n", uniqueDeviceID);
+
+    wifi_config.ap.ssid_len = strlen(comm_wifi_dev.wifi_ap_ssid);
+    printf("(char *)wifi_config.ap.ssid_len:  %d\n",   wifi_config.ap.ssid_len);
+
+    // Last working SSID
+//    wifi_config_t wifi_config = {
+//		.ap = {
+//			.ssid = EXAMPLE_ESP_WIFI_SSID,
+//			.ssid_len = strlen(EXAMPLE_ESP_WIFI_SSID),
+//			.password = EXAMPLE_ESP_WIFI_PASS,
+//			.max_connection = 2,
+//			.authmode = WIFI_AUTH_WPA_WPA2_PSK
+//			},
+//		};
 
 	if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0) {
 		wifi_config.ap.authmode = WIFI_AUTH_OPEN;
@@ -2347,6 +2084,9 @@ void saveTimeZone(void)
 		set_integer_to_storage(STORAGE_KEY_TIMEZONE_OFFSET_INDEX, timezone_offset_idx);
 		printf("Time Zone updated in memory\n");
 	}
+
+	set_string_to_storage(NVS_TIMEZONE, timeZone); // New added on 28Oct2020
+
 	/*esp_err_t err;
 	size_t size = strlen(timeZone);
 	err = nvs_set_blob(my_handle, "timeZone", timeZone,size);
@@ -2385,6 +2125,8 @@ void readEEPROM()
 	get_string_from_storage(NVS_DEVICE_ID, id); printf("DeviceID = %s",id);
 	get_string_from_storage(NVS_LOC_ID, locID); printf("LocID = %s",locID);
 	get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
+
+	get_string_from_storage(NVS_TIMEZONE, timeZone); printf("TimeZone = %s",timeZone);  // New added for Time Zone
 }
 #else
 

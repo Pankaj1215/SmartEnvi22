@@ -140,7 +140,7 @@ void app_main(void) {
     /* Hardware peripherals init end */
 //while(1)
 //{
-//	printf(" I am in Main \n ");
+	printf(" I am in Main \n ");
 //
 //}
     /* app proper */

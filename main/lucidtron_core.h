@@ -28,6 +28,9 @@
 
 #include "communication_server.h"
 
+
+#define NVS_TIMEZONE				"timezone_key" // New Addded after TimeZOne Added 28Oct2020
+
 /**
  *  This is a sample message
  *
