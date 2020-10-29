@@ -60,6 +60,13 @@ const int CONNECTED_BIT = BIT0;
 
 #ifdef P_TESTING
 
+
+#define  wifi_AP_STA_COMBINE
+#ifdef wifi_AP_STA_COMBINE
+char aws_task_flag=0,aws_task_running_status=0;
+void aws_iot_task(void *param);
+#endif
+
 char uniqueDeviceID[12];
 struct comm_wifi comm_wifi_dev; // New Added for mac adress testing
 
@@ -350,8 +357,13 @@ void http_web_server()
     netconn_delete(conn);
 }
 
+
+
 int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void* event_data)
 {
+
+
+
     switch(event_id) {
         //deprecated
         case SYSTEM_EVENT_WIFI_READY:
@@ -395,6 +407,11 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 			//ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&event->ip_info.ip));
 			s_retry_num = 0;
 			xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+
+#ifdef wifi_AP_STA_COMBINE
+			aws_task_flag= 1;
+#endif
+
 			printf("connected\n");
             break;
             //case SYSTEM_EVENT_AP_STA_GOT_IP:  //no macro like this TODO
@@ -448,7 +465,22 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
     if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
 		s_retry_num = 0;
 		xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+#ifdef wifi_AP_STA_COMBINE
+	aws_task_flag= 1;
+#endif
+
 	}
+
+#ifdef   wifi_AP_STA_COMBINE
+    if(aws_task_flag==1 && aws_task_running_status==0)
+        {
+        	aws_task_running_status=1;
+        	xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
+        	ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
+        	oneTimeRegistrationPacketToAWS = 1; // New added to sending First packet to AWS
+        }
+#endif
+
     return ESP_OK;
 }
 //added this event_handler and commented previous
@@ -1463,46 +1495,195 @@ static void http_get_task(void *pvParameters)
       }
 
 
-#ifdef HeaterTopicData
-			const char *topicDevRegis = "dev_regis";  // testing for param key..
-			const int topicDevRegis_Len = strlen(topicDevRegis);
 
-			 ESP_LOGI(TAG, "Subscribing...");
-			 rc = aws_iot_mqtt_subscribe(&client, topicDevRegis, topicDevRegis_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-			 if(SUCCESS != rc) {
-				 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-			 }
-
-			const char *topicSetTemp = "setTemp";  // testing for param key..
-			const int topicSetTemp_Len = strlen(topicSetTemp);
-
-			ESP_LOGI(TAG, "Subscribing...");
-			rc = aws_iot_mqtt_subscribe(&client, topicSetTemp, topicSetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-			if(SUCCESS != rc) {
-			ESP_LOGE(TAG, "Error subscribing : %d ", rc);
-			// abort();  // Commneted for testing
-			}
+//// #define OLD_TOPICS
+//#define NEW_RECEIVING_TOPICS
 //
-			const char *topicGetTemp = "getTemp";  // testing for param key..
-			const int topicGetTemp_Len = strlen(topicGetTemp);
+//#ifdef HeaterTopicData
+//
+//#ifdef OLD_TOPICS
+//			const char *topicDevRegis = "dev_regis";  // testing for param key..
+//#else
+//			const char *topicDevRegis = "aws/device/registration/consumer";  // testing for param key..
+//#endif
+//			const int topicDevRegis_Len = strlen(topicDevRegis);
+//			 ESP_LOGI(TAG, "Subscribing...");
+//			 rc = aws_iot_mqtt_subscribe(&client, topicDevRegis, topicDevRegis_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			 if(SUCCESS != rc) {
+//				 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//			 }
+//
+//#ifdef OLD_TOPICS
+//			const char *topicSetTemp = "setTemp";  // testing for param key..
+//#else
+//			const char *topicSetTemp = "aws/device/command/set_temp/response";  // testing for param key..
+//#endif
+//			const int topicSetTemp_Len = strlen(topicSetTemp);
+//			ESP_LOGI(TAG, "Subscribing...");
+//			rc = aws_iot_mqtt_subscribe(&client, topicSetTemp, topicSetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			if(SUCCESS != rc) {
+//			ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+//			// abort();  // Commneted for testing
+//			}
+////
+//#ifdef OLD_TOPICS
+//			const char *topicGetTemp = "getTemp";  // testing for param key..
+//#else
+//			const char *topicGetTemp = "aws/device/command/get_temp/response";  // testing for param key..
+//#endif
+//			const int topicGetTemp_Len = strlen(topicGetTemp);
+//			ESP_LOGI(TAG, "Subscribing...");
+//			rc = aws_iot_mqtt_subscribe(&client, topicGetTemp, topicGetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			if(SUCCESS != rc) {
+//			ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+//			// abort();  // Commneted for testing
+//			}
+//
+//#ifdef OLD_TOPICS
+//			const char *topicKeepAlive = "keepAlive";  // testing for param key..
+//#else
+//			const char *topicKeepAlive = "aws/device/command/keep_alive";  // testing for param key..
+//#endif
+//			const int topicKeepAlive_Len = strlen(topicKeepAlive);
+//			ESP_LOGI(TAG, "Subscribing...");
+//			rc = aws_iot_mqtt_subscribe(&client, topicKeepAlive, topicKeepAlive_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			if(SUCCESS != rc) {
+//			 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+//			// abort();  // Commneted for testing
+//			}
+//
+//
+//
+//#ifdef NEW_RECEIVING_TOPICS
+//			const char *topicDevRegis_Res = "aws/device/registration/ack";  // testing for param key..
+//			const int topicDevRegis_Res_Len = strlen(topicDevRegis_Res);
+//			ESP_LOGI(TAG, "Subscribing...");
+//			rc = aws_iot_mqtt_subscribe(&client, topicDevRegis_Res, topicDevRegis_Res_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			if(SUCCESS != rc) {
+//			 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+//			// abort();  // Commneted for testing
+//			}
+//
+//			const char *topicSetTemp = "aws/device/command/set_temp";  // testing for param key..
+//			const int topicSetTemp_Len = strlen(topicSetTemp);
+//			ESP_LOGI(TAG, "Subscribing...");
+//			rc = aws_iot_mqtt_subscribe(&client, topicSetTemp, topicSetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			if(SUCCESS != rc) {
+//			ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+//			// abort();  // Commneted for testing
+//			}
+//
+//			const char *topicGetTemp = "aws/device/command/get_temp";  // testing for param key..
+//			const int topicGetTemp_Len = strlen(topicGetTemp);
+//			ESP_LOGI(TAG, "Subscribing...");
+//			rc = aws_iot_mqtt_subscribe(&client, topicGetTemp, topicGetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			if(SUCCESS != rc) {
+//			 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+//			// abort();  // Commneted for testing
+//			}
+//#endif
 
-			ESP_LOGI(TAG, "Subscribing...");
-			rc = aws_iot_mqtt_subscribe(&client, topicGetTemp, topicGetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-			if(SUCCESS != rc) {
-			ESP_LOGE(TAG, "Error subscribing : %d ", rc);
-			// abort();  // Commneted for testing
-			}
 
-			const char *topicKeepAlive = "keepAlive";  // testing for param key..
-			const int topicKeepAlive_Len = strlen(topicKeepAlive);
 
-			ESP_LOGI(TAG, "Subscribing...");
-			rc = aws_iot_mqtt_subscribe(&client, topicKeepAlive, topicKeepAlive_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-			if(SUCCESS != rc) {
-			 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
-			// abort();  // Commneted for testing
-			}
+      // #define OLD_TOPICS
+      #define NEW_RECEIVING_TOPICS
+
+      #ifdef HeaterTopicData
+
+      #ifdef OLD_TOPICS
+      			const char *topicDevRegis = "dev_regis";  // testing for param key..
+      #else
+      			const char *topicDevRegis = "aws/device/registration/consumer";  // testing for param key..
+      #endif
+      			const int topicDevRegis_Len = strlen(topicDevRegis);
+      			 ESP_LOGI(TAG, "Subscribing...");
+      			 rc = aws_iot_mqtt_subscribe(&client, topicDevRegis, topicDevRegis_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+      			 if(SUCCESS != rc) {
+      				 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+      				// abort();  // Commneted for testing
+      			 }
+
+      #ifdef OLD_TOPICS
+      			const char *topicSetTemp = "setTemp";  // testing for param key..
+      			// const char *topicSetTemp = "setTemp";  // testing for param key..
+      #else
+      			const char *topicSetTemp_Res = "aws/device/command/set_temp/response";  // testing for param key..
+      #endif
+      			const int topicSetTemp_Res_Len = strlen(topicSetTemp_Res);
+      			ESP_LOGI(TAG, "Subscribing...");
+      			rc = aws_iot_mqtt_subscribe(&client, topicSetTemp_Res, topicSetTemp_Res_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+      			if(SUCCESS != rc) {
+      			ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+      			// abort();  // Commneted for testing
+      			}
+      //
+      #ifdef OLD_TOPICS
+      			const char *topicGetTemp = "getTemp";  // testing for param key..
+      #else
+      			const char *topicGetTemp_Res = "aws/device/command/get_temp/response";  // testing for param key..
+      #endif
+      			const int topicGetTemp_Res_Len = strlen(topicGetTemp_Res);
+      			ESP_LOGI(TAG, "Subscribing...");
+      			rc = aws_iot_mqtt_subscribe(&client, topicGetTemp_Res, topicGetTemp_Res_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+      			if(SUCCESS != rc) {
+      			ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+      			// abort();  // Commneted for testing
+      			}
+
+      #ifdef OLD_TOPICS
+      			const char *topicKeepAlive = "keepAlive";  // testing for param key..
+      #else
+      			const char *topicKeepAlive = "aws/device/command/keep_alive";  // testing for param key..
+      #endif
+      			const int topicKeepAlive_Len = strlen(topicKeepAlive);
+      			ESP_LOGI(TAG, "Subscribing...");
+      			rc = aws_iot_mqtt_subscribe(&client, topicKeepAlive, topicKeepAlive_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+      			if(SUCCESS != rc) {
+      			 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+      			// abort();  // Commneted for testing
+      			}
+
+
+      #ifdef NEW_RECEIVING_TOPICS
+
+				const char *topicSetTemp = "aws/device/command/set_temp";  // testing for param key..
+				const int topicSetTemp_Len = strlen(topicSetTemp);
+				ESP_LOGI(TAG, "Subscribing..aws/device/command/set_temp.");
+				rc = aws_iot_mqtt_subscribe(&client, topicSetTemp, topicSetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topicSetTemp subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+      			const char *topicDevRegis_Res = "aws/device/registration/ack";  // testing for param key..
+      			const int topicDevRegis_Res_Len = strlen(topicDevRegis_Res);
+      			ESP_LOGI(TAG, "Subscribing...");
+      			rc = aws_iot_mqtt_subscribe(&client, topicDevRegis_Res, topicDevRegis_Res_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+      			if(SUCCESS != rc) {
+      			 ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+      			// abort();  // Commneted for testing
+      			}
+
+//      			const char *topicSetTemp = "aws/device/command/set_temp";  // testing for param key..
+//      			const int topicSetTemp_Len = strlen(topicSetTemp);
+//      			ESP_LOGI(TAG, "Subscribing...");
+//      			rc = aws_iot_mqtt_subscribe(&client, topicSetTemp, topicSetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//      			if(SUCCESS != rc) {
+//      			ESP_LOGE(TAG, "Error subscribing : %d ", rc);
+//      			// abort();  // Commneted for testing
+//      			}
+
+      			const char *topicGetTemp = "aws/device/command/get_temp";  // testing for param key..
+      			const int topicGetTemp_Len = strlen(topicGetTemp);
+      			ESP_LOGI(TAG, "Subscribing.aws/device/command/get_temp..");
+      			rc = aws_iot_mqtt_subscribe(&client, topicGetTemp, topicGetTemp_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+      			if(SUCCESS != rc) {
+      			 ESP_LOGE(TAG, "Error topicGetTemp subscribing : %d ", rc);
+      			// abort();  // Commneted for testing
+      			}
+      #endif
+
 
 //
 //			const char *topicMaxThresTempReached = "maxThresTempReach";  //
@@ -1535,7 +1716,14 @@ static void http_get_task(void *pvParameters)
  		HeaterMeassage.isRetained = 0;
  #endif
 
-      while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {
+
+#define TEST_WIFI_STUCK_PROB   //
+#ifdef TEST_WIFI_STUCK_PROB
+     	while(1){  // Testing only
+#else
+      while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {  // Original Line..
+#endif
+    	  //while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {
 
           //Max time the yield function will wait for read messages
           rc = aws_iot_mqtt_yield(&client, 100);
@@ -1565,6 +1753,13 @@ static void http_get_task(void *pvParameters)
 
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, topicDevRegis, topicDevRegis_Len, &HeaterMeassage);
+#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+					printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+					continue;
+				}
+#endif
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
 			}
@@ -1581,14 +1776,23 @@ static void http_get_task(void *pvParameters)
 				switch(CommandAck)
 				{
 				    case SET_TEMP_ACK :
-					                     rc = aws_iot_mqtt_publish(&client, topicSetTemp, topicSetTemp_Len, &HeaterMeassage);
+					                    // rc = aws_iot_mqtt_publish(&client, topicSetTemp, topicSetTemp_Len, &HeaterMeassage);
+					                     rc = aws_iot_mqtt_publish(&client, topicSetTemp_Res, topicSetTemp_Res_Len, &HeaterMeassage);
 					                     break;
 				    case GET_TEMP_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topicGetTemp, topicGetTemp_Len, &HeaterMeassage);
+				    			     	// rc = aws_iot_mqtt_publish(&client, topicGetTemp, topicGetTemp_Len, &HeaterMeassage);
+				    			     	rc = aws_iot_mqtt_publish(&client, topicGetTemp_Res, topicGetTemp_Res_Len, &HeaterMeassage);
 				    			     	 break;
 				    default:   break;
 				}
 
+#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+					printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+					continue;
+				}
+#endif
 				commandReceived_SendAck = 0;
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
@@ -1611,7 +1815,15 @@ static void http_get_task(void *pvParameters)
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID,"type","everythingFineHere"); // WorkingOne..
 
 				HeaterMeassage.payloadLen = strlen(cPayload1);
+				// rc = aws_iot_mqtt_publish(&client, topicKeepAlive, topicKeepAlive_Len, &HeaterMeassage);
 				rc = aws_iot_mqtt_publish(&client, topicKeepAlive, topicKeepAlive_Len, &HeaterMeassage);
+#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+					printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+					continue;
+				}
+#endif
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
 				keepAliveSendDataToAWS =0;
@@ -1710,12 +1922,20 @@ nvs_handle_t my_handle;
 // static const char *TAG = "example";  // Original Lines
 static const char *TCP_SERVER_TAG = "example";
 
+
+#define TCP_SOCKET_RECCONECT  // Added on 29Oct20
+
 static void tcp_server_task(void *pvParameters)
 {
     char rx_buffer[328];
     char addr_str[128];
     int addr_family;
     int ip_protocol;
+
+#ifdef TCP_SOCKET_RECCONECT
+    char flag=0;
+    int listen_sock=0,err;
+#endif
 
     while (1) {
 
@@ -1737,7 +1957,12 @@ static void tcp_server_task(void *pvParameters)
         inet6_ntoa_r(dest_addr.sin6_addr, addr_str, sizeof(addr_str) - 1);
 #endif
 
-        int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
+#ifdef TCP_SOCKET_RECCONECT
+     if(flag ==0){
+         listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
+#else
+         int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
+#endif
         if (listen_sock < 0) {
             ESP_LOGE(TCP_SERVER_TAG, "Unable to create socket: errno %d", errno);
             break;
@@ -1756,6 +1981,9 @@ static void tcp_server_task(void *pvParameters)
             ESP_LOGE(TCP_SERVER_TAG, "Error occurred during listen: errno %d", errno);
             break;
         }
+#ifdef TCP_SOCKET_RECCONECT
+      } //  if(flag ==0)
+#endif
         ESP_LOGI(TCP_SERVER_TAG, "Socket listening");
 
         struct sockaddr_in6 source_addr; // Large enough for both IPv4 or IPv6
@@ -1766,11 +1994,12 @@ static void tcp_server_task(void *pvParameters)
             break;
         }
         ESP_LOGI(TCP_SERVER_TAG, "Socket accepted");
+#ifdef TCP_SOCKET_RECCONECT
+        flag = 1;
+#endif
         vTaskDelay(2000/portTICK_PERIOD_MS);
 
         err = send(sock, "found\r\n", 7, 0);
-
-
 
         if (err < 0) {
 			ESP_LOGE(TCP_SERVER_TAG, "Error occurred during sending: errno %d", errno);
@@ -1815,13 +2044,19 @@ static void tcp_server_task(void *pvParameters)
             }
         }
 
+#ifdef TCP_SOCKET_RECCONECT
+
+#else
+        // Commented on 29Oct_6pm -Dlipreet
         if (sock != -1) {
         	shutdown(sock, 0);
         	close(sock);
         	abort();
             ESP_LOGE(TCP_SERVER_TAG, "Shutting down socket and restarting...");
-
         }
+#endif
+
+
     }
     vTaskDelete(NULL);
 }
@@ -1873,9 +2108,14 @@ void initialise_wifi(void)
 	 * happened. */
 	if (bits & WIFI_CONNECTED_BIT) {
 		ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
-		xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);   // aws iot task .. initiation..
 
+#ifdef wifi_AP_STA_COMBINE
+		// aws iot task is called in event handler..commented here in this function for application of wifi AP STATION Mode..
+#else
+		xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);   // aws iot task .. initiation..// aws iot task is called in event handler..
 		oneTimeRegistrationPacketToAWS = 1; // New added to sending First packet to AWS
+#endif
+
 
 	} else if (bits & WIFI_FAIL_BIT) {
 		ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",username, password);
@@ -1960,7 +2200,13 @@ void initSoftAP()
 		wifi_config.ap.authmode = WIFI_AUTH_OPEN;
 	}
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+#ifdef  wifi_AP_STA_COMBINE
+	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+#else
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+#endif
+
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
 	ESP_ERROR_CHECK(esp_wifi_start());
 }
@@ -2067,7 +2313,10 @@ void saveDetails(char *eusart1RxBuffer)
 void saveTimeZone(void)
 {
 	int timezoneOffsetMinutes = atoi(timeZone);
+
+	timezoneOffsetMinutes = timezoneOffsetMinutes * (-1);  // New Added For Inverse the TimeZOne. 29Oct2020 It Is added for -330 to make +330.
 	int timezone_offset_idx,i,len;
+
 	//len = sizeof(timezone_offset_list_min)/sizeof(timezone_offset_list_min[0]);
 	len=38;													//length of array timezone_offset_list_min
 	for(i=0;i<len;i++)

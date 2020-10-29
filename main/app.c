@@ -121,7 +121,10 @@ void initialise_wifi(void);  // Added for testing Wifi Testing _ P_16Sept2020
 void tcpServer_main();
 extern unsigned char maxTemperatureThresholdReachedWarning;
 extern unsigned char minTemperatureThresholdReachedWarning;
-bool daylightSaving=true;
+
+bool daylightSaving=false;   // New Added for Day light on Off
+// bool daylightSaving=true;
+
 #endif
 
 
@@ -3514,7 +3517,9 @@ static app_mode_t menu_communications(app_data_t *data) {
                 break;
             case MENU_COMMUNICATIONS_AP_MODE_EN:
                 printf("MENU_COMMUNICATIONS_AP_MODE_EN\r\n");
-                display_menu(comm_wifi_dev->is_wifi_ap_enabled() ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR);
+
+                //display_menu(comm_wifi_dev->is_wifi_ap_enabled() ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  Only fpr testiing
+
                 break;
             case MENU_COMMUNICATIONS_AP_MODE_SSID:
                 printf("MENU_COMMUNICATIONS_AP_MODE_SSID\r\n");
