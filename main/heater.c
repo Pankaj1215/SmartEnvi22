@@ -49,9 +49,13 @@ esp_err_t heater_on(void) {
     esp_err_t ret = ESP_OK;
     ret |= gpio_set_direction(HEATER_CTL_GPIO_NUM, GPIO_MODE_OUTPUT);
     ret |= gpio_set_level(HEATER_CTL_GPIO_NUM, 1);
+
+    printf("\n Heater On \n");
+
     return ret;
 }
 
 esp_err_t heater_off(void) {
+	printf("\n Heater Off \n");
     return gpio_set_direction(HEATER_CTL_GPIO_NUM, GPIO_MODE_INPUT);
 }

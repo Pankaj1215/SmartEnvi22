@@ -152,7 +152,6 @@ unsigned char HeaterOnByCMD = 0;// By Default Heater OFF
 #endif
 
 
-
 /* Constants that aren't configurable in menuconfig */
 #define WEB_SERVER              "192.168.254.127"
 #define WEB_PORT                "3000"
@@ -1823,7 +1822,7 @@ static void http_get_task(void *pvParameters)
 				printf("commandReceived_SendAck \n");
 
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceID", "Heater2",replybuff); //  Working one ..
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceID", uniqueDeviceID, replybuff); //  Testing Unique
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceId", uniqueDeviceID, replybuff); //  Testing Unique
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 
 				switch(CommandAck)
@@ -1865,7 +1864,7 @@ static void http_get_task(void *pvParameters)
 				memset(cPayload1,0,sizeof(cPayload1));
 				//  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","msg","EveryThingIsFine"); // WorkingOne..
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID,"type","everythingFineHere"); // WorkingOne..
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","everythingFineHere"); // WorkingOne..
 
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 				// rc = aws_iot_mqtt_publish(&client, topicKeepAlive, topicKeepAlive_Len, &HeaterMeassage);
@@ -2056,7 +2055,8 @@ static void tcp_server_task(void *pvParameters)
 
 #ifdef   DEVICE_ID_TO_MOBILE
          char tcpPayload[70];
-                sprintf(tcpPayload, "{\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID);
+               // sprintf(tcpPayload, "{\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID);
+                sprintf(tcpPayload, "{\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID);
                 send(sock, "found\r\n", 7, 0);
                 err = send(sock, tcpPayload, strlen(tcpPayload), 0);
 #else

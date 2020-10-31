@@ -417,15 +417,19 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         app_set_target_temp(atoi(value));
 
        //	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success"); // Working one
-       	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success", "value", value);
-       	CommandAck = SET_TEMP_ACK;
+       //	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success", "value", value);
+    	// sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set_temp","type", "set", "status","success", "value", value);
+    	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "type", "set","cmd", "set_temp", "status","success", "value", value);
+    	CommandAck = SET_TEMP_ACK;
 
     } else if (strcmp(label, REMOTE_CMD_GET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
         // This for get set temperature command..
        // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_target_temp() );  // it is for sending our set tmepra
         // This is for get ambient temperature..
-        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_ambient_temp());
+       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_ambient_temp());
+       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get_temp","type", "get", "status","success",  "value",app_get_ambient_temp());
+        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp());
         CommandAck = GET_TEMP_ACK;
 
     } else if (strcmp(label, REMOTE_CMD_SET_TIMER_SETTING) == 0) {
