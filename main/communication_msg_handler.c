@@ -509,7 +509,8 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         app_ota_start(value);
     }
 	 else if (strcmp(label, "dev_regis") == 0) {
-		printf("dev_registered successfully \n");
+		 if(strcmp(value, "success") == 0)
+		   printf("dev_registered successfully \n");
 		oneTimeRegistrationPacketToAWS= 0;
 		keepAliveFlag = 1;
 	}else {

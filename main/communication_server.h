@@ -91,6 +91,11 @@ struct comm_wifi {
     int (*sleep)(void);
 };
 
+
+// extern struct comm_wifi comm_wifi_dev; // New Added for Testing
+
+
+
 struct comm_bluetooth {
     int status;
     int (*initialize)(void);

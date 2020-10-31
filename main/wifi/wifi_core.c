@@ -53,6 +53,7 @@
 #include "wifi_core.h"
 
 #include "communication_server.h"
+
 #include "app.h"
 
 static EventGroupHandle_t wifi_event_group;
@@ -60,6 +61,9 @@ const int CONNECTED_BIT = BIT0;
 
 #ifdef P_TESTING
 
+app_data_t *app_data = NULL; // New Added for Wifi Icon
+
+#define DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
 
 #define  wifi_AP_STA_COMBINE
 #ifdef wifi_AP_STA_COMBINE
@@ -68,6 +72,7 @@ void aws_iot_task(void *param);
 #endif
 
 char uniqueDeviceID[12];
+
 struct comm_wifi comm_wifi_dev; // New Added for mac adress testing
 
 time_t keepAlive_ms = 0;
@@ -169,7 +174,16 @@ int esp32_wifi_status = ESP32_WIFI_UNKNOWN;
 int web_server_status = WEB_SVR_STAT_UNKNOWN;
 
 // char username[50],password[50],id[11],locID[20],name[20],timeZone[30];
-char username[32],password[64],id[11],locID[50],name[20],timeZone[20]; // Time Zone size changed to 20 on 28Oct2020
+
+// char username[32],password[64],id[11],locID[50],name[20],timeZone[20]; // working .. Last before acccount ID Problem..
+// char username[32],password[64],id[27],locID[27],name[20],timeZone[20]; // worked for dummy values..accountId,LocId, For this buffer size
+
+
+// Short Packet Size..
+char username[32],password[64],id[30],locID[30],name[30],timeZone[20];
+
+
+// char username[32],password[64],id[30],locID[30],name[20],timeZone[20]; //Testing for id size
 
 wifi_config_t global_wifi_config;
 
@@ -363,7 +377,6 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 {
 
 
-
     switch(event_id) {
         //deprecated
         case SYSTEM_EVENT_WIFI_READY:
@@ -386,6 +399,9 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
              //  auto-reassociate.
         	//added by dilpreet for tcp to check wifi is connected or not
             printf("disconnected\n");
+
+            app_data->is_connected = false;  // new added for wifi icon
+
             esp_wifi_connect();
             xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
             if (wifi_conn_stat_callback)
@@ -413,6 +429,8 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 #endif
 
 			printf("connected\n");
+			app_data->is_connected = true; // wifi icon
+
             break;
             //case SYSTEM_EVENT_AP_STA_GOT_IP:  //no macro like this TODO
             //break;
@@ -468,16 +486,25 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 #ifdef wifi_AP_STA_COMBINE
 	aws_task_flag= 1;
 #endif
-
+	app_data->is_connected = true;// wifi icon
 	}
 
 #ifdef   wifi_AP_STA_COMBINE
     if(aws_task_flag==1 && aws_task_running_status==0)
         {
         	aws_task_running_status=1;
+
+#ifdef DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
+        	esp32_wifi_client_enable(username,password);
+#endif
+
         	xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
         	ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
         	oneTimeRegistrationPacketToAWS = 1; // New added to sending First packet to AWS
+
+//app_data_t *app_data = NULL;
+//        	// Added for displaying Wifi Icon in LCD // Added on 29Oct20_P
+           	 app_data->is_connected = true;
         }
 #endif
 
@@ -637,7 +664,13 @@ int esp32_wps_disable(void)
 }
 int esp32_wifi_client_enable(char* ssid, char* pw)
 {
-    esp_wifi_stop();
+
+#ifdef DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
+    //Commneted
+#else
+	esp_wifi_stop();
+#endif
+
     esp32_wifi_status = ESP32_WIFI_CLIENT;
     esp32_wifi_config(WIFI_MODE_STA, ssid, pw);
     esp_wifi_start();
@@ -1710,7 +1743,8 @@ static void http_get_task(void *pvParameters)
 
 #ifdef HeaterTopicData
  	   //  char cPayload1[100];
- 		 char cPayload1[300];
+      char cPayload1[300];  // Original Working
+ 		// char cPayload1[330];
  		HeaterMeassage.qos = QOS1;
  		HeaterMeassage.payload = (void *) cPayload1;
  		HeaterMeassage.isRetained = 0;
@@ -1749,7 +1783,26 @@ static void http_get_task(void *pvParameters)
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // working one..
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID,"deviceName",name ,"ssid", username , "accounId", id, "locationId ",locID ); // Testing for unique ID..// Working
 
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID,"deviceName",name ,"ssid", username , "accounId", id, "locationId ",locID, "timeZone",timeZone); // Adding TimeZone..
+				//Original Line
+				printf("account ID : %s\n",id);
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"deviceName",name ,"ssid", username , "accountId", id, "locationId ",locID, "timeZone",timeZone); // Adding TimeZone..
+
+				// Short ID String
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone);
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone);
+
+
+				 // ssid 30 Testing only
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\", \n\"%s\":\"%s\", \n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", "123456789123456789123456789123" , "aId", id, "lId",locID, "tz",timeZone);
+
+
+			   // Adviced to Amit..
+				 sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\", \n\"%s\":\"%s\", \n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone);
+				// sprintf(cPayload1, "Dilpreet"); // Adding TimeZone..
+
+				// Testing Line
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"deviceName",name ,"ssid", username , "accountId", "123456789101", "locationId ",locID, "timeZone",timeZone);
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"deviceName",name ,"ssid", username , "accountId", "123456789123456789123456789123", "locationId ",locID, "timeZone",timeZone);
 
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, topicDevRegis, topicDevRegis_Len, &HeaterMeassage);
@@ -1999,7 +2052,17 @@ static void tcp_server_task(void *pvParameters)
 #endif
         vTaskDelay(2000/portTICK_PERIOD_MS);
 
+#define DEVICE_ID_TO_MOBILE
+
+#ifdef   DEVICE_ID_TO_MOBILE
+         char tcpPayload[70];
+                sprintf(tcpPayload, "{\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID);
+                send(sock, "found\r\n", 7, 0);
+                err = send(sock, tcpPayload, strlen(tcpPayload), 0);
+#else
         err = send(sock, "found\r\n", 7, 0);
+#endif
+
 
         if (err < 0) {
 			ESP_LOGE(TCP_SERVER_TAG, "Error occurred during sending: errno %d", errno);
@@ -2074,6 +2137,12 @@ void initialise_wifi(void)
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
 
+
+#ifdef DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
+    esp32_wifi_client_enable(username,password);
+#else
+
+
     wifi_config_t wifi_config = {};
     strcpy((char *)wifi_config.sta.ssid, username);
     strcpy((char *)wifi_config.sta.password, password);
@@ -2094,6 +2163,8 @@ void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     ESP_ERROR_CHECK( esp_wifi_start() );
+
+#endif
 
 
         /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
@@ -2209,6 +2280,11 @@ void initSoftAP()
 
 	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
 	ESP_ERROR_CHECK(esp_wifi_start());
+
+#ifdef DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
+	esp32_wifi_status = ESP32_WIFI_AP;
+#endif
+
 }
 
 
@@ -2238,15 +2314,22 @@ void saveDetails(char *eusart1RxBuffer)
     int startPos=0,endPos=0,j=0;
     char flag=0,saveTimezoneFlag = 0;
 
+    memset(username, 0, sizeof(username));
+        memset(password, 0, sizeof(password));
+        memset(id, 0, sizeof(id));
+        memset(locID, 0, sizeof(locID));
+        memset(name, 0, sizeof(name));
+        memset(timeZone, 0, sizeof(timeZone));
+
 //    startPos=cmpString(eusart1RxBuffer, "U:<");
 //    endPos=cmpString(eusart1RxBuffer, ">U");
     startPos=cmpString(eusart1RxBuffer, "S:<");
     endPos=cmpString(eusart1RxBuffer, ">S");
-    for(int i=0;i<50;i++)
-    {
-        username[i]=0;
-        password[i]=0;
-    }
+//    for(int i=0;i<50;i++)
+//    {
+//        username[i]=0;
+//        password[i]=0;
+//    }
     for(int i=startPos;i<endPos-2;i++)
     {
     	username[j]=eusart1RxBuffer[i];
@@ -2263,8 +2346,12 @@ void saveDetails(char *eusart1RxBuffer)
         flag=1;
     }
     j=0;
-	startPos=cmpString(eusart1RxBuffer, "D:<");
-	endPos=cmpString(eusart1RxBuffer, ">D");
+//	startPos=cmpString(eusart1RxBuffer, "D:<");
+//	endPos=cmpString(eusart1RxBuffer, ">D");
+
+	startPos=cmpString(eusart1RxBuffer, "A:<");
+	endPos=cmpString(eusart1RxBuffer, ">A");
+
 	for(int i=startPos;i<endPos-2;i++)
 	{
 		id[j]=eusart1RxBuffer[i];

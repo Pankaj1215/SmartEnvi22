@@ -108,8 +108,13 @@ static void ping_task(void *param);
 static void display_brightness_task(void *param);
 static int wifi_conn_stat(int stat);
 
-app_data_t *app_data = NULL;
-static struct comm_wifi *comm_wifi_dev = NULL;
+
+// app_data_t *app_data = NULL;  // Original
+extern app_data_t *app_data; // TESTING // changed for wifi Icon
+
+static struct comm_wifi *comm_wifi_dev = NULL;  // Original  Commented only for Testing
+// struct comm_wifi *comm_wifi_dev; // Testing
+
 static wifi_ap_record_t ap_info;
 
 auto_mode_sched_t sched_weekday[AUTO_MODE_SCHED_NUM];
@@ -170,7 +175,10 @@ const int timezone_offset_list_min[] = {
     840,         //UTC+14:00
 };
 #define TIMEZONE_OFFSET_LIST_SIZE (sizeof(timezone_offset_list_min)/sizeof(int))
-// #define Test_Storage
+
+
+
+//#define Test_Storage
 
 static void print_fw_version(void)
 {
@@ -183,7 +191,10 @@ esp_err_t app_init(void) {
     print_fw_version();
 
 #ifdef Test_Storage
- test_storage();
+// test_storage();
+ printf("Before erase \n");
+ erase_storage_all();
+ printf("After erase \n");
 #endif
 
     esp_err_t ret = ESP_OK;
@@ -3409,11 +3420,13 @@ static app_mode_t menu_communications(app_data_t *data) {
                             m_comms = MENU_COMMUNICATIONS_WPS_EN;
                             break;
                         case MENU_COMMUNICATIONS_AP_MODE_EN:
+
                             // enable AP mode
                             if (comm_wifi_dev->is_wifi_ap_enabled())
                                 comm_wifi_dev->wifi_ap_disable();
                             else
                                 comm_wifi_dev->wifi_ap_enable(comm_wifi_dev->wifi_ap_ssid, comm_wifi_dev->wifi_ap_pw);
+
                             break;
                         case MENU_COMMUNICATIONS_AP_MODE_SSID:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_SSID_VAL;
@@ -3518,7 +3531,8 @@ static app_mode_t menu_communications(app_data_t *data) {
             case MENU_COMMUNICATIONS_AP_MODE_EN:
                 printf("MENU_COMMUNICATIONS_AP_MODE_EN\r\n");
 
-                //display_menu(comm_wifi_dev->is_wifi_ap_enabled() ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  Only fpr testiing
+                //  display_menu(comm_wifi_dev->is_wifi_ap_enabled() ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  because  it is struck in Firmware..
+                // display_menu(1 ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  Only fpr testiing
 
                 break;
             case MENU_COMMUNICATIONS_AP_MODE_SSID:
@@ -3539,7 +3553,13 @@ static app_mode_t menu_communications(app_data_t *data) {
                 break;
             case MENU_COMMUNICATIONS_AP_MODE_SSID_VAL:
                 printf("MENU_COMMUNICATIONS_AP_MODE_SSID_VAL\r\n");
-                display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);
+
+                printf("comm_wifi_dev->wifi_ap_ssid %s\n",comm_wifi_dev->wifi_ap_ssid);
+
+                // display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);  // Original
+                display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);   //Testing
+
+
                 break;
             case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
                 printf("MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE\r\n");
@@ -4277,7 +4297,7 @@ static void temp_sensor_task(void *param) {
     app_data_t *data = (app_data_t *) param;
     int *ambient_temp_c = &(data->ambient_temperature_celsius);
     int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
-
+    int tempInFehrenniete =0;
     while(1) {
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
 
@@ -4290,7 +4310,6 @@ static void temp_sensor_task(void *param) {
 		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
     	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
-    	  printf("ambient_temp_c %d\n",*ambient_temp_c);
     	  printf("maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
     	  printf("\n maxTemperatureThresholdReachedWarning \n\n ");
       }
@@ -4302,12 +4321,13 @@ static void temp_sensor_task(void *param) {
 		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
     	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
-    	  printf("ambient_temp_c %d\n",*ambient_temp_c);
     	  printf("minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
     	  printf("\n minTemperatureThresholdReachedWarning \n ");
       }
 #endif
-        printf("ambient_temp=%d\r\n", *ambient_temp_c);
+        tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);
+        printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
+        printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
     }// end of while
 }
@@ -4389,24 +4409,15 @@ static void night_light_task(void *param) {
                         nlight_br = NIGHT_LIGHT_BRIGHTNESS_MAX - (*ambient_light * (NIGHT_LIGHT_BRIGHTNESS_MAX - NIGHT_LIGHT_BRIGHTNESS_MIN) / NIGHT_LIGHT_BRIGHTNESS_MAX + NIGHT_LIGHT_BRIGHTNESS_MIN);
                     }
 
-                    // Hard code for testing..
-                   // *nlight_cfg = 16777215;   // Added only for testing..
-                   // nlight_br = 20 ;  // Added for Testing
-
+                   // *nlight_cfg = 16777215;   // Added only for testing..                   // nlight_br = 20 ;  // Added for Testing
                     int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;
                     int g_br = nlight_br * GET_LED_G_VAL(*nlight_cfg) / 100;
                     int b_br = nlight_br * GET_LED_B_VAL(*nlight_cfg) / 100;
                     // set night light color and brightness
-
                     night_light_set_br(r_br, g_br, b_br);  // Original Line..
-                   // night_light_set_br(100, 100, 255);
-                   //  night_light_set_br(50, 255, 50);
-
+                   // night_light_set_br(100, 100, 255);                     //  night_light_set_br(50, 255, 50);
                     t_set_brightness_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-                   // printf("\n\n*ambient_light %d \n ",*ambient_light);
-                   // printf("*nlight_cfg %d \n ",*nlight_cfg);
-                   // printf("nlight_br %d \n ",nlight_br);
-                   // printf("night light %d %d %d\r\n", r_br, g_br, b_br);
+                   // printf("nlight_br %d \n ",nlight_br);                        // printf("\n\n*ambient_light %d \n ",*ambient_light);         // printf("*nlight_cfg %d \n ",*nlight_cfg);                  // printf("night light %d %d %d\r\n", r_br, g_br, b_br);
                 }
             }
             prev_nlight_auto_en = true;
@@ -4415,10 +4426,8 @@ static void night_light_task(void *param) {
                 night_light_off();
                 printf("night light off \n");
             }
-
             prev_nlight_auto_en = false;
         }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 }
@@ -4452,7 +4461,6 @@ static void display_brightness_task(void *param) {
                 prev_display_brightness = *display_brightness;
             }
         }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 }
@@ -4494,7 +4502,6 @@ static void ping_task(void *param) {
         }
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
-
     vTaskDelete(NULL);
 }
 
@@ -4533,17 +4540,26 @@ int app_get_mode(void) {
 }
 
 int app_get_ambient_temp(void) {
-    if (app_data) {
+   int temperatureInFehrannite;
+	if (app_data) {
     	printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
-        return app_data->ambient_temperature_celsius;
-    }
 
+    	 if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+          	 return app_data->ambient_temperature_celsius;
+    	 else  //     			app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT
+    	 {
+    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
+    	     return temperatureInFehrannite;
+    	 }
+    }
     return 0x80000000;
 }
 
 int app_set_target_temp(int temp_c) {
     if (app_data)
     {
+// fahr_to_celsius
+    if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
         if (temp_c >= TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX)
 #else
@@ -4552,15 +4568,31 @@ int app_set_target_temp(int temp_c) {
         {
             app_data->manual_temperature_celsius = temp_c;
             app_data->manual_temperature_fahrenheit = celsius_to_fahr(temp_c);
-
             // update target temperature in flash
             set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, app_data->manual_temperature_celsius);
             set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit);
             printf("Temp set by command: %d \n ",temp_c );
+            printf("Temp set by command in fahrenheit: %d \n ",app_data->manual_temperature_fahrenheit );
             return 0;
         }
-    }
-
+     }
+    else{ // Temperature Value in Fehreanite
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+        if (temp_c >= TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MIN   && temp_c <= TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX)
+#else
+        if (temp_c >= TEMPERATURE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_CELSIUS_VAL_MAX)  	  // Original Last Firmware Line
+#endif
+        {
+            app_data->manual_temperature_fahrenheit = temp_c;
+            app_data->manual_temperature_celsius = fahr_to_celsius(temp_c);
+            // update target temperature in flash
+            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, app_data->manual_temperature_celsius);
+            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit);
+            printf("Temp set by command in fahrenheit: %d \n ",app_data->manual_temperature_fahrenheit );
+            return 0;
+        } // if
+       } // else
+    }//  if (app_data)
     return -1;
 }
 
