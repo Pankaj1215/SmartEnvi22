@@ -31,7 +31,15 @@
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 
+
+#include "nvs_flash.h"   // These new added for status last state
+#include "non_volatile_lib.h"
+#include "app.h"
+
 #include "heater.h"
+
+// app_data_t *app_data = NULL; // New Added for saving Last Heater Status
+
 
 esp_err_t heater_init(void) {
     // initialize GPIO
@@ -50,12 +58,17 @@ esp_err_t heater_on(void) {
     ret |= gpio_set_direction(HEATER_CTL_GPIO_NUM, GPIO_MODE_OUTPUT);
     ret |= gpio_set_level(HEATER_CTL_GPIO_NUM, 1);
 
-    printf("\n Heater On \n");
+      printf("\n Heater On \n");
+//	  app_data->lastHeaterState = true;
+//	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 
     return ret;
 }
 
 esp_err_t heater_off(void) {
 	printf("\n Heater Off \n");
+//	app_data->lastHeaterState = false;
+//	set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+
     return gpio_set_direction(HEATER_CTL_GPIO_NUM, GPIO_MODE_INPUT);
 }

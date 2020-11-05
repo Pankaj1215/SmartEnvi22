@@ -58,15 +58,15 @@
 
 #define DEFAULT_LAST_HEATER_STATE   0
 
-#define TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN 40
-#define TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX 100
-#define TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_DEF 70
+#define TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN  40
+#define TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX  100
+#define TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_DEF  70
 
 // #define TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN 4  // Original
 // #define TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX 37  // // Original
 
-#define TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN  4
-#define TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX  37
+#define TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN   4
+#define TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX   37
 
 #define TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_DEF 21
 
@@ -74,9 +74,9 @@
 #define TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX 90
 #define TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_DEF 70
 
-#define TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN 10
-#define TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX 32
-#define TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_DEF 21
+#define TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN  10
+#define TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX  32
+#define TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_DEF  21
 
 #else
 #define TEMPERATURE_FAHRENHEIT_VAL_MIN 32
@@ -659,3 +659,177 @@ int app_ota_start(char* loc);
 
 #endif /* MAIN_APP_H */
 
+
+
+// Copied from app.c file paste in app.h for back up...
+
+/*
+static app_mode_t menu_energy(app_data_t *data) {
+    int *btn = &(data->button_status);
+    int prev_btn = *btn;
+
+    // when changing mode, this task should be completed before starting the next mode
+    bool exit = false;
+    app_mode_t next_mode = data->mode;
+
+    uint8_t m_energy = MENU_ENERGY_DAY;
+    bool update_display = true;
+    time_t btn_power_press_ms = 0;
+
+    bool screen_off = false;
+    time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+
+    while (!exit) {
+        if (*btn == prev_btn) {
+            if (data->display_settings.is_auto_screen_off_en) {
+                if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
+                    display_off();
+                    screen_off = true;
+                }
+            }
+
+            if (!screen_off) {
+                if (!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01)) { // power button is pressed
+                    int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+                    if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
+                        next_mode = APP_MODE_STANDBY;
+                        exit = true;
+                        btn_power_press_ms = cur_ms;
+                    }
+                }
+            }
+        } else { // any of the buttons was pressed
+            if (data->display_settings.is_auto_screen_off_en) {
+                t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+            }
+
+            if (screen_off) {
+                // enable screen only if all buttons are unpressed
+                if (((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) && ((*btn >> BUTTON_UP_STAT) & 0x01)
+                    && ((*btn >> BUTTON_DOWN_STAT) & 0x01) && ((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)) {
+                    screen_off = false;
+                    display_on();
+                }
+            } else {
+                if ((*btn & (1 << BUTTON_POWER_BACK_STAT)) != (prev_btn & (1 << BUTTON_POWER_BACK_STAT))) { // power button toggles
+                    if ((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) { // unpressed
+                        switch (m_energy) {
+                        case MENU_ENERGY_DAY:
+                        case MENU_ENERGY_WEEK:
+                        case MENU_ENERGY_MONTH:
+                            exit = true;
+                            break;
+                        case MENU_ENERGY_DAY_VAL:
+                            m_energy = MENU_ENERGY_DAY;
+                            break;
+                        case MENU_ENERGY_WEEK_VAL:
+                            m_energy = MENU_ENERGY_WEEK;
+                            break;
+                        case MENU_ENERGY_MONTH_VAL:
+                            m_energy = MENU_ENERGY_MONTH;
+                            break;
+                        }
+
+                        update_display = true;
+                    } else {
+                        btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+                    }
+                } else if ((*btn & (1 << BUTTON_UP_STAT)) != (prev_btn & (1 << BUTTON_UP_STAT))) { // up button toggles
+                    if ((*btn >> BUTTON_UP_STAT) & 0x01) { // unpressed
+                        switch (m_energy) {
+                        case MENU_ENERGY_DAY:
+                            m_energy = MENU_ENERGY_WEEK;
+                            break;
+                        case MENU_ENERGY_WEEK:
+                            m_energy = MENU_ENERGY_MONTH;
+                            break;
+                        case MENU_ENERGY_MONTH:
+                            m_energy = MENU_ENERGY_DAY;
+                            break;
+                        }
+
+                        update_display = true;
+                    }
+                } else if ((*btn & (1 << BUTTON_DOWN_STAT)) != (prev_btn & (1 << BUTTON_DOWN_STAT))) { // down button toggles
+                    if ((*btn >> BUTTON_DOWN_STAT) & 0x01) { // unpressed
+                        switch (m_energy) {
+                        case MENU_ENERGY_DAY:
+                            m_energy = MENU_ENERGY_MONTH;
+                            break;
+                        case MENU_ENERGY_WEEK:
+                            m_energy = MENU_ENERGY_DAY;
+                            break;
+                        case MENU_ENERGY_MONTH:
+                            m_energy = MENU_ENERGY_WEEK;
+                            break;
+                        }
+
+                        update_display = true;
+                    }
+                } else if ((*btn & (1 << BUTTON_TIMER_FORWARD_STAT)) != (prev_btn & (1 << BUTTON_TIMER_FORWARD_STAT))) { // timer button toggles
+                    if ((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01) { // unpressed
+                        switch (m_energy) {
+                        case MENU_ENERGY_DAY:
+                            m_energy = MENU_ENERGY_DAY_VAL;
+                            break;
+                        case MENU_ENERGY_WEEK:
+                            m_energy = MENU_ENERGY_WEEK_VAL;
+                            break;
+                        case MENU_ENERGY_MONTH:
+                            m_energy = MENU_ENERGY_MONTH_VAL;
+                            break;
+                        }
+
+                        update_display = true;
+                    }
+                }
+            }
+            prev_btn = *btn;
+        }
+
+        // update the display
+        if (update_display) {
+            printf("m_energy=%d\r\n", m_energy);
+
+            display_clear_screen();
+            // display connection status indication if connected
+            if (data->is_connected)
+                display_wifi_icon(DISPLAY_COLOR);
+            switch (m_energy) {
+            case MENU_ENERGY_DAY:
+                display_menu("Day", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+                break;
+            case MENU_ENERGY_WEEK:
+                display_menu("Week", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+                break;
+            case MENU_ENERGY_MONTH:
+                display_menu("Month", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+                break;
+            case MENU_ENERGY_DAY_VAL:
+                // TODO: display real power consumption of the day
+                display_energy(0, ENERGY_UNIT_STR, DISPLAY_COLOR);
+                break;
+            case MENU_ENERGY_WEEK_VAL:
+                // TODO: display real power consumption of the week
+                display_energy(0, ENERGY_UNIT_STR, DISPLAY_COLOR);
+                break;
+            case MENU_ENERGY_MONTH_VAL:
+                // TODO: display real power consumption of the month
+                display_energy(0, ENERGY_UNIT_STR, DISPLAY_COLOR);
+                break;
+            }
+
+            update_display = false;
+        }
+
+        vTaskDelay(1 / portTICK_RATE_MS);
+    }
+
+    // exit with display on
+    if (screen_off)
+       display_on();
+
+    // return new mode
+    return next_mode;
+}
+*/

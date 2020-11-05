@@ -26,9 +26,22 @@
 #ifndef __WIFI_CORE_H__
 #define __WIFI_CORE_H__
 
+// These macro used for identify which command Ack
+#define SET_TEMP_ACK    1
+#define GET_TEMP_ACK    2
 
-#define SET_TEMP_ACK  1
-#define GET_TEMP_ACK  2
+#define HEATER_ON_OFF_ACK   3
+
+
+// #define HEATER_OFF_ACK  4
+
+
+#define SET_RGB_ACK     5
+
+#define EN_NIGHT_LIGHT_MODE_ACK     6
+#define EN_ANTI_FREEZE_ACK     7
+// #define ACTIVATE_CHILD_LOCK_ACK     8
+
 
 
 #define ESP32_WIFI_UNKNOWN      0

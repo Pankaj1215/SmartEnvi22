@@ -130,6 +130,8 @@ extern unsigned char minTemperatureThresholdReachedWarning;
 bool daylightSaving=false;   // New Added for Day light on Off
 // bool daylightSaving=true;
 
+extern unsigned char en_anti_freeze;
+
 #endif
 
 
@@ -2170,176 +2172,9 @@ static void button_timer_forward_cb(int level) {
     }
 }
 
-/*
-static app_mode_t menu_energy(app_data_t *data) {
-    int *btn = &(data->button_status);
-    int prev_btn = *btn;
 
-    // when changing mode, this task should be completed before starting the next mode
-    bool exit = false;
-    app_mode_t next_mode = data->mode;
 
-    uint8_t m_energy = MENU_ENERGY_DAY;
-    bool update_display = true;
-    time_t btn_power_press_ms = 0;
 
-    bool screen_off = false;
-    time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-
-    while (!exit) {
-        if (*btn == prev_btn) {
-            if (data->display_settings.is_auto_screen_off_en) {
-                if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
-                    display_off();
-                    screen_off = true;
-                }
-            }
-
-            if (!screen_off) {
-                if (!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01)) { // power button is pressed
-                    int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-                    if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
-                        next_mode = APP_MODE_STANDBY;
-                        exit = true;
-                        btn_power_press_ms = cur_ms;
-                    }
-                }
-            }
-        } else { // any of the buttons was pressed
-            if (data->display_settings.is_auto_screen_off_en) {
-                t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-            }
-
-            if (screen_off) {
-                // enable screen only if all buttons are unpressed
-                if (((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) && ((*btn >> BUTTON_UP_STAT) & 0x01)
-                    && ((*btn >> BUTTON_DOWN_STAT) & 0x01) && ((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)) {
-                    screen_off = false;
-                    display_on();
-                }
-            } else {
-                if ((*btn & (1 << BUTTON_POWER_BACK_STAT)) != (prev_btn & (1 << BUTTON_POWER_BACK_STAT))) { // power button toggles
-                    if ((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) { // unpressed
-                        switch (m_energy) {
-                        case MENU_ENERGY_DAY:
-                        case MENU_ENERGY_WEEK:
-                        case MENU_ENERGY_MONTH:
-                            exit = true;
-                            break;
-                        case MENU_ENERGY_DAY_VAL:
-                            m_energy = MENU_ENERGY_DAY;
-                            break;
-                        case MENU_ENERGY_WEEK_VAL:
-                            m_energy = MENU_ENERGY_WEEK;
-                            break;
-                        case MENU_ENERGY_MONTH_VAL:
-                            m_energy = MENU_ENERGY_MONTH;
-                            break;
-                        }
-
-                        update_display = true;
-                    } else {
-                        btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-                    }
-                } else if ((*btn & (1 << BUTTON_UP_STAT)) != (prev_btn & (1 << BUTTON_UP_STAT))) { // up button toggles
-                    if ((*btn >> BUTTON_UP_STAT) & 0x01) { // unpressed
-                        switch (m_energy) {
-                        case MENU_ENERGY_DAY:
-                            m_energy = MENU_ENERGY_WEEK;
-                            break;
-                        case MENU_ENERGY_WEEK:
-                            m_energy = MENU_ENERGY_MONTH;
-                            break;
-                        case MENU_ENERGY_MONTH:
-                            m_energy = MENU_ENERGY_DAY;
-                            break;
-                        }
-
-                        update_display = true;
-                    }
-                } else if ((*btn & (1 << BUTTON_DOWN_STAT)) != (prev_btn & (1 << BUTTON_DOWN_STAT))) { // down button toggles
-                    if ((*btn >> BUTTON_DOWN_STAT) & 0x01) { // unpressed
-                        switch (m_energy) {
-                        case MENU_ENERGY_DAY:
-                            m_energy = MENU_ENERGY_MONTH;
-                            break;
-                        case MENU_ENERGY_WEEK:
-                            m_energy = MENU_ENERGY_DAY;
-                            break;
-                        case MENU_ENERGY_MONTH:
-                            m_energy = MENU_ENERGY_WEEK;
-                            break;
-                        }
-
-                        update_display = true;
-                    }
-                } else if ((*btn & (1 << BUTTON_TIMER_FORWARD_STAT)) != (prev_btn & (1 << BUTTON_TIMER_FORWARD_STAT))) { // timer button toggles
-                    if ((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01) { // unpressed
-                        switch (m_energy) {
-                        case MENU_ENERGY_DAY:
-                            m_energy = MENU_ENERGY_DAY_VAL;
-                            break;
-                        case MENU_ENERGY_WEEK:
-                            m_energy = MENU_ENERGY_WEEK_VAL;
-                            break;
-                        case MENU_ENERGY_MONTH:
-                            m_energy = MENU_ENERGY_MONTH_VAL;
-                            break;
-                        }
-
-                        update_display = true;
-                    }
-                }
-            }
-            prev_btn = *btn;
-        }
-
-        // update the display
-        if (update_display) {
-            printf("m_energy=%d\r\n", m_energy);
-
-            display_clear_screen();
-            // display connection status indication if connected
-            if (data->is_connected)
-                display_wifi_icon(DISPLAY_COLOR);
-            switch (m_energy) {
-            case MENU_ENERGY_DAY:
-                display_menu("Day", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
-                break;
-            case MENU_ENERGY_WEEK:
-                display_menu("Week", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
-                break;
-            case MENU_ENERGY_MONTH:
-                display_menu("Month", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
-                break;
-            case MENU_ENERGY_DAY_VAL:
-                // TODO: display real power consumption of the day
-                display_energy(0, ENERGY_UNIT_STR, DISPLAY_COLOR);
-                break;
-            case MENU_ENERGY_WEEK_VAL:
-                // TODO: display real power consumption of the week
-                display_energy(0, ENERGY_UNIT_STR, DISPLAY_COLOR);
-                break;
-            case MENU_ENERGY_MONTH_VAL:
-                // TODO: display real power consumption of the month
-                display_energy(0, ENERGY_UNIT_STR, DISPLAY_COLOR);
-                break;
-            }
-
-            update_display = false;
-        }
-
-        vTaskDelay(1 / portTICK_RATE_MS);
-    }
-
-    // exit with display on
-    if (screen_off)
-       display_on();
-
-    // return new mode
-    return next_mode;
-}
-*/
 
 static app_mode_t menu_calendar(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -2677,7 +2512,6 @@ static app_mode_t menu_calendar(app_data_t *data) {
             }
 
         }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 
@@ -4297,40 +4131,72 @@ static void temp_sensor_task(void *param) {
     app_data_t *data = (app_data_t *) param;
     int *ambient_temp_c = &(data->ambient_temperature_celsius);
     int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
-    int tempInFehrenniete =0;
+    int tempInFehrenniete = 0;
+    int Prev_TempInFahrenite =0;
+
     while(1) {
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
-
+        tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);// Calcius converted to Fehranite..
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-      if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX)
-      {
+   if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
+      if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
     	  heater_off();
-    	  printf("Heater Off \n ");
 		 app_data->lastHeaterState = false;
 		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
     	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
-    	  printf("maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
-    	  printf("\n maxTemperatureThresholdReachedWarning \n\n ");
+    	  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
+    	  printf("\n In calsius maxTemperatureThresholdReachedWarning \n\n ");
       }
-      if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN)
-      {
+      if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) {
     	  heater_on();
-          printf("Heater On \n ");
 		 app_data->lastHeaterState = true;
 		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
     	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
     	  printf("minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
     	  printf("\n minTemperatureThresholdReachedWarning \n ");
-      }
-#endif
-        tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);
+      }}
+   else{
+	   if(tempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
+	      	 heater_off();
+	  		 app_data->lastHeaterState = false;
+	  		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+	  		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+	      	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
+	      	  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX);
+	      	  printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
+	        }
+
+	   if(en_anti_freeze ==1){
+	        if(tempInFehrenniete  < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN)  {
+	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
+	          heater_on();
+	  		  app_data->lastHeaterState = true;
+	  		  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+	  		  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+	      	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
+	      	  printf("In Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
+	      	  printf("\n In Fahrenite minTemperatureThresholdReachedWarning \n ");
+	        }
+	      } // end of  if(en_anti_freeze ==1){
+        }// end of else
+
         printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
         printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
+//        time_t TempChange_ms = 0;
+//		int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+//			if ((cur_ms - TempChange_ms) >= 60000) {
+//			keepAlive_ms = cur_ms;
+//			keepAliveSendDataToAWS = 1;
+//			}
+
+
+
+#endif
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
     }// end of while
-}
+} // end of static void temp_sensor_task(void *param)
 
 static void light_sensor_task(void *param) {
     app_data_t *data = (app_data_t *) param;
@@ -4342,7 +4208,7 @@ static void light_sensor_task(void *param) {
         *ambient_light = (val > 100) ? 100 : val;
         printf("ambient_light=%d\r\n", *ambient_light);
         vTaskDelay(LIGHT_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
-    }
+    } // end of while
 }
 
 #if 1
@@ -4404,18 +4270,32 @@ static void night_light_task(void *param) {
                     int nlight_br;
                     if (*ambient_light >= NIGHT_LIGHT_BRIGHTNESS_OFF_THS) {
                         nlight_br = 0;
+                        printf("Zero nlight_br \n");
                     } else {
                     // brighter in dark
                         nlight_br = NIGHT_LIGHT_BRIGHTNESS_MAX - (*ambient_light * (NIGHT_LIGHT_BRIGHTNESS_MAX - NIGHT_LIGHT_BRIGHTNESS_MIN) / NIGHT_LIGHT_BRIGHTNESS_MAX + NIGHT_LIGHT_BRIGHTNESS_MIN);
                     }
 
-                   // *nlight_cfg = 16777215;   // Added only for testing..                   // nlight_br = 20 ;  // Added for Testing
-                    int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;
+                    nlight_br = 74 ;  // Added for Testing
+                    int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;  // Exsiting logic
                     int g_br = nlight_br * GET_LED_G_VAL(*nlight_cfg) / 100;
                     int b_br = nlight_br * GET_LED_B_VAL(*nlight_cfg) / 100;
+
+//                    int r_br =  GET_LED_R_VAL(*nlight_cfg) ;   // New logic with out light sensor calculation.
+//                    int g_br =  GET_LED_G_VAL(*nlight_cfg);
+//                    int b_br =  GET_LED_B_VAL(*nlight_cfg);
                     // set night light color and brightness
+                	// printf("night_light_task data->night_light_cfg %d \n ",data->night_light_cfg);
+                	// printf("app_data->night_light_cfg %d \n ",app_data->night_light_cfg);
+                    printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,r_br, g_br, b_br);
                     night_light_set_br(r_br, g_br, b_br);  // Original Line..
-                   // night_light_set_br(100, 100, 255);                     //  night_light_set_br(50, 255, 50);
+
+                    int temp = 0;
+                   // uint_32 temp = 0;
+                    temp = ((b_br | temp) << 16) | (( g_br | temp) <<8) |( r_br | temp);
+                    printf("\n temp : %d vs nlight_cfg  %d\n ",temp,*nlight_cfg );
+
+                   // night_light_set_br(0, 255, 0);       //  night_light_set_br(50, 255, 50);
                     t_set_brightness_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                    // printf("nlight_br %d \n ",nlight_br);                        // printf("\n\n*ambient_light %d \n ",*ambient_light);         // printf("*nlight_cfg %d \n ",*nlight_cfg);                  // printf("night light %d %d %d\r\n", r_br, g_br, b_br);
                 }
@@ -4467,7 +4347,6 @@ static void display_brightness_task(void *param) {
 #endif
 
 uint32_t waiting_results = 0;
-
 esp_err_t ping_results(ping_target_id_t msgType, esp_ping_found * pf) {
     printf("AvgTime:%.1fmS Sent:%d Rec:%d Err:%d min(mS):%d max(mS):%d ", (float)pf->total_time/pf->recv_count, pf->send_count, pf->recv_count, pf->err_count, pf->min_time, pf->max_time );
     printf("Resp(mS):%d Timeouts:%d Total Time:%d\n",pf->resp_time, pf->timeout_count, pf->total_time);
@@ -4499,9 +4378,7 @@ static void ping_task(void *param) {
             printf("\nPinging %s\n", inet_ntoa(ip));
             ping_init();
             waiting_results = 1;
-        }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
+        }  vTaskDelay(100 / portTICK_PERIOD_MS); }
     vTaskDelete(NULL);
 }
 
@@ -4511,8 +4388,6 @@ static int wifi_conn_stat(int stat) {
     display_wifi_icon(stat ? DISPLAY_COLOR : !DISPLAY_COLOR);
     return 0;
 }
-
-
 int app_set_mode(int mode) {
     if (app_data) {
         switch (mode) {
@@ -4525,17 +4400,13 @@ int app_set_mode(int mode) {
             default:
                 return -1;
         }
-        return 0;
-    }
-
+        return 0;}
     return -1;
 }
 
 int app_get_mode(void) {
     if (app_data) {
-        return app_data->mode;
-    }
-
+        return app_data->mode;}
     return -1;
 }
 
@@ -4543,7 +4414,6 @@ int app_get_ambient_temp(void) {
    int temperatureInFehrannite;
 	if (app_data) {
     	printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
-
     	 if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
           	 return app_data->ambient_temperature_celsius;
     	 else  //     			app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT
@@ -4572,7 +4442,6 @@ int app_set_target_temp(int temp_c) {
             set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, app_data->manual_temperature_celsius);
             set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit);
             printf("Temp set by command: %d \n ",temp_c );
-            printf("Temp set by command in fahrenheit: %d \n ",app_data->manual_temperature_fahrenheit );
             return 0;
         }
      }
@@ -4676,7 +4545,6 @@ int app_enable_autoset_time_date(bool en) {
 
             // save new value to flash
             set_integer_to_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int) *is_auto_time_date_en);
-
             return 0;
         }
     }
@@ -4807,6 +4675,7 @@ int app_enable_night_light_auto_brightness(bool en) {
         if (en != *is_nlight_auto_br_en) {
             *is_nlight_auto_br_en = en;
             set_data_to_storage(STORAGE_KEY_SETTINGS, (void *) &app_data->settings, sizeof(settings_t));
+            printf("is_nlight_auto_br_en :  %d", *is_nlight_auto_br_en );
         }
         return 0;
     }
@@ -4825,23 +4694,35 @@ bool app_is_night_light_auto_brightness_enabled(void) {
 //void
 
 int app_set_night_light_config(int cfg) {
+	printf("In app_set_night_light_config function \n ");
     if (app_data) {
        int *nlight_cfg = &(app_data->night_light_cfg);
        // check if valid
-#define GET_LED_R_VAL(BR) ((BR & LED_R_MASK) >> LED_R_POS)
-       if (GET_LED_R_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_R_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
-           return -1;
-       if (GET_LED_G_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_G_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
-           return -1;
-       if (GET_LED_B_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_B_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
-           return -1;
+//#define GET_LED_R_VAL(BR) ((BR & LED_R_MASK) >> LED_R_POS)
+//       if (GET_LED_R_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_R_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
+//       { printf("Back from In GET_LED_R_VAL if condition \n ");
+//    	   return -1;
+//       }
+//       if (GET_LED_G_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_G_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
+//       {  printf("Back from GET_LED_G_VAL if condition \n ");
+//    	   return -1;
+//       }
+//       if (GET_LED_B_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_B_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
+//       {   printf("Back from GET_LED_B_VAL if condition \n ");
+//    	   return -1;
+//       }
+
        // set
        *nlight_cfg = cfg;
        // save
         set_integer_to_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, cfg);
+
+       // app_data->night_light_cfg = cfg ;  // New Added P_Test_04Oct2020_13_42PM
+        printf("app_set_night_light_config app_data->night_light_cfg \n");
+        printf("app_set_night_light_config app_data->night_light_cfg %d \n ",app_data->night_light_cfg);
+        printf("Remote command set led -nlight_cfg - %d", cfg);
        return 0;
     }
-
     return -1;
 }
 

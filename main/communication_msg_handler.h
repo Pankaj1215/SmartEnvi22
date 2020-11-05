@@ -63,7 +63,10 @@
 #define REMOTE_CMD_GET_TARGET_TEMP               "get_target_temp"
 #define REMOTE_CMD_SET_TIMER_SETTING             "set_timer_setting"
 #define REMOTE_CMD_GET_TIMER_SETTING             "get_timer_setting"
+
 #define REMOTE_CMD_ACTIVATE_CHILD_LOCK           "activate_child_lock"
+
+
 #define REMOTE_CMD_IS_CHILD_LOCK_ACTIVATED       "is_child_lock_activated"
 #define REMOTE_CMD_SET_SCHED                     "set_sched"
 #define REMOTE_CMD_GET_SCHED                     "get_sched"
@@ -73,7 +76,11 @@
 #define REMOTE_CMD_GET_TEMP_UNIT                 "get_temp_unit"
 #define REMOTE_CMD_EN_AUTO_DIM_PILOT_LIGHT       "en_auto_dim_pilot_light"
 #define REMOTE_CMD_IS_AUTO_DIM_PILOT_LIGHT_EN    "is_auto_dim_pilot_light_en"
-#define REMOTE_CMD_EN_NIGHT_LIGHT_AUTO_BRIGHTNESS "en_night_light_auto_brightness"
+
+// #define REMOTE_CMD_EN_NIGHT_LIGHT_AUTO_BRIGHTNESS "en_night_light_auto_brightness"
+#define REMOTE_CMD_EN_NIGHT_LIGHT_AUTO_BRIGHTNESS "en_night_light_mode"
+
+
 #define REMOTE_CMD_IS_NIGHT_LIGHT_AUTO_BRIGHTNESS_EN "is_night_light_auto_brightness_en"
 #define REMOTE_CMD_SET_NIGHT_LIGHT_CONFIG        "set_night_light_config"
 #define REMOTE_CMD_GET_NIGHT_LIGHT_CONFIG        "get_night_light_config"
@@ -89,6 +96,13 @@
 #define REMOTE_CMD_GET_AUTO_SCREEN_OFF_DELAY_SEC "get_auto_screen_off_delay_sec"
 #define REMOTE_CMD_OTA                           "ota"
 
+#define REMOTE_CMD_DEV_REGIS     "dev_regis"
+
+#define REMOTE_CMD_HEATER_ON_OFF     "heater_on_off"
+
+// #define REMOTE_CMD_HEATER_OFF     "heater_off"
+
+#define REMOTE_CMD_EN_ANTI_FREEZE     "en_anti_freeze"
 
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)

@@ -60,16 +60,22 @@ int message_label_value_handler(char* label, char* value, char* reply_buff);
 
 #ifdef  P_TESTING
  // extern char replybuff[500];  // old
- extern char replybuff[150];  // Testing
- extern int commandReceived_SendAck;
- extern int oneTimeRegistrationPacketToAWS;
+extern char replybuff[150];  // Testing
+
+// extern int commandReceived_SendAck; // Tested for getSetAPPTestFirmware modified to unsigned char..
+extern unsigned char commandReceived_SendAck;
+
+// extern int oneTimeRegistrationPacketToAWS;  // Tested for getSetAPPTestFirmware modified to unsigned char..
+extern unsigned char oneTimeRegistrationPacketToAWS;
+
 extern unsigned char keepAliveFlag;
-//#define SET_TEMP_ACK  1
-//#define GET_TEMP_ACK  2
 
 extern unsigned char CommandAck;
-
+// extern volatile unsigned char CommandAck;
 extern char uniqueDeviceID[12];
+#include "heater.h"  // new Added fot Heater OnOff functions..
+
+unsigned char en_anti_freeze;
 
 #endif
 
@@ -173,8 +179,8 @@ int mainflux_msg_handler(char* msg, char* response)
 
                 strncpy(label, labelstart, labelend - labelstart); 
                 strncpy(value, valuestart, valueend - valuestart); 
-               // printf("label [%s]\n", label);
-               // printf("value [%s]\n", value);
+              //  printf("label [%s]\n", label);
+              //  printf("value [%s]\n", value);
 
              //   if(strcmp(label, "cmd") == 0)   // Original
              	if(strcmp(label, "type") == 0)
@@ -425,10 +431,6 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     } else if (strcmp(label, REMOTE_CMD_GET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
         // This for get set temperature command..
-       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_target_temp() );  // it is for sending our set tmepra
-        // This is for get ambient temperature..
-       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get","type", "get_temp", "status","success",  "value",app_get_ambient_temp());
-       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "cmd", "get_temp","type", "get", "status","success",  "value",app_get_ambient_temp());
         sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp());
         CommandAck = GET_TEMP_ACK;
 
@@ -440,6 +442,12 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         sprintf(reply_buff, "%d", app_get_timer());
     } else if (strcmp(label, REMOTE_CMD_ACTIVATE_CHILD_LOCK) == 0) {
         printf("REMOTE_CMD_ACTIVATE_CHILD_LOCK %s\r\n", value);
+
+//        CommandAck = ACTIVATE_CHILD_LOCK_ACK;
+//        if(*value == 1)
+//		   sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_child_lock", "status","success",  "value",value);
+//        else
+//    		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "dis_child_lock", "status","success",  "value",value);
         app_activate_child_lock(atoi(value));
     } else if (strcmp(label, REMOTE_CMD_IS_CHILD_LOCK_ACTIVATED) == 0) {
         printf("REMOTE_CMD_IS_CHILD_LOCK_ACTIVATED %s\r\n", value);
@@ -468,13 +476,23 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         sprintf(reply_buff, "%d", app_is_autodim_pilot_light_enabled());
     } else if (strcmp(label, REMOTE_CMD_EN_NIGHT_LIGHT_AUTO_BRIGHTNESS) == 0) {
         printf("REMOTE_CMD_EN_NIGHT_LIGHT_AUTO_BRIGHTNESS %s\r\n", value);
+
+        CommandAck = EN_NIGHT_LIGHT_MODE_ACK;
+
+        if(*value == 1)
+		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_night_light_mode", "status","success",  "value",value);
+        else
+    		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "dis_night_light_mode", "status","success",  "value",value);
+
         app_enable_night_light_auto_brightness(atoi(value));
     } else if (strcmp(label, REMOTE_CMD_IS_NIGHT_LIGHT_AUTO_BRIGHTNESS_EN) == 0) {
         printf("REMOTE_CMD_IS_NIGHT_LIGHT_AUTO_BRIGHTNESS_EN %s\r\n", value);
         sprintf(reply_buff, "%d", app_is_night_light_auto_brightness_enabled());
     } else if (strcmp(label, REMOTE_CMD_SET_NIGHT_LIGHT_CONFIG) == 0) {
         printf("REMOTE_CMD_SET_NIGHT_LIGHT_CONFIG %s\r\n", value);
+        CommandAck = SET_RGB_ACK;
         app_set_night_light_config(atoi(value));
+		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_rgb_led", "status","success",  "value",value);
     } else if (strcmp(label, REMOTE_CMD_GET_NIGHT_LIGHT_CONFIG) == 0) {
         printf("REMOTE_CMD_GET_NIGHT_LIGHT_CONFIG %s\r\n", value);
         sprintf(reply_buff, "%d", app_get_night_light_config());
@@ -512,12 +530,44 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         printf("REMOTE_CMD_OTA%s\r\n", value);
         app_ota_start(value);
     }
-	 else if (strcmp(label, "dev_regis") == 0) {
+	// else if (strcmp(label, "dev_regis") == 0) {
+	 else if (strcmp(label, REMOTE_CMD_DEV_REGIS) == 0) {
 		 if(strcmp(value, "success") == 0)
 		   printf("dev_registered successfully \n");
 		oneTimeRegistrationPacketToAWS= 0;
 		keepAliveFlag = 1;
-	}else {
+	}
+	 else if (strcmp(label, REMOTE_CMD_HEATER_ON_OFF) == 0) {
+		  printf("REMOTE_CMD_HEATER_ON OFF \n");
+		  CommandAck = HEATER_ON_OFF_ACK;
+
+		  if(*value == 1)
+		  {  heater_on();
+		     printf("Heater ON \n ");
+		  }
+		  else
+		  {  heater_off();
+		     printf("Heater Off \n  ");
+		  }
+
+	      sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_on_off", "status","success",  "value",value);
+		}
+//	 else if (strcmp(label, REMOTE_CMD_HEATER_OFF) == 0) {
+//		   printf("REMOTE_CMD_HEATER_OFF \n");
+//		   CommandAck = HEATER_OFF_ACK;
+//		   heater_off();
+//		   sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_off", "status","success",  "value","00");
+//		}
+	 else if (strcmp(label, REMOTE_CMD_EN_ANTI_FREEZE) == 0) {
+			   printf("REMOTE_CMD_EN_ANTI_FREEZE \n");
+			   CommandAck = EN_ANTI_FREEZE_ACK;
+			   if(*value == 1)
+			       en_anti_freeze = 1;
+			   else
+				   en_anti_freeze = 0;
+			     sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_anti_freeze", "status","success",  "value",value);
+			}
+	 else {
         printf("unhandled label %s %s\r\n", label, value);
     }
 

@@ -108,11 +108,15 @@ static void set_night_light_init_config(void)
     nvs_flash_init();
     get_data_from_storage(STORAGE_KEY_SETTINGS, &settings);
     if (settings.is_night_light_auto_brightness_en == true) {
+    	printf("Inside settings.is_night_light_auto_brightness_en == true \n ");
+
         int config;
         uint8_t r;
         uint8_t g;
         uint8_t b;
         get_integer_from_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, &config);
+        printf("config in the led.c set_night_light_init_config -%d \n",config);
+
         r = (config & 0x0000FF);
 #if LED_R_POL
         r = r * LEDC_MAX_DUTY_VAL / LED_MAX_BRIGHTNESS;
