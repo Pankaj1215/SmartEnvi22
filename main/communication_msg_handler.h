@@ -97,12 +97,15 @@
 #define REMOTE_CMD_OTA                           "ota"
 
 #define REMOTE_CMD_DEV_REGIS     "dev_regis"
-
 #define REMOTE_CMD_HEATER_ON_OFF     "heater_on_off"
-
 // #define REMOTE_CMD_HEATER_OFF     "heater_off"
-
 #define REMOTE_CMD_EN_ANTI_FREEZE     "en_anti_freeze"
+#define REMOTE_CMD_RGB_LED_STATE   "rgb_led_state"
+
+#define REMOTE_CMD_DAY_LIGHT_TIME_STATE   "day_light_time_on"
+#define REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME   "set_threshold_offset_time"
+
+
 
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)

@@ -56,12 +56,17 @@
 
 #include "app.h"
 
+#include "ntp.h"
+
+// unsigned char daylightSaving;
+
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
 
 #ifdef P_TESTING
-
+// int  getSubString(char *source, char *target,int from, int to);
 app_data_t *app_data = NULL; // New Added for Wifi Icon
+
 
 #define DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
 
@@ -82,6 +87,7 @@ unsigned char keepAliveSendDataToAWS = 0;
 // char replybuff[500];  //  newadded for ack
 unsigned char maxTemperatureThresholdReachedWarning;
 unsigned char minTemperatureThresholdReachedWarning;
+unsigned char setTempThresholdOffsetCrossed;
 
 char replybuff[150];  //  newadded for ack
 
@@ -93,6 +99,10 @@ unsigned char oneTimeRegistrationPacketToAWS;
 
 unsigned char keepAliveFlag;
 unsigned char CommandAck;  // CommandACk for all commands triggered from Server
+
+unsigned char manaully_Set_Temp_change;
+unsigned char manaully_night_Light_State_change;
+unsigned char manaully_child_Lock_State_change;
 
 
 #define TimeZoneAdded
@@ -499,6 +509,9 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 #ifdef DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
         	esp32_wifi_client_enable(username,password);
 #endif
+    	    printf("\nSNTP app_data->is_auto_time_date_en %d\n", app_data->is_auto_time_date_en);
+           	if (app_data->is_auto_time_date_en)
+           		 get_NTP_Time();
 
         	xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
         	ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
@@ -507,6 +520,10 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 //app_data_t *app_data = NULL;
 //        	// Added for displaying Wifi Icon in LCD // Added on 29Oct20_P
            	 app_data->is_connected = true;
+
+//           	if (app_data->is_auto_time_date_en)
+//           		 get_NTP_Time();
+
         }
 #endif
 
@@ -1551,60 +1568,146 @@ static void http_get_task(void *pvParameters)
 //				 // abort();  // Commneted for testing
 //				  }
 			 //	}// end of if( CommandAck == HEATER_OFF_ACK)
+				// aws/device/command/set_rgb_led
 
-				const char *topic_Set_RGB = "aws/device/command/set_rgb";  // testing for param key..
+				// const char *topic_Set_RGB = "aws/device/command/set_rgb";  // testing for param key..
+				const char *topic_Set_RGB = "aws/device/command/set_rgb_led";  // testing for param key..
+
 				const int topic_Set_RGB_Len = strlen(topic_Set_RGB);
-				ESP_LOGI(TAG, "Subscribing.topicHeaterOff..");
+				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB, topic_Set_RGB_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topicHeaterOff subscribing : %d ", rc);
+				ESP_LOGE(TAG, "Error topic_Set_RGB subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
 
-				const char *topic_Set_RGB_Response = "aws/device/command/set_rgb/response";  // testing for param key..
+				// const char *topic_Set_RGB_Response = "aws/device/command/set_rgb/response";  // testing for param key..
+				const char *topic_Set_RGB_Response = "aws/device/command/set_rgb_led/response";  // testing for param key..
+
 				const int topic_Set_RGB_Response_Len = strlen(topic_Set_RGB_Response);
-				ESP_LOGI(TAG, "Subscribing.topicHeaterOff..");
+				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB_Response..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				 ESP_LOGE(TAG, "Error topicHeaterOff subscribing : %d ", rc);
+				 ESP_LOGE(TAG, "Error topic_Set_RGB_Response subscribing : %d ", rc);
 				 // abort();  // Commneted for testing
 				}
 
 
-				const char *topic_Enable_Night_Light_Mode = "aws/device/command/enableNightLightMode";  // testing for param key..
+				const char *topic_Enable_Night_Light_Mode = "aws/device/command/night_light";  // testing for param key..
 				const int topic_Enable_Night_Light_Mode_Len = strlen(topic_Enable_Night_Light_Mode);
-				ESP_LOGI(TAG, "Subscribing.topicHeaterOff..");
+				ESP_LOGI(TAG, "Subscribing.topic_Enable_Night_Light_Mode..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_Enable_Night_Light_Mode, topic_Enable_Night_Light_Mode_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				 ESP_LOGE(TAG, "Error topicHeaterOff subscribing : %d ", rc);
+				 ESP_LOGE(TAG, "Error topic_Enable_Night_Light_Mode subscribing : %d ", rc);
 				 // abort();  // Commneted for testing
 				}
-
-				const char *topic_Enable_Night_Light_Mode_Response = "aws/device/command/set_rgb/response";  // testing for param key..
+				const char *topic_Enable_Night_Light_Mode_Response = "aws/device/command/night_light/response";  // testing for param key..
 				const int topic_Enable_Night_Light_Mode_Response_Len = strlen(topic_Enable_Night_Light_Mode_Response);
-				ESP_LOGI(TAG, "Subscribing.topicHeaterOff..");
+				ESP_LOGI(TAG, "Subscribing.topic_Enable_Night_Light_Mode_Response..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_Enable_Night_Light_Mode_Response, topic_Enable_Night_Light_Mode_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topicHeaterOff subscribing : %d ", rc);
+				ESP_LOGE(TAG, "Error topic_Enable_Night_Light_Mode_Response subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
 
-
-				const char *topic_Enable_En_Anti_Freeze = "aws/device/command/enAntiFreeze";  // testing for param key..
+				const char *topic_Enable_En_Anti_Freeze = "aws/device/command/anti_freeze";  // testing for param key..
 				const int topic_Enable_En_Anti_Freeze_Len = strlen(topic_Enable_En_Anti_Freeze);
-				ESP_LOGI(TAG, "Subscribing.topicHeaterOff..");
+				ESP_LOGI(TAG, "Subscribing.topic_Enable_En_Anti_Freeze..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_Enable_En_Anti_Freeze, topic_Enable_En_Anti_Freeze_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topicHeaterOff subscribing : %d ", rc);
+				ESP_LOGE(TAG, "Error topic_Enable_En_Anti_Freeze subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
 
-				const char *topic_Enable_En_Anti_Freeze_Response = "aws/device/command/set_rgb/response";  // testing for param key..
+				const char *topic_Enable_En_Anti_Freeze_Response = "aws/device/command/anti_freeze/response";  // testing for param key..
 				const int topic_Enable_En_Anti_Freeze_Response_Len = strlen(topic_Enable_En_Anti_Freeze_Response);
-				ESP_LOGI(TAG, "Subscribing.topicHeaterOff..");
+				ESP_LOGI(TAG, "Subscribing.topic_Enable_En_Anti_Freeze_Response..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topicHeaterOff subscribing : %d ", rc);
+				ESP_LOGE(TAG, "Error topic_Enable_En_Anti_Freeze_Response subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_RGB_LED_STATE = "aws/device/command/rgb_led_state";  // testing for param key..
+				const int topic_RGB_LED_STATE_Len = strlen(topic_RGB_LED_STATE);
+				ESP_LOGI(TAG, "Subscribing.topic_RGB_LED_STATE..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_RGB_LED_STATE, topic_RGB_LED_STATE_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_RGB_LED_STATE subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_RGB_LED_STATE_Response = "aws/device/command/rgb_led_state/response";  // testing for param key..
+				const int topic_RGB_LED_STATE_Response_Len = strlen(topic_RGB_LED_STATE_Response);
+				ESP_LOGI(TAG, "Subscribing.topic_RGB_LED_STATE_Response..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_RGB_LED_STATE_Response subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_Day_Light_State = "aws/device/command/day_light_state";  // testing for param key..
+				const int topic_Day_Light_State_Len = strlen(topic_Day_Light_State);
+				ESP_LOGI(TAG, "Subscribing.topic_Day_Light_State..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Day_Light_State, topic_Day_Light_State_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Day_Light_State subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_Day_Light_State_Response = "aws/device/command/day_light_state/response";  // testing for param key..
+				const int topic_Day_Light_State_Response_Len = strlen(topic_Day_Light_State_Response);
+				ESP_LOGI(TAG, "Subscribing.topic_Day_Light_State_Response..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Day_Light_State_Response subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+               // set_threshold_offset_time
+				const char *topic_Set_Threshold_Offset_Time = "aws/device/command/set_threshold_offset_time";  // testing for param key..
+				const int topic_Set_Threshold_Offset_Time_Len = strlen(topic_Set_Threshold_Offset_Time);
+				ESP_LOGI(TAG, "Subscribing.topic_Set_Threshold_Offset_Time..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Set_Threshold_Offset_Time, topic_Set_Threshold_Offset_Time_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_Set_Threshold_Offset_Time_Response = "aws/device/command/set_threshold_offset_time/response";  // testing for param key..
+				const int topic_topic_Set_Threshold_Offset_Time_Response_Len = strlen(topic_Set_Threshold_Offset_Time_Response);
+				ESP_LOGI(TAG, "Subscribing.topic_Set_Threshold_Offset_Time_Response..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time_Response subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+
+				const char *topic_Manual_Set_Temp_change = "aws/device/event/temp_change";  // testing for param key..
+				const int topic_Manual_Set_Temp_change_Len = strlen(topic_Manual_Set_Temp_change);
+				ESP_LOGI(TAG, "Subscribing.topic_Manual_Set_Temp_change..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Manual_Set_Temp_change subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_Manual_Night_Light_State_change = "aws/device/event/night_light_state_changed";  // testing for param key..
+				const int topic_Manual_Night_Light_State_change_Len = strlen(topic_Manual_Night_Light_State_change);
+				ESP_LOGI(TAG, "Subscribing.topic_Manual_Night_Light_State_change..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Manual_Night_Light_State_change, topic_Manual_Night_Light_State_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Manual_Night_Light_State_change subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_Manual_Child_Lock_change = "aws/device/event/child_lock_changed";  // testing for param key..
+				const int topic_Manual_Child_Lock_change_Len = strlen(topic_Manual_Child_Lock_change);
+				ESP_LOGI(TAG, "Subscribing.topic_Manual_Child_Lock_change..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Manual_Child_Lock_change, topic_Manual_Child_Lock_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Manual_Child_Lock_change subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
 
@@ -1737,6 +1840,15 @@ static void http_get_task(void *pvParameters)
 				    case EN_ANTI_FREEZE_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, &HeaterMeassage);
 				    			     	 break;
+				    case RGB_LED_STATE_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, &HeaterMeassage);
+				    			     	 break;
+				    case DAY_LIGHT_TIME_STATE_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, &HeaterMeassage);
+				    			     	 break;
+				    case SET_THRESHOLD_OFFSET_TIME_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, &HeaterMeassage);
+				    			     	 break;
 				    default:   break;
 				}
 
@@ -1821,6 +1933,83 @@ static void http_get_task(void *pvParameters)
 					memset(cPayload1,0,sizeof(cPayload1));
 					minTemperatureThresholdReachedWarning= 0;
 				 } // end of if(minTemperatureThresholdReachedWarning==1)
+
+
+//				if(setTempThresholdOffsetCrossed==1){
+//				memset(cPayload1,0,sizeof(cPayload1));
+//				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","setTempThresholdOffsetCrossed");
+//				HeaterMeassage.payloadLen = strlen(cPayload1);
+//				rc = aws_iot_mqtt_publish(&client, topicMinThresholdReached, topicMinThresholdReached_Len, &HeaterMeassage);
+//				#ifdef TEST_WIFI_STUCK_PROB
+//				if(rc!=0)
+//				{
+//				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+//				continue;
+//				}
+//				#endif
+//				memset(replybuff,0,sizeof(replybuff));
+//				memset(cPayload1,0,sizeof(cPayload1));
+//				setTempThresholdOffsetCrossed= 0;
+//				} // end of if(minTemperatureThresholdReachedWarning==1)
+
+				if(manaully_Set_Temp_change==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit);
+
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, &HeaterMeassage);
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Set_Temp_change= 0;
+				} // end of if(manaully_Set_Temp_change==1){
+//topic_Manual_Child_Lock_change
+			       // manaully_night_Light_State_change
+				if(manaully_night_Light_State_change==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_night_Light_change", "status","success",  "value", app_data->settings.is_night_light_auto_brightness_en );  // data->settings.is_night_light_auto_brightness_en // app_data
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, topic_Manual_Night_Light_State_change, topic_Manual_Night_Light_State_change_Len, &HeaterMeassage);
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_night_Light_State_change= 0;
+				} // end of if(manaully_night_Light_State_change==1){
+//
+				// manaully_child_Lock_State_change
+				if(manaully_child_Lock_State_change==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+
+			//	sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_child_Lock_change", "status","success",  "value", app_data->settings.is_child_lock_en ); //app_data->is_child_lock_active// app_data->is_child_lock_active // app_data->settings.is_child_lock_en  // app_data->is_child_lock_active
+
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_child_Lock_change", "status","success",  "value", app_data->is_child_lock_active);
+
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, topic_Manual_Child_Lock_change, topic_Manual_Child_Lock_change_Len, &HeaterMeassage);
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_child_Lock_State_change= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 #endif
 		//  printf("After publish HeaterParameterSendingToAWS\n ");
@@ -2525,3 +2714,41 @@ int cmpString(char *a,char *b)
 }
 
 #endif
+
+
+
+
+void get_NTP_Time(void)
+{
+//	if (app_data->is_auto_time_date_en)
+//	    {
+
+
+	    	printf("\nSNTP INITIALISING\n");
+	        ntp_init(NTP_SERVER);
+	        printf("\nauto_time_date_en");
+			#ifdef P_TESTING   // Added for Testing  // This macro in only for testing purpose..when ever want to crosscheck the time and date..
+				int yr,mnt,day,hr,min,sec,retry=0;
+				while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < 5) {
+						//printf("Waiting for system time to be set... (%d/%d)", retry, 5);
+						vTaskDelay(2000 / portTICK_PERIOD_MS);
+					}
+				clock_get_date_and_time(&yr,&mnt,&day,&hr, &min, &sec);
+				if(daylightSaving)
+				{
+					if(hr==23)
+						hr=0;
+					else
+						hr++;
+				}
+				printf("\nAUTO TIME: yr=%d mnt=%d day=%d hr=%d min=%d\r\n",yr,mnt,day, hr, min);
+			#endif
+//	    }
+//	    else
+//	    	printf("\nauto_time_date not enabled");
+}
+
+
+
+
+

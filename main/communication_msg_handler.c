@@ -41,6 +41,7 @@
 #include "version.h"
 
 #include "wifi_core.h" // New Added for P_Testing included in wifi_core.h
+// #include <math.h>
 
 // int oneTimeRegistrationPacketToAWS = 0;
 
@@ -76,8 +77,203 @@ extern char uniqueDeviceID[12];
 #include "heater.h"  // new Added fot Heater OnOff functions..
 
 unsigned char en_anti_freeze;
+int hexadecimalToDecimal(char hexVal[]);
+void decToHexa(int n);
+unsigned char rgb_led_state;
+
+// unsigned char daylightSaving;
+// bool daylightSaving;
+unsigned char heater_On_Off_state_by_command;
 
 #endif
+
+//unsigned int hex2int(unsigned char hex[]);
+unsigned int hex2int(char hex[]);
+long power(long no,long p);
+
+int getNum(char ch);
+//function : getNum
+//this function will return number corresponding
+//0,1,2..,9,A,B,C,D,E,F
+
+int getNum(char ch)
+{
+    int num=0;
+    if(ch>='0' && ch<='9')
+    {
+        num=ch-0x30;
+    }
+    else
+    {
+        switch(ch)
+        {
+            case 'A': case 'a': num=10; break;
+            case 'B': case 'b': num=11; break;
+            case 'C': case 'c': num=12; break;
+            case 'D': case 'd': num=13; break;
+            case 'E': case 'e': num=14; break;
+            case 'F': case 'f': num=15; break;
+            default: num=0;
+        }
+    }
+    return num;
+}
+
+
+//function : hex2int
+//this function will return integer value against
+//hexValue - which is in string format
+
+// unsigned int hex2int(unsigned char hex[])
+unsigned int hex2int(char hex[])
+{
+    unsigned int x=0;
+   //  x=(getNum(hex[0]))*16+(getNum(hex[1]));
+
+    printf("hex[0] %c\n", hex[0]);
+    printf("hex[1] %c\n", hex[1]);
+    printf("hex[2] %c\n", hex[2]);
+    printf("hex[3] %c\n", hex[3]);
+    printf("hex[4] %c\n", hex[4]);
+    printf("hex[5] %c\n", hex[5]);
+
+    // x=(getNum(hex[0]))*16+(getNum(hex[1]));
+    x=((getNum(hex[0])*16*16*16*16*16)+(getNum(hex[1])*16*16*16*16) + (getNum(hex[2])*16*16*16)+(getNum(hex[3])*16*16)+(getNum(hex[4]))*16) +(getNum(hex[5]));
+   // x=((getNum(hex[0])*power(16,5))+(getNum(hex[1])*power(16,4)) + (getNum(hex[2])*power(16,3))+(getNum(hex[3])*power(16,2))+(getNum(hex[4]))*16) +(getNum(hex[5]));
+    printf("x %d \n ", x);
+    return (x);
+}
+
+
+
+// function to convert decimal to hexadecimal
+void decToHexa(int n)
+{
+    // char array to store hexadecimal number
+    char hexaDeciNum[100];
+
+    // counter for hexadecimal number array
+    int i = 0;
+    while(n!=0)
+    {
+        // temporary variable to store remainder
+        int temp  = 0;
+
+        // storing remainder in temp variable.
+        temp = n % 16;
+
+        // check if temp < 10
+        if(temp < 10)
+        {
+            hexaDeciNum[i] = temp + 48;
+            i++;
+        }
+        else
+        {
+            hexaDeciNum[i] = temp + 55;
+            i++;
+        }
+
+        n = n/16;
+    }
+
+    // printing hexadecimal number array in reverse order
+    for(int j=i-1; j>=0; j--)
+       //  cout << hexaDeciNum[j];
+       printf("hexaDeciNum %c \n", hexaDeciNum[j]);
+}
+
+long power(long no,long p)
+{
+    long a=1;
+    for(int j=0;j<p;j++)
+    {
+        a=a*no;
+    }
+    return a;
+}
+
+// Function to convert hexadecimal to decimal
+int hexadecimalToDecimal(char hexVal[])
+// int hexadecimalToDecimal(char hex[])
+{
+	printf("In hexadecimalToDecimal hexVal %s",hexVal);
+    int len = strlen(hexVal);
+    printf("In len hexVal %d",len);
+    // Initializing base value to 1, i.e 16^0
+    int base = 1;
+
+    int dec_val = 0;
+
+    // Extracting characters as digits from last character
+    for (int i=len-1; i>=0; i--)
+    {
+        // if character lies in '0'-'9', converting
+        // it to integral 0-9 by subtracting 48 from
+        // ASCII value.
+        if (hexVal[i]>='0' && hexVal[i]<='9')
+        {
+            dec_val += (hexVal[i] - 48)*base;
+
+            // incrementing base by power
+            base = base * 16;
+            printf(" 0 -9 dec_val %d",dec_val);
+           // printf(" 0 -9 hexVal %d",hexVal);
+        }
+
+        // if character lies in 'A'-'F' , converting
+        // it to integral 10 - 15 by subtracting 55
+        // from ASCII value
+       // else if (hexVal[i]>='A' && hexVal[i]<='F')
+       	else if (hexVal[i]>='a' && hexVal[i]<='f')
+        {
+            dec_val += (hexVal[i] - 55)*base;
+
+            // incrementing base by power
+            base = base*16;
+        }
+    }
+
+    return dec_val;
+
+//   // char hex[17];
+//     long long decimal, place;
+//     int i = 0, val, len;
+//
+//     val =0;
+//     decimal = 0;
+//     place = 1;
+//
+// /* Find the length of total number of hex digit */
+//	len = strlen(hex);
+//	len--;
+//
+//    for(i=0; hex[i]!='\0'; i++)
+//      {
+//
+//          /* Find the decimal representation of hex[i] */
+//          if(hex[i]>='0' && hex[i]<='9')
+//          {
+//              val = hex[i] - 48;
+//          }
+//          else if(hex[i]>='a' && hex[i]<='f')
+//          {
+//              val = hex[i] - 97 + 10;
+//          }
+//          else if(hex[i]>='A' && hex[i]<='F')
+//          {
+//              val = hex[i] - 65 + 10;
+//          }
+//
+//          //decimal += val * pow(16, len);
+//		  decimal += val * power(16, len);
+//
+//          len--;
+//      }
+//    return decimal;
+}
+
+
 
 
 int mainflux_msg_handler(char* msg, char* response)
@@ -479,10 +675,11 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 
         CommandAck = EN_NIGHT_LIGHT_MODE_ACK;
 
-        if(*value == 1)
-		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_night_light_mode", "status","success",  "value",value);
-        else
-    		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "dis_night_light_mode", "status","success",  "value",value);
+       	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_night_light_mode", "status","success",  "value",value);
+//       	if(*value == 1)
+//		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_night_light_mode", "status","success",  "value",value);
+//        else
+//    		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "dis_night_light_mode", "status","success",  "value",value);
 
         app_enable_night_light_auto_brightness(atoi(value));
     } else if (strcmp(label, REMOTE_CMD_IS_NIGHT_LIGHT_AUTO_BRIGHTNESS_EN) == 0) {
@@ -491,7 +688,12 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     } else if (strcmp(label, REMOTE_CMD_SET_NIGHT_LIGHT_CONFIG) == 0) {
         printf("REMOTE_CMD_SET_NIGHT_LIGHT_CONFIG %s\r\n", value);
         CommandAck = SET_RGB_ACK;
-        app_set_night_light_config(atoi(value));
+
+        int hex_to_num = 0 ;
+        hex_to_num = hex2int(value);
+        app_set_night_light_config(hex_to_num);   // Testing
+       // app_set_night_light_config(atoi(value));  // Original
+
 		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_rgb_led", "status","success",  "value",value);
     } else if (strcmp(label, REMOTE_CMD_GET_NIGHT_LIGHT_CONFIG) == 0) {
         printf("REMOTE_CMD_GET_NIGHT_LIGHT_CONFIG %s\r\n", value);
@@ -540,15 +742,22 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 else if (strcmp(label, REMOTE_CMD_HEATER_ON_OFF) == 0) {
 		  printf("REMOTE_CMD_HEATER_ON OFF \n");
 		  CommandAck = HEATER_ON_OFF_ACK;
+		  // if(*value == '1')
+//	      if (strcmp(value, "01") == 0)
+//		  {
+//	    	  heater_on();
+//	    	  heater_On_Off_state_by_command =1;
+//	    	  // Last state saving Pending. in message handler
+//		     printf("Heater ON \n ");
+//		  }
+//	      if (strcmp(value, "00") == 0)
+//		  {
+//	    	 heater_off();
+//	    	 heater_On_Off_state_by_command =0;
+//		     printf("Heater Off \n  ");
+//		  }
 
-		  if(*value == 1)
-		  {  heater_on();
-		     printf("Heater ON \n ");
-		  }
-		  else
-		  {  heater_off();
-		     printf("Heater Off \n  ");
-		  }
+		  app_set_heater_state(atoi(value));
 
 	      sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_on_off", "status","success",  "value",value);
 		}
@@ -559,18 +768,64 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 //		   sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_off", "status","success",  "value","00");
 //		}
 	 else if (strcmp(label, REMOTE_CMD_EN_ANTI_FREEZE) == 0) {
-			   printf("REMOTE_CMD_EN_ANTI_FREEZE \n");
-			   CommandAck = EN_ANTI_FREEZE_ACK;
-			   if(*value == 1)
-			       en_anti_freeze = 1;
-			   else
-				   en_anti_freeze = 0;
-			     sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_anti_freeze", "status","success",  "value",value);
+		   printf("REMOTE_CMD_EN_ANTI_FREEZE \n");
+		   CommandAck = EN_ANTI_FREEZE_ACK;
+
+			if (strcmp(value, "01") == 0)
+			{  en_anti_freeze = 1;
+			 printf("en_anti_freeze\n ");
 			}
-	 else {
+			if (strcmp(value, "00") == 0)
+			{  en_anti_freeze = 0;
+			 printf(" en_anti_freeze disable \n  ");
+			}
+			 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_anti_freeze", "status","success",  "value",value);
+			}
+	 else if (strcmp(label, REMOTE_CMD_RGB_LED_STATE) == 0) {
+			   printf("REMOTE_CMD_RGB_LED_STATE \n");
+			   CommandAck = RGB_LED_STATE_ACK;
+
+				if (strcmp(value, "01") == 0)
+				{  rgb_led_state = 1;
+				   printf("rgb_led_state ON \n ");
+				}
+				if (strcmp(value, "00") == 0)
+				{  rgb_led_state = 0;
+				   printf(" rgb_led_state OFF \n  ");
+				}
+				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "rgb_led_state", "status","success",  "value",value);
+				}
+	 else if (strcmp(label, REMOTE_CMD_DAY_LIGHT_TIME_STATE) == 0) {
+	 			   printf("REMOTE_CMD_DAY_LIGHT_TIME_STATE \n");
+	 			   CommandAck = DAY_LIGHT_TIME_STATE_ACK;
+
+	 				if (strcmp(value, "01") == 0)
+	 				{  daylightSaving = 1;
+	 				   printf("REMOTE_CMD_DAY_LIGHT_TIME_STATE ON \n ");
+	 				}
+	 				if (strcmp(value, "00") == 0)
+	 				{  daylightSaving = 0;
+	 				   printf(" REMOTE_CMD_DAY_LIGHT_TIME_STATE OFF \n  ");
+	 				}
+
+	 				 set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)daylightSaving);
+	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "day_light_time_on", "status","success",  "value",value);
+	 				}
+	 else if (strcmp(label, REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME) == 0) {
+		 			   printf("REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME \n");
+		 			   CommandAck = SET_THRESHOLD_OFFSET_TIME_ACK;
+                       //Put this value in the variable for threshold offset value
+		 			  printf("REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME %s\r\n", value);
+
+		 			 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_threshold_offset_time", "status","success",  "value",value);
+		 				}
+	 else
+	 {
         printf("unhandled label %s %s\r\n", label, value);
-    }
+     }
 
     return SUCCESS;
 }
+
+
 

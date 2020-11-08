@@ -62,14 +62,31 @@
 #define pilot_light_off() led1_off(); led2_off();
 #define pilot_light_set_brightness(x) led1_set_brightness(x); led2_set_brightness(x);
 
-// night light
-#define LED_R_POS 0
-#define LED_G_POS 8
-#define LED_B_POS 16
+// night light  // Original Line
+//#define LED_R_POS 0
+//#define LED_G_POS 8
+//#define LED_B_POS 16
+//
+//#define LED_R_MASK 0x0000FF
+//#define LED_G_MASK 0x00FF00
+//#define LED_B_MASK 0xFF0000
 
-#define LED_R_MASK 0x0000FF
+// Only For tesing
+// #define LED_R_POS 0
+#define LED_R_POS 16
+#define LED_G_POS 8
+// #define LED_B_POS 16
+#define LED_B_POS 0
+
+
+// #define LED_R_MASK 0x0000FF
+#define LED_R_MASK 0xFF0000
+
 #define LED_G_MASK 0x00FF00
-#define LED_B_MASK 0xFF0000
+
+// #define LED_B_MASK 0xFF0000
+#define LED_B_MASK 0x0000FF
+
 
 #define GET_LED_R_VAL(BR) ((BR & LED_R_MASK) >> LED_R_POS)
 #define GET_LED_G_VAL(BR) ((BR & LED_G_MASK) >> LED_G_POS)
@@ -108,13 +125,11 @@ static void ping_task(void *param);
 static void display_brightness_task(void *param);
 static int wifi_conn_stat(int stat);
 
-
 // app_data_t *app_data = NULL;  // Original
 extern app_data_t *app_data; // TESTING // changed for wifi Icon
 
 static struct comm_wifi *comm_wifi_dev = NULL;  // Original  Commented only for Testing
 // struct comm_wifi *comm_wifi_dev; // Testing
-
 static wifi_ap_record_t ap_info;
 
 auto_mode_sched_t sched_weekday[AUTO_MODE_SCHED_NUM];
@@ -126,11 +141,25 @@ void initialise_wifi(void);  // Added for testing Wifi Testing _ P_16Sept2020
 void tcpServer_main();
 extern unsigned char maxTemperatureThresholdReachedWarning;
 extern unsigned char minTemperatureThresholdReachedWarning;
+extern unsigned char setTempThresholdOffsetCrossed;
+extern unsigned char rgb_led_state;
 
-bool daylightSaving=false;   // New Added for Day light on Off
-// bool daylightSaving=true;
+// extern unsigned char daylightSaving;   // New Added for Day light on Off
+// bool daylightSaving;   // New Added for Day light on Off
+
+int daylightSaving;   // New Added for Day light on Off
 
 extern unsigned char en_anti_freeze;
+extern unsigned char heater_On_Off_state_by_command;
+extern unsigned char manaully_Set_Temp_change;
+extern unsigned char manaully_night_Light_State_change;
+extern unsigned char manaully_child_Lock_State_change;
+
+
+// Threshold_Offset 30Minute calculation ..
+time_t TempChange_ms = 0;
+int time_OneMinuteOver = 0;
+int time_count = 0;
 
 #endif
 
@@ -178,9 +207,17 @@ const int timezone_offset_list_min[] = {
 };
 #define TIMEZONE_OFFSET_LIST_SIZE (sizeof(timezone_offset_list_min)/sizeof(int))
 
+void init_Variables(void);
 
+void init_Variables(void){
+en_anti_freeze = 1;  // It is used to enable anti freeze logic defualt ON.
+rgb_led_state = 1;
+heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
 
-//#define Test_Storage
+printf("heater_On_Off_state_by_command %d",heater_On_Off_state_by_command);
+
+}
+// #define Test_Storage
 
 static void print_fw_version(void)
 {
@@ -195,7 +232,7 @@ esp_err_t app_init(void) {
 #ifdef Test_Storage
 // test_storage();
  printf("Before erase \n");
- erase_storage_all();
+ // erase_storage_all();
  printf("After erase \n");
 #endif
 
@@ -268,6 +305,7 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, &(app_data->manual_temperature_fahrenheit));
     get_integer_from_storage(STORAGE_KEY_LAST_TIMER_SETTING, &(app_data->last_timer_setting_min));
     get_integer_from_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int *) &(app_data->is_auto_time_date_en));
+    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     printf("before app_data->lastHeaterState %d \n",app_data->lastHeaterState);
@@ -280,6 +318,22 @@ esp_err_t app_init(void) {
     else
     	printf("Last heater status is unidentified \n");
 #endif
+
+
+    init_Variables();
+
+
+
+    //daylightSaving =1;
+    // set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)daylightSaving);
+    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, &(daylightSaving));
+
+    if(daylightSaving == 1)
+    printf("daylightSaving  is One %d \n",daylightSaving);
+    else if(daylightSaving ==0)
+    	 printf("daylightSaving zero %d \n",daylightSaving);
+    else
+    	printf("unvalid state\n ");
 
     get_integer_from_storage(STORAGE_KEY_TIMEZONE_OFFSET_INDEX, &(app_data->timezone_offset_idx));
     get_integer_from_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, &(app_data->night_light_cfg));
@@ -368,54 +422,11 @@ esp_err_t app_init(void) {
     if ((xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) < APP_WELCOME_SCREEN_DELAY_MS)
         vTaskDelay(APP_WELCOME_SCREEN_DELAY_MS - (xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) / portTICK_RATE_MS);
 
-    // start NTP if enabled
-    if (app_data->is_auto_time_date_en)
-        ntp_init(NTP_SERVER);
-
-#ifdef P_TESTING   // Added for Testing  // This macro in only for testing purpose..when ever want to crosscheck the time and date..
-    int yr,mnt,day,hr,min,sec,retry=0;
-    printf("\nSNTP INITIALISING\n");
-    ntp_init(NTP_SERVER);
-    while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < 5) {
-            printf("Waiting for system time to be set... (%d/%d)", retry, 5);
-            vTaskDelay(2000 / portTICK_PERIOD_MS);
-        }
-    clock_get_date_and_time(&yr,&mnt,&day,&hr, &min, &sec);
-    if(daylightSaving)
-    {
-    	if(hr==23)
-    		hr=0;
-    	else
-    		hr++;
-    }
-    printf("\nAUTO TIME: yr=%d mnt=%d day=%d hr=%d min=%d\r\n",yr,mnt,day, hr, min);
-#endif
-
-
     // start app task
     xTaskCreate(app_task, "app_task", 4096, (void *)app_data, 12, NULL);
-
-/*
-    // storage test
-    char str_test[10] = "";
-    int int_test = 0;
-    get_integer_from_storage("int_test", &int_test);
-    printf("int_test=%d\r\n", int_test);
-    ++int_test;
-    set_integer_to_storage("int_test", int_test);
-    get_string_from_storage("str_test", str_test);
-    printf("str_test=%s\r\n", str_test);
-    sprintf(str_test, "str_test %d", int_test);
-    set_string_to_storage("str_test", str_test);
-
-    if (int_test > 1) {
-        erase_integer_in_storage("int_test");
-        erase_string_in_storage("str_test");
-    }
-*/
-
     return ret;
 }
+
 
 static void app_task(void *param) {
     app_data_t *data = (app_data_t *) param;
@@ -508,6 +519,7 @@ static void standby_mode_task(app_data_t *data) {
     // this is necessary to disregard button toggle while waiting for power button released
     prev_btn = *btn;
 
+    if(heater_On_Off_state_by_command == 1){
     // turn off heater
     heater_off();
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
@@ -515,6 +527,7 @@ static void standby_mode_task(app_data_t *data) {
      set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
      printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 #endif
+    } //end of if(heater_On_Off_state_by_command == 1){
 
     while(*mode == APP_MODE_STANDBY) {
         /* button
@@ -539,10 +552,10 @@ static void standby_mode_task(app_data_t *data) {
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
+                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
 
                             update_display = true;
-
                             btn_up_press_ms = cur_ms;
                             btn_down_press_ms = cur_ms;
                         }
@@ -699,15 +712,17 @@ static void manual_temperature_mode_task(app_data_t *data) {
         // turn off/on the heater based on temperature
         if (*ambient_temp_c < data->manual_temperature_celsius) {
             if (!is_heater_on) {
-                heater_on();
+
+            	if(heater_On_Off_state_by_command == 1){
+            	heater_on();
                 is_heater_on = true;
 
                 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
                     app_data->lastHeaterState = true;
                     set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
                #endif
-
-                printf("MANUAL: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
+            	}
+               // printf("MANUAL: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
             }
         } else {
             if (*temp_unit == TEMP_UNIT_CELSIUS)
@@ -717,7 +732,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
             if (*ambient_temp_c >= (data->manual_temperature_celsius + hysteresis_c)) {
                 if (is_heater_on) {
-                    heater_off();
+
+                 if(heater_On_Off_state_by_command == 1){
+                	heater_off();
                     is_heater_on = false;
 
 					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
@@ -725,8 +742,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
                     	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
                     	printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 					#endif
-
-                    printf("MANUAL heater off ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
+                 } // end of if(heater_On_Off_state_by_command == 1)
+                  //  printf("MANUAL heater off ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
                 }
             }
         }
@@ -765,6 +782,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
+
+                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
 
@@ -818,6 +838,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                             if ((*temp + 1) <= temp_max) {
                                 is_target_temp_changed = true;
                                 *temp += 1;
+                                manaully_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
                             }
                         }
                     } else {
@@ -829,6 +850,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                             if ((*temp - 1) >= temp_min) {
                                 is_target_temp_changed = true;
                                 *temp -= 1;
+                                manaully_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
                             }
                         }
                     } else {
@@ -968,6 +990,9 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
+
+                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
 
@@ -1125,6 +1150,9 @@ static void debug_mode_task(app_data_t *data) {
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
+
+                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
 
@@ -1306,30 +1334,34 @@ static void timer_increment_mode_task(app_data_t *data) {
 #endif
 
     while(*mode == APP_MODE_TIMER_INCREMENT) {
-        if (*timer_min == 0) {
-            if (is_timer_expired) {
-                // go to standby only if there is no timer increment within 5 seconds
-                if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_timer_expire_ms) >= (TIMER_EXPIRE_WAIT_FOR_INCREMENT_MS)) {
-                    *mode = APP_MODE_STANDBY;
-                }
-            } else {
-                is_timer_expired = true;
+        if (*timer_min == 0)
+        {
+				if (is_timer_expired) {
+					// go to standby only if there is no timer increment within 5 seconds
+					if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_timer_expire_ms) >= (TIMER_EXPIRE_WAIT_FOR_INCREMENT_MS)) {
+						*mode = APP_MODE_STANDBY;
+					}
+				} else {
+					is_timer_expired = true;
 
-                // set time when the timer expired
-                t_timer_expire_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-            }
+					// set time when the timer expired
+					t_timer_expire_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+				}
 
-            // turn off heater
-            heater_off();
-            is_heater_on = false;
 
-			#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-				 app_data->lastHeaterState = false;
-				 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-				 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-			#endif
+				// turn off heater
+				heater_off();
+				is_heater_on = false;
 
-        } else {
+				#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+					 app_data->lastHeaterState = false;
+					 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+					 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+				#endif
+
+        }
+        else
+        {
             is_timer_expired = false;
 
             // update timer based on lapsed time
@@ -1342,37 +1374,46 @@ static void timer_increment_mode_task(app_data_t *data) {
             // turn off/on the heater based on temperature
             if (*ambient_temp_c < *target_temp_c) {
                 if (!is_heater_on) {
-                    heater_on();
+
+                	if(heater_On_Off_state_by_command == 1){
+
+                	heater_on();
                     is_heater_on = true;
 
 					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
 						 app_data->lastHeaterState = true;
 						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 					#endif
-                    printf("TIMER: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
+                	}
+                  //  printf("TIMER: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
                 }
-            } else {
-                if (*temp_unit == TEMP_UNIT_CELSIUS)
-                    hysteresis_c = *temp_hysteresis_c;
-                else
-                    hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);
+              }
+             else
+              {
+					if (*temp_unit == TEMP_UNIT_CELSIUS)
+						hysteresis_c = *temp_hysteresis_c;
+					else
+						hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);
 
-                if (*ambient_temp_c >= (*target_temp_c + hysteresis_c)) {
-                    if (is_heater_on) {
-                        heater_off();
-                        is_heater_on = false;
+					if (*ambient_temp_c >= (*target_temp_c + hysteresis_c)) {
+						if (is_heater_on) {
 
-						#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-							 app_data->lastHeaterState = false;
-							 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-							 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-						#endif
+							if(heater_On_Off_state_by_command == 1){
 
-                        printf("TIMER: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
-                    }
-                }
-            }
-        }
+							heater_off();
+							is_heater_on = false;
+
+							#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+								 app_data->lastHeaterState = false;
+								 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+								 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+							#endif
+							}
+							// printf("TIMER: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
+						}
+					}// end of if (*ambient_temp_c >= (*target_temp_c + hysteresis_c))
+              } //end of else
+        }// end of else
 
         /* button
            - single press TIMER button to enable increasing or increasing timer value
@@ -1403,6 +1444,9 @@ static void timer_increment_mode_task(app_data_t *data) {
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
+
+                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
 
@@ -1461,6 +1505,8 @@ static void timer_increment_mode_task(app_data_t *data) {
                                 if ((*temp + 1) <= temp_max) {
                                     is_target_temp_changed = true;
                                     *temp += 1;
+                                    manaully_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
+
                                 }
                             }
                         }
@@ -1484,6 +1530,7 @@ static void timer_increment_mode_task(app_data_t *data) {
                                 if ((*temp - 1) >= temp_min) {
                                     is_target_temp_changed = true;
                                     *temp -= 1;
+                                    manaully_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
                                 }
                             }
                         }
@@ -1801,6 +1848,8 @@ static void auto_mode_task(app_data_t *data) {
         // turn off/on the heater based on temperature
         if (*ambient_temp_c < auto_temp_c) {
             if (!is_heater_on) {
+
+            	if(heater_On_Off_state_by_command == 1){
                 heater_on();
                 is_heater_on = true;
 
@@ -1808,8 +1857,8 @@ static void auto_mode_task(app_data_t *data) {
 					 app_data->lastHeaterState = true;
 					 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 				#endif
-
-                printf("AUTO: heater on ambient=%d target=%d\r\n", *ambient_temp_c, auto_temp_c);
+            	}
+              //  printf("AUTO: heater on ambient=%d target=%d\r\n", *ambient_temp_c, auto_temp_c);
             }
         } else {
             if (*temp_unit == TEMP_UNIT_CELSIUS)
@@ -1819,7 +1868,9 @@ static void auto_mode_task(app_data_t *data) {
 
             if (*ambient_temp_c >= (auto_temp_c + hysteresis_c)) {
                 if (is_heater_on) {
-                    heater_off();
+
+                	if(heater_On_Off_state_by_command == 1){
+                	heater_off();
                     is_heater_on = false;
 
 					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
@@ -1828,8 +1879,8 @@ static void auto_mode_task(app_data_t *data) {
 						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 						 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 					#endif
-
-                    printf("AUTO: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, auto_temp_c);
+                	}// endof if(heater_On_Off_state_by_command == 1)
+                  //  printf("AUTO: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, auto_temp_c);
                 }
             }
         }
@@ -1866,6 +1917,9 @@ static void auto_mode_task(app_data_t *data) {
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
+
+                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
 
                             // display / remove child lock logo
@@ -2172,10 +2226,6 @@ static void button_timer_forward_cb(int level) {
     }
 }
 
-
-
-
-
 static app_mode_t menu_calendar(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = *btn;
@@ -2213,8 +2263,6 @@ static app_mode_t menu_calendar(app_data_t *data) {
     uint8_t temp_min = data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? TEMPERATURE_CELSIUS_VAL_MIN : TEMPERATURE_FAHRENHEIT_VAL_MIN;
 
 #endif
-
-
 
     while (!exit) {
         if (*btn == prev_btn) {
@@ -2555,8 +2603,18 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
 
     int *timezone_offset_idx = &(data->timezone_offset_idx);
     int prev_timezone_offset_idx = *timezone_offset_idx;
-
     clock_get_date_and_time(&year, &month, &day, &hour, &minute, NULL);
+
+#define NTP_Testing_dayLightSaving
+#ifdef NTP_Testing_dayLightSaving
+    if(daylightSaving)
+	{
+		if(hour==23)
+			hour=0;
+		else
+			hour++;
+	}
+#endif
 
     while (!exit) {
         if (*btn == prev_btn) {
@@ -2710,7 +2768,6 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
                             clock_set_minute(++minute);
                             break;
                         }
-
                         update_display = true;
                     }
                 } else if ((*btn & (1 << BUTTON_DOWN_STAT)) != (prev_btn & (1 << BUTTON_DOWN_STAT))) { // down button toggles
@@ -2818,7 +2875,6 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
                             m_timedate = MENU_TIME_AND_DATE_MANUAL_TIME_MINUTE_CHANGE;
                             break;
                         }
-
                         update_display = true;
                     }
                 }
@@ -3393,7 +3449,6 @@ static app_mode_t menu_communications(app_data_t *data) {
                 // display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);  // Original
                 display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);   //Testing
 
-
                 break;
             case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
                 printf("MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE\r\n");
@@ -3544,6 +3599,9 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Enable <--> Disable
                             data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
+
+                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+
                             break;
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
@@ -3554,6 +3612,9 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Auto <--> Off
                             data->settings.is_night_light_auto_brightness_en = !data->settings.is_night_light_auto_brightness_en;
+
+                            manaully_night_Light_State_change= 1;  // New Added for manaully_night_Light_State_change notification to AWS
+
                             break;
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
@@ -3606,6 +3667,9 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Enable <--> Disable
                             data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
+
+                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+
                             break;
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
@@ -3616,6 +3680,9 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Auto <--> Off
                             data->settings.is_night_light_auto_brightness_en = !data->settings.is_night_light_auto_brightness_en;
+
+                            manaully_night_Light_State_change= 1;  // New Added for manaully_night_Light_State_change notification to AWS
+
                             break;
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
@@ -4132,31 +4199,45 @@ static void temp_sensor_task(void *param) {
     int *ambient_temp_c = &(data->ambient_temperature_celsius);
     int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
     int tempInFehrenniete = 0;
-    int Prev_TempInFahrenite =0;
+    int Prev_TempInFahrenite = 0;
+    int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
+    int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
+
+    int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
+    printf("In Temp task \n ");
 
     while(1) {
+
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
         tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);// Calcius converted to Fehranite..
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
    if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
-      if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
-    	  heater_off();
-		 app_data->lastHeaterState = false;
-		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-    	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
-    	  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
-    	  printf("\n In calsius maxTemperatureThresholdReachedWarning \n\n ");
-      }
-      if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) {
-    	  heater_on();
-		 app_data->lastHeaterState = true;
-		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-    	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
-    	  printf("minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
-    	  printf("\n minTemperatureThresholdReachedWarning \n ");
-      }}
+		  if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
+			  heater_off();
+			 app_data->lastHeaterState = false;
+			 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+			 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+			  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
+			  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
+			  printf("\n In calsius maxTemperatureThresholdReachedWarning \n\n "); }
+
+		  if(en_anti_freeze == 1){
+		  if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) {
+			  heater_on();
+			 app_data->lastHeaterState = true;
+			 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+			 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+			  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
+			  printf("minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
+			  printf("\n minTemperatureThresholdReachedWarning \n ");
+		  }	}// endof  if(en_anti_freeze == 1){
+
+		 if( *ambient_temp_c > (*target_temp_c + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS)){
+		     printf("Alert meassage for passing SET TEMP");
+		     setTempThresholdOffsetCrossed = 1;
+		   }
+
+     }
    else{
 	   if(tempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
 	      	 heater_off();
@@ -4168,7 +4249,7 @@ static void temp_sensor_task(void *param) {
 	      	  printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
 	        }
 
-	   if(en_anti_freeze ==1){
+	   if(en_anti_freeze == 1){
 	        if(tempInFehrenniete  < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN)  {
 	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
 	          heater_on();
@@ -4180,18 +4261,48 @@ static void temp_sensor_task(void *param) {
 	      	  printf("\n In Fahrenite minTemperatureThresholdReachedWarning \n ");
 	        }
 	      } // end of  if(en_anti_freeze ==1){
+
+	     if( tempInFehrenniete > (*target_temp_f + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE))
+	  	  {
+	  		printf("Alert meassage for passing SET TEMP");
+	  	  }
+
+	     unsigned char hysterisFlag;
+	     if(tempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)
+	     {
+	        hysterisFlag = 1;
+	     }
+	     if(hysterisFlag == 1)
+	       {
+	    	 if( tempInFehrenniete < (*target_temp_f - TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE))
+			 {
+	    		 printf("Alert meassage for hysterisFlag once true \n ");
+			 }
+	       } // end of  if(hysterisFlag == 1)
         }// end of else
 
-        printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
-        printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
-//        time_t TempChange_ms = 0;
-//		int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-//			if ((cur_ms - TempChange_ms) >= 60000) {
-//			keepAlive_ms = cur_ms;
-//			keepAliveSendDataToAWS = 1;
-//			}
+       // printf("temp_offset_c in calsius=%d\r\n", *temp_offset_c);
+      //  printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
+     //   printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
 
-
+	  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+			if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
+				TempChange_ms = cur_ms;
+				time_OneMinuteOver = 1;
+			}
+		printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
+		if(time_OneMinuteOver == 1)
+		{
+		  time_count++;
+		  time_OneMinuteOver = 0;
+		}
+		printf("time_count %d \n", time_count);
+#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
+		if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
+		   printf("2 minutes over \n ");
+		   time_OneMinuteOver =0;
+		   time_count = 0;
+		}
 
 #endif
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
@@ -4206,7 +4317,7 @@ static void light_sensor_task(void *param) {
     while(1) {
         val = lightsensor_get_val();
         *ambient_light = (val > 100) ? 100 : val;
-        printf("ambient_light=%d\r\n", *ambient_light);
+       // printf("ambient_light=%d\r\n", *ambient_light);
         vTaskDelay(LIGHT_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
     } // end of while
 }
@@ -4235,7 +4346,7 @@ static void pilot_light_task(void *param) {
                         *pilot_br = *ambient_light * (AUTO_DIM_PILOT_LIGHT_MAX_BRIGHTNESS - AUTO_DIM_PILOT_LIGHT_MIN_BRIGHTNESS) / AUTO_DIM_PILOT_LIGHT_MAX_BRIGHTNESS + AUTO_DIM_PILOT_LIGHT_MIN_BRIGHTNESS;
                         pilot_light_set_brightness((uint8_t)*pilot_br);
                         t_set_brightness_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-                        printf("pilot light br=%d\r\n", *pilot_br);
+                       // printf("pilot light br=%d\r\n", *pilot_br);
                     }
                 }
                 prev_pilot_light_en_settings = true;
@@ -4276,24 +4387,41 @@ static void night_light_task(void *param) {
                         nlight_br = NIGHT_LIGHT_BRIGHTNESS_MAX - (*ambient_light * (NIGHT_LIGHT_BRIGHTNESS_MAX - NIGHT_LIGHT_BRIGHTNESS_MIN) / NIGHT_LIGHT_BRIGHTNESS_MAX + NIGHT_LIGHT_BRIGHTNESS_MIN);
                     }
 
-                    nlight_br = 74 ;  // Added for Testing
-                    int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;  // Exsiting logic
-                    int g_br = nlight_br * GET_LED_G_VAL(*nlight_cfg) / 100;
-                    int b_br = nlight_br * GET_LED_B_VAL(*nlight_cfg) / 100;
+                   // *nlight_cfg = 0xFFFFFF;
+                    nlight_br = 76 ;  // Added for Testing // 77 bright will be less // 99 brightness will be high
+//                    int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;  // Exsiting logic
+//                    int g_br = nlight_br * GET_LED_G_VAL(*nlight_cfg) / 100;
+//                    int b_br = nlight_br * GET_LED_B_VAL(*nlight_cfg) / 100;
 
-//                    int r_br =  GET_LED_R_VAL(*nlight_cfg) ;   // New logic with out light sensor calculation.
-//                    int g_br =  GET_LED_G_VAL(*nlight_cfg);
-//                    int b_br =  GET_LED_B_VAL(*nlight_cfg);
+                    float r_br = nlight_br * (GET_LED_R_VAL(*nlight_cfg)/2.6) / 100;  // Exsiting logic
+                    float g_br = nlight_br * (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
+                    float b_br = nlight_br * (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
+
+//                    float r_br =  GET_LED_R_VAL(*nlight_cfg)/2.6 ;   // New logic with out light sensor calculation.
+//                    float g_br =  GET_LED_G_VAL(*nlight_cfg)/2.6;
+//                    float b_br =  GET_LED_B_VAL(*nlight_cfg)/2.6;
+
                     // set night light color and brightness
                 	// printf("night_light_task data->night_light_cfg %d \n ",data->night_light_cfg);
                 	// printf("app_data->night_light_cfg %d \n ",app_data->night_light_cfg);
-                    printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,r_br, g_br, b_br);
-                    night_light_set_br(r_br, g_br, b_br);  // Original Line..
+                   //  printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,r_br, g_br, b_br);
 
-                    int temp = 0;
+                    if(rgb_led_state == 1)
+                    {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
+                        night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
+                    	// night_light_set_br(99, 0, 0); //  night_light_set_br(0, 255, 0);
+                      printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
+                     printf("Led ON in night light task function \n ");
+                    }
+                    if(rgb_led_state == 0)
+                    {     night_light_off();
+                    printf("Led OFF in night light task function \n ");
+                    }
+
+                   // int temp = 0;
                    // uint_32 temp = 0;
-                    temp = ((b_br | temp) << 16) | (( g_br | temp) <<8) |( r_br | temp);
-                    printf("\n temp : %d vs nlight_cfg  %d\n ",temp,*nlight_cfg );
+                   // temp = ((b_br | temp) << 16) | (( g_br | temp) <<8) |( r_br | temp);
+                  //  printf("\n temp : %d vs nlight_cfg  %d\n ",temp,*nlight_cfg );
 
                    // night_light_set_br(0, 255, 0);       //  night_light_set_br(50, 255, 50);
                     t_set_brightness_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -4691,6 +4819,42 @@ bool app_is_night_light_auto_brightness_enabled(void) {
     return false;
 }
 
+void app_set_heater_state(int heater_state)
+{
+	heater_On_Off_state_by_command = heater_state ;
+
+	if(heater_On_Off_state_by_command ==1)
+	 { heater_on(); }
+	else
+	{ heater_off(); }
+
+	  app_data->lastHeaterState = heater_state;
+
+	  	if(app_data->lastHeaterState == 1)
+	    	 printf("Heater ON from app  \n ");
+	  	else
+         printf("Heater OFF from app \n ");
+
+	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+	  printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+}
+
+
+void RGB_LED_ON_OFF(int value)
+{
+	if(value == 1)
+	{
+		rgb_led_state = 1;   // ON
+		//Led ON
+	}
+	else
+	{
+		rgb_led_state = 0;   // Off
+		//OFF
+	}
+
+}
+
 //void
 
 int app_set_night_light_config(int cfg) {
@@ -4718,7 +4882,7 @@ int app_set_night_light_config(int cfg) {
         set_integer_to_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, cfg);
 
        // app_data->night_light_cfg = cfg ;  // New Added P_Test_04Oct2020_13_42PM
-        printf("app_set_night_light_config app_data->night_light_cfg \n");
+        printf("Remote command set led -*nlight_cfg - %d", *nlight_cfg);
         printf("app_set_night_light_config app_data->night_light_cfg %d \n ",app_data->night_light_cfg);
         printf("Remote command set led -nlight_cfg - %d", cfg);
        return 0;

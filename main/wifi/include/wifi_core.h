@@ -31,18 +31,21 @@
 #define GET_TEMP_ACK    2
 
 #define HEATER_ON_OFF_ACK   3
-
-
 // #define HEATER_OFF_ACK  4
-
-
 #define SET_RGB_ACK     5
-
 #define EN_NIGHT_LIGHT_MODE_ACK     6
 #define EN_ANTI_FREEZE_ACK     7
+
+#define RGB_LED_STATE_ACK     8
+
+#define DAY_LIGHT_TIME_STATE_ACK     9
+
+#define SET_THRESHOLD_OFFSET_TIME_ACK     10
+
+
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 
-
+ int  getSubString(char *source, char *target,int from, int to);
 
 #define ESP32_WIFI_UNKNOWN      0
 #define ESP32_WIFI_CLIENT       1
@@ -173,5 +176,10 @@ int esp32_reg_wifi_msg_callback(int (*msg_callbk)(char* msg, char* ret_reply));
  * \return returns success 
  */
 int esp32_reg_wifi_conn_callback(int (*wifi_conn_cb)(int conn_stat));
+
+
+void get_NTP_Time(void); // new added for NTP testing_08Nov2020
+
+
 
 #endif //__WIFI_CORE_H__

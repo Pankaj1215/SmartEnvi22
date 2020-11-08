@@ -50,7 +50,12 @@
 #define TEMPERATURE_SENSOR_OFFSET_CELSIUS_MAX 100
 
 
+
+
 #define P_TESTING_TEMP_OPERATING_RANGE_TESTING
+
+#define TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE    5
+#define TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS       5
 
 // As Per Manav sir instruction two temperature range defined. 1) Operating Range 50 to 90F (10 to 32C), 2) Threshold Range 40 to 100F (4 to 37C )
 
@@ -173,6 +178,12 @@
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
 #define STORAGE_KEY_LAST_HEATER_STATE  "htr_stat"
+
+#define STORAGE_KEY_EN_DAY_LIGHT_SAVING  "en_day_li"
+
+// extern bool daylightSaving;
+extern int daylightSaving;
+
 
 #define NVS_DEVICE_ID				"id"
 #define NVS_LOC_ID					"locID"
@@ -656,6 +667,11 @@ int app_start_fw_update(void);
  */
 int app_ota_start(char* loc);
 
+//New added for RGB ON OFF
+void RGB_LED_ON_OFF(int value);
+
+void app_set_heater_state(int heater_state);
+
 
 #endif /* MAIN_APP_H */
 
@@ -833,3 +849,52 @@ static app_mode_t menu_energy(app_data_t *data) {
     return next_mode;
 }
 */
+
+
+
+
+//// start NTP if enabled
+//   if (app_data->is_auto_time_date_en)
+//       ntp_init(NTP_SERVER);
+//
+//#ifdef P_TESTING   // Added for Testing  // This macro in only for testing purpose..when ever want to crosscheck the time and date..
+//   int yr,mnt,day,hr,min,sec,retry=0;
+//   printf("\nSNTP INITIALISING\n");
+//   ntp_init(NTP_SERVER);
+//   while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < 5) {
+//           printf("Waiting for system time to be set... (%d/%d)", retry, 5);
+//           vTaskDelay(2000 / portTICK_PERIOD_MS);
+//       }
+//   clock_get_date_and_time(&yr,&mnt,&day,&hr, &min, &sec);
+//   if(daylightSaving)
+//   {
+//   	if(hr==23)
+//   		hr=0;
+//   	else
+//   		hr++;
+//   }
+//   printf("\nAUTO TIME: yr=%d mnt=%d day=%d hr=%d min=%d\r\n",yr,mnt,day, hr, min);
+//#endif
+
+
+
+
+/*
+    // storage test
+    char str_test[10] = "";
+    int int_test = 0;
+    get_integer_from_storage("int_test", &int_test);
+    printf("int_test=%d\r\n", int_test);
+    ++int_test;
+    set_integer_to_storage("int_test", int_test);
+    get_string_from_storage("str_test", str_test);
+    printf("str_test=%s\r\n", str_test);
+    sprintf(str_test, "str_test %d", int_test);
+    set_string_to_storage("str_test", str_test);
+
+    if (int_test > 1) {
+        erase_integer_in_storage("int_test");
+        erase_string_in_storage("str_test");
+    }
+*/
+
