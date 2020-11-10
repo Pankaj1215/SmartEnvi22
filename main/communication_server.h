@@ -89,10 +89,10 @@ struct comm_wifi {
     int (*wifi_scan)(void* variable_args);
     int (*wake_up)(void* param);
     int (*sleep)(void);
-};
+//};
+} ;
 
-
-// extern struct comm_wifi comm_wifi_dev; // New Added for Testing
+//extern struct comm_wifi *comm_wifi_dev; // New Added for Testing
 
 
 

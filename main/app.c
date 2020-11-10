@@ -128,8 +128,9 @@ static int wifi_conn_stat(int stat);
 // app_data_t *app_data = NULL;  // Original
 extern app_data_t *app_data; // TESTING // changed for wifi Icon
 
-static struct comm_wifi *comm_wifi_dev = NULL;  // Original  Commented only for Testing
-// struct comm_wifi *comm_wifi_dev; // Testing
+//static struct comm_wifi *comm_wifi_dev = NULL;  // Original  Commented only for Testing
+extern struct comm_wifi *comm_wifi_dev = NULL; // Testing
+
 static wifi_ap_record_t ap_info;
 
 auto_mode_sched_t sched_weekday[AUTO_MODE_SCHED_NUM];
@@ -146,7 +147,7 @@ extern unsigned char rgb_led_state;
 
 // extern unsigned char daylightSaving;   // New Added for Day light on Off
 // bool daylightSaving;   // New Added for Day light on Off
-
+// unsigned char daylightSaving;   // New Added for Day light on Off
 int daylightSaving;   // New Added for Day light on Off
 
 extern unsigned char en_anti_freeze;
@@ -155,14 +156,12 @@ extern unsigned char manaully_Set_Temp_change;
 extern unsigned char manaully_night_Light_State_change;
 extern unsigned char manaully_child_Lock_State_change;
 
-
 // Threshold_Offset 30Minute calculation ..
 time_t TempChange_ms = 0;
 int time_OneMinuteOver = 0;
 int time_count = 0;
 
 #endif
-
 
 // static int timezone_offset_list_min[] = { //  Original old Firmware..
 const int timezone_offset_list_min[] = {
@@ -214,11 +213,14 @@ en_anti_freeze = 1;  // It is used to enable anti freeze logic defualt ON.
 rgb_led_state = 1;
 heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
 
-printf("heater_On_Off_state_by_command %d",heater_On_Off_state_by_command);
+if(heater_On_Off_state_by_command ==1)
+	heater_on();
+else
+	heater_off();
 
+printf("heater_On_Off_state_by_command %d",heater_On_Off_state_by_command);
 }
 // #define Test_Storage
-
 static void print_fw_version(void)
 {
     char fw_version[100]; 
@@ -230,7 +232,6 @@ esp_err_t app_init(void) {
     print_fw_version();
 
 #ifdef Test_Storage
-// test_storage();
  printf("Before erase \n");
  // erase_storage_all();
  printf("After erase \n");
@@ -305,7 +306,7 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, &(app_data->manual_temperature_fahrenheit));
     get_integer_from_storage(STORAGE_KEY_LAST_TIMER_SETTING, &(app_data->last_timer_setting_min));
     get_integer_from_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int *) &(app_data->is_auto_time_date_en));
-    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
+   // get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     printf("before app_data->lastHeaterState %d \n",app_data->lastHeaterState);
@@ -319,26 +320,19 @@ esp_err_t app_init(void) {
     	printf("Last heater status is unidentified \n");
 #endif
 
-
     init_Variables();
-
-
-
-    //daylightSaving =1;
-    // set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)daylightSaving);
-    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, &(daylightSaving));
-
-    if(daylightSaving == 1)
-    printf("daylightSaving  is One %d \n",daylightSaving);
-    else if(daylightSaving ==0)
-    	 printf("daylightSaving zero %d \n",daylightSaving);
-    else
-    	printf("unvalid state\n ");
-
     get_integer_from_storage(STORAGE_KEY_TIMEZONE_OFFSET_INDEX, &(app_data->timezone_offset_idx));
     get_integer_from_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, &(app_data->night_light_cfg));
     get_data_from_storage(STORAGE_KEY_SETTINGS, &(app_data->settings));
     get_data_from_storage(STORAGE_KEY_DISPLAY_SETTINGS, &(app_data->display_settings));
+// get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
+
+     if(daylightSaving == 1)
+     printf("daylightSaving  is One %d \n",daylightSaving);
+     else if(daylightSaving ==0)
+     	 printf("daylightSaving zero %d \n",daylightSaving);
+     else
+     	printf("unvalid state\n ");
 
     clock_set_timezone_offset(timezone_offset_list_min[app_data->timezone_offset_idx]);
 
@@ -370,22 +364,6 @@ esp_err_t app_init(void) {
     get_data_from_storage(STORAGE_KEY_SCHED_WEEKDAY, sched_weekday);
     get_data_from_storage(STORAGE_KEY_SCHED_WEEKEND, sched_weekend);
 
-/*
-    // test
-    for (int i = 0; i < AUTO_MODE_SCHED_NUM; i++) {
-        sched_weekday[i].en = true;
-        sched_weekday[i].hour = 0;
-        sched_weekday[i].minute = i;
-        sched_weekday[i].temp_c = TEMPERATURE_CELSIUS_VAL_DEF + i;
-        sched_weekday[i].temp_f = TEMPERATURE_FAHRENHEIT_VAL_DEF + i; //celsius_to_fahr(sched_weekday[i].temp_c);
-        sched_weekend[i].en = true;
-        sched_weekend[i].hour = 0;
-        sched_weekend[i].minute = i;
-        sched_weekend[i].temp_c = TEMPERATURE_CELSIUS_VAL_DEF + i;
-        sched_weekend[i].temp_f = TEMPERATURE_FAHRENHEIT_VAL_DEF + i; //celsius_to_fahr(sched_weekend[i].temp_c);
-    }
-*/
-
     ret |= button_up_set_cb(button_up_cb);
     ret |= button_down_set_cb(button_down_cb);
     ret |= button_power_back_set_cb(button_power_back_cb);
@@ -410,95 +388,59 @@ esp_err_t app_init(void) {
 //   initialize_communication_service();
 //    comm_wifi_dev = get_wifi_dev();
 
-
 #ifdef P_TESTING   // Added for Testing
      tcpServer_main();
-    // initialise_wifi();
-    printf("I am in main firmware \n ");
-   // xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
 #endif
-
     // wait for at least APP_WELCOME_SCREEN_DELAY_MS
     if ((xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) < APP_WELCOME_SCREEN_DELAY_MS)
         vTaskDelay(APP_WELCOME_SCREEN_DELAY_MS - (xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) / portTICK_RATE_MS);
-
     // start app task
     xTaskCreate(app_task, "app_task", 4096, (void *)app_data, 12, NULL);
     return ret;
 }
 
-
 static void app_task(void *param) {
     app_data_t *data = (app_data_t *) param;
     app_mode_t *mode = &(data->mode);
-
     // start at default mode
     *mode = APP_MODE_ON_STARTUP;
-
     // start task that reads ambient temperature
      xTaskCreate(temp_sensor_task, "tsensor_task", 4096, (void *)app_data, 12, NULL);
-
     // start task that reads ambient light
      xTaskCreate(light_sensor_task, "lsensor_task", 4096, (void *)app_data, 12, NULL);
-
     // start task that controls pilot light
     xTaskCreate(pilot_light_task, "plight_task", 4096, (void *)app_data, 12, NULL);
-
     // start task that controls night light
      xTaskCreate(night_light_task, "nlight_task", 4096, (void *)app_data, 12, NULL);
-
     // start task that controls display brightness
     xTaskCreate(display_brightness_task, "dbright_task", 4096, (void *)app_data, 12, NULL);
-
     while (1) {
         switch (*mode) {
         case APP_MODE_STANDBY:
-        {
-            printf("APP_MODE_STANDBY\r\n");
-            standby_mode_task(data);
-            break;
-        }
+        {   printf("APP_MODE_STANDBY\r\n"); standby_mode_task(data);
+            break; }
         case APP_MODE_MANUAL_TEMPERATURE:
-        {
-            printf("APP_MODE_MANUAL_TEMPERATURE\r\n");
-            manual_temperature_mode_task(data);
-            break;
-        }
+        {   printf("APP_MODE_MANUAL_TEMPERATURE\r\n");   manual_temperature_mode_task(data);
+            break;   }
         case APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET:
-        {
-            printf("APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET\r\n");
-            temperature_offset_set_mode_task(data);
-            break;
-        }
+        {    printf("APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET\r\n");  temperature_offset_set_mode_task(data);
+            break;   }
         case APP_MODE_TIMER_INCREMENT:
-        {
-            printf("APP_MODE_TIMER_INCREMENT\r\n");
-            timer_increment_mode_task((void *)data);
-            break;
-        }
+        {    printf("APP_MODE_TIMER_INCREMENT\r\n");   timer_increment_mode_task((void *)data);
+            break;   }
         case APP_MODE_AUTO:
-        {
-            printf("APP_MODE_AUTO\r\n");
-            auto_mode_task((void *)data);
-            break;
-        }
+        {   printf("APP_MODE_AUTO\r\n");   auto_mode_task((void *)data);
+            break;   }
         case APP_MODE_MENU:
-        {
-            printf("APP_MODE_MENU\r\n");
-            menu_mode_task((void *)data);
-            break;
-        }
+        {   printf("APP_MODE_MENU\r\n");   menu_mode_task((void *)data);
+            break;   }
         case APP_MODE_DEBUG:
-        {
-            printf("APP_MODE_DEBUG\r\n");
-            debug_mode_task((void *)data);
-            break;
-        }
-        }
-
+        {    printf("APP_MODE_DEBUG\r\n");  debug_mode_task((void *)data);
+            break;   }
+        }// end of switch
         vTaskDelay(1 / portTICK_RATE_MS);
-    }
-} 
+    }// end of while
+} //static void app_task(void *param) {
 
 static void standby_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -509,23 +451,22 @@ static void standby_mode_task(app_data_t *data) {
     bool update_display = true;
     bool screen_off = false;
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-
     // clear screen
     display_clear_screen();
-
     // wait until power button is released
     while (!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01)) vTaskDelay(1 / portTICK_RATE_MS);
 
     // this is necessary to disregard button toggle while waiting for power button released
     prev_btn = *btn;
 
-    if(heater_On_Off_state_by_command == 1){
+   // if(heater_On_Off_state_by_command == 1){
+   if(heater_On_Off_state_by_command == 0){
     // turn off heater
     heater_off();
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
      app_data->lastHeaterState = false;
      set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-     printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+     printf("in Stand by Mode app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 #endif
     } //end of if(heater_On_Off_state_by_command == 1){
 
@@ -630,24 +571,19 @@ static void standby_mode_task(app_data_t *data) {
             display_clear_screen();
             // display standby message
             display_standby_message(DISPLAY_COLOR);
-
             // display connection status indication if connected
             if (data->is_connected)
                 display_wifi_icon(DISPLAY_COLOR);
-
             // display lock icon if child lock is active
             if (data->is_child_lock_active)
                 display_child_lock_icon(DISPLAY_COLOR);
         }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
-
     // exit with display on
     if (screen_off)
        display_on();
 }
-
 
 static void manual_temperature_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -673,13 +609,10 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
     // clear screen
     display_clear_screen();
-
     // wait until timer button is released so that it will prevent entering AUTO mode if this mode is entered from Timer mode
     while (!((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)) vTaskDelay(1 / portTICK_RATE_MS);
-
     // this is necessary to disregard button toggle while waiting for timer button released
     prev_btn = *btn;
-
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     // set maximum and minimum temperatures and temp pointer based on unit
@@ -705,8 +638,6 @@ static void manual_temperature_mode_task(app_data_t *data) {
        }
 
 #endif
-
-
 
     while(*mode == APP_MODE_MANUAL_TEMPERATURE) {
         // turn off/on the heater based on temperature
@@ -924,7 +855,6 @@ static void manual_temperature_mode_task(app_data_t *data) {
             if (data->is_child_lock_active)
                 display_child_lock_icon(DISPLAY_COLOR);
         }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 
@@ -1052,10 +982,8 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
 
         if (is_temp_offset_changed) {
             is_temp_offset_changed = false;
-
             // save new offset
             set_integer_to_storage(STORAGE_KEY_TEMP_SENSOR_OFFSET_CELSIUS, *ambient_temp_offset_c);
-
             // update display
             update_display = true;
         }
@@ -1083,7 +1011,6 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
        display_on();
 }
 
-
 static void debug_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = 0;
@@ -1109,13 +1036,10 @@ static void debug_mode_task(app_data_t *data) {
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
     int screen_num = 1;
-
     // start ping task
     xTaskCreate(ping_task, "ping_task", 4096, (void *)data, 12, NULL);
-
     // clear screen
     display_clear_screen();
-
     // wait until up and timer buttons are released
     while ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)))
         vTaskDelay(1 / portTICK_RATE_MS);
@@ -2605,9 +2529,9 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
     int prev_timezone_offset_idx = *timezone_offset_idx;
     clock_get_date_and_time(&year, &month, &day, &hour, &minute, NULL);
 
-#define NTP_Testing_dayLightSaving
+//#define NTP_Testing_dayLightSaving
 #ifdef NTP_Testing_dayLightSaving
-    if(daylightSaving)
+    if(daylightSaving == 1)
 	{
 		if(hour==23)
 			hour=0;
@@ -3301,6 +3225,7 @@ static app_mode_t menu_communications(app_data_t *data) {
                             break;
                         case MENU_COMMUNICATIONS_WIFI_AP:
                             // get Wi-Fi AP info
+                        	printf("Line no 3228 \n ");
                             esp_wifi_sta_get_ap_info(&ap_info);
                             memset(data->sta_ssid, 0, sizeof(data->sta_ssid));
                             memcpy(data->sta_ssid, ap_info.ssid, strlen((char *) ap_info.ssid));
@@ -3310,12 +3235,19 @@ static app_mode_t menu_communications(app_data_t *data) {
                             m_comms = MENU_COMMUNICATIONS_WPS_EN;
                             break;
                         case MENU_COMMUNICATIONS_AP_MODE_EN:
+                        	printf("Line no 3238 \n ");
+//                            // enable AP mode
+//                            if (comm_wifi_dev->is_wifi_ap_enabled())
+//                                comm_wifi_dev->wifi_ap_disable();
+//                            else
+//                            	comm_wifi_dev->wifi_ap_enable(uniqueDeviceID, ap_password);  // testing
+                                //comm_wifi_dev->wifi_ap_enable(comm_wifi_dev->wifi_ap_ssid, comm_wifi_dev->wifi_ap_pw);  // original
 
-                            // enable AP mode
-                            if (comm_wifi_dev->is_wifi_ap_enabled())
-                                comm_wifi_dev->wifi_ap_disable();
-                            else
-                                comm_wifi_dev->wifi_ap_enable(comm_wifi_dev->wifi_ap_ssid, comm_wifi_dev->wifi_ap_pw);
+                        	// comm_wifi_dev->wifi_ap_enable(uniqueDeviceID, ap_password);
+                        	if(esp32_wifi_status != ESP32_WIFI_AP)
+                        		esp32_wifi_ap_enable(uniqueDeviceID, ap_password);
+                        	else
+                        		esp32_wifi_client_enable(username,password);
 
                             break;
                         case MENU_COMMUNICATIONS_AP_MODE_SSID:
@@ -3419,10 +3351,13 @@ static app_mode_t menu_communications(app_data_t *data) {
                 display_menu("WPS", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
             case MENU_COMMUNICATIONS_AP_MODE_EN:
-                printf("MENU_COMMUNICATIONS_AP_MODE_EN\r\n");
-
-                //  display_menu(comm_wifi_dev->is_wifi_ap_enabled() ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  because  it is struck in Firmware..
-                // display_menu(1 ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  Only fpr testiing
+                printf("MENU_COMMUNICATIONS_AP_MODE_EN\r\n" );
+               // comm_wifi_dev->is_wifi_ap_enabled() = (&esp32_wifi_is_ap_enabled); // New Added for testing omnly ..
+              //  printf("comm_wifi_dev->is_wifi_ap_enabled() %d",comm_wifi_dev->is_wifi_ap_enabled() );
+               // display_menu(comm_wifi_dev->is_wifi_ap_enabled() ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); //original  Commented  because  it is struck in Firmware..
+               //  display_menu(1 ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  Only fpr testiing
+               //  display_menu(esp32_wifi_is_ap_enabled() ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  Only fpr testiing
+                 display_menu((esp32_wifi_status == ESP32_WIFI_AP) ? "Disable" : "Enable", DISPLAY_COLOR, "AP mode", DISPLAY_COLOR); // Commented  Only fpr testiing
 
                 break;
             case MENU_COMMUNICATIONS_AP_MODE_SSID:
@@ -3444,10 +3379,16 @@ static app_mode_t menu_communications(app_data_t *data) {
             case MENU_COMMUNICATIONS_AP_MODE_SSID_VAL:
                 printf("MENU_COMMUNICATIONS_AP_MODE_SSID_VAL\r\n");
 
+//                printf("comm_wifi_dev->wifi_ap_ssid %s\n",comm_wifi_dev->wifi_ap_ssid);
+//
+//                // display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);  // Original
+//                display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);   //Testing
+
                 printf("comm_wifi_dev->wifi_ap_ssid %s\n",comm_wifi_dev->wifi_ap_ssid);
 
                 // display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);  // Original
-                display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);   //Testing
+                display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+
 
                 break;
             case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
@@ -4199,7 +4140,8 @@ static void temp_sensor_task(void *param) {
     int *ambient_temp_c = &(data->ambient_temperature_celsius);
     int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
     int tempInFehrenniete = 0;
-    int Prev_TempInFahrenite = 0;
+    int Prev_SetTemp = 0;
+
     int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
     int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
 
@@ -4214,6 +4156,7 @@ static void temp_sensor_task(void *param) {
    if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
 		  if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
 			  heater_off();
+			  heater_On_Off_state_by_command = 0 ;
 			 app_data->lastHeaterState = false;
 			 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 			 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
@@ -4222,8 +4165,10 @@ static void temp_sensor_task(void *param) {
 			  printf("\n In calsius maxTemperatureThresholdReachedWarning \n\n "); }
 
 		  if(en_anti_freeze == 1){
-		  if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) {
+			  printf("en_anti_freeze in calsius minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
+			  if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) {
 			  heater_on();
+			  heater_On_Off_state_by_command =1 ;
 			 app_data->lastHeaterState = true;
 			 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 			 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
@@ -4232,15 +4177,16 @@ static void temp_sensor_task(void *param) {
 			  printf("\n minTemperatureThresholdReachedWarning \n ");
 		  }	}// endof  if(en_anti_freeze == 1){
 
-		 if( *ambient_temp_c > (*target_temp_c + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS)){
-		     printf("Alert meassage for passing SET TEMP");
-		     setTempThresholdOffsetCrossed = 1;
-		   }
+//		 if( *ambient_temp_c > (*target_temp_c + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS)){
+//		     printf("Alert meassage for passing SET TEMP");
+//		     setTempThresholdOffsetCrossed = 1;
+//		   }
 
      }
    else{
 	   if(tempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
 	      	 heater_off();
+	      	 heater_On_Off_state_by_command = 0 ;
 	  		 app_data->lastHeaterState = false;
 	  		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 	  		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
@@ -4249,41 +4195,54 @@ static void temp_sensor_task(void *param) {
 	      	  printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
 	        }
 
+	   printf("en_anti_freeze : %d\n ",en_anti_freeze);
 	   if(en_anti_freeze == 1){
-	        if(tempInFehrenniete  < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN)  {
+	       printf("en_anti_freeze logic Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
+	       printf("en_anti_freeze logic tempInFehrenniete %d\n ",tempInFehrenniete);
+		   if(tempInFehrenniete  < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN)  {
 	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
 	          heater_on();
+	          heater_On_Off_state_by_command = 1 ; // As there is waring which will indicate that heater is in ON state.
 	  		  app_data->lastHeaterState = true;
 	  		  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 	  		  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 	      	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
-	      	  printf("In Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
 	      	  printf("\n In Fahrenite minTemperatureThresholdReachedWarning \n ");
 	        }
 	      } // end of  if(en_anti_freeze ==1){
 
-	     if( tempInFehrenniete > (*target_temp_f + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE))
-	  	  {
-	  		printf("Alert meassage for passing SET TEMP");
-	  	  }
 
-	     unsigned char hysterisFlag;
-	     if(tempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)
+	     unsigned char hysterisFlag =0;
+	     if(tempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)  // ambient temperature in fahraneit
 	     {
 	        hysterisFlag = 1;
 	     }
 	     if(hysterisFlag == 1)
 	       {
-	    	 if( tempInFehrenniete < (*target_temp_f - TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE))
+	    	 if( tempInFehrenniete < (*target_temp_f - TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
 			 {
-	    		 printf("Alert meassage for hysterisFlag once true \n ");
+	    		 printf("Alert meassage for hysterisFlag once true  under \n ");
 			 }
+
+	    	 if( tempInFehrenniete > (*target_temp_f + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
+			 {
+				 printf("Alert meassage for hysterisFlag once true  over Alert meassage for passing SET TEMP\n ");
+			 }
+
 	       } // end of  if(hysterisFlag == 1)
         }// end of else
 
        // printf("temp_offset_c in calsius=%d\r\n", *temp_offset_c);
       //  printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
      //   printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
+
+        if( Prev_SetTemp != *target_temp_f )
+        {
+        	Prev_SetTemp = *target_temp_f;
+        	time_t TempChange_ms = 0;
+        	int time_OneMinuteOver = 0;
+        	int time_count = 0;
+        }
 
 	  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 			if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
@@ -4302,6 +4261,15 @@ static void temp_sensor_task(void *param) {
 		   printf("2 minutes over \n ");
 		   time_OneMinuteOver =0;
 		   time_count = 0;
+
+			if( tempInFehrenniete < (*target_temp_f - TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
+			 {
+				 printf("Alert meassage for hysterisFlag once true  under \n ");
+			 }
+			 if( tempInFehrenniete > (*target_temp_f + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
+			 {
+				 printf("Alert meassage for hysterisFlag once true  over \n ");
+			 }
 		}
 
 #endif
@@ -4593,14 +4561,12 @@ int app_set_target_temp(int temp_c) {
     return -1;
 }
 
-
 int app_get_target_temp(void) {
     if (app_data) { // Original Lines
         printf("From app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
         return app_data->manual_temperature_celsius;
     }
-
-    printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
+     printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
 	 return 0x80000000;  // Original Line
 }
 
@@ -4611,11 +4577,9 @@ int app_set_timer(int timer) {
             app_data->current_timer_setting_min = timer;
             app_data->last_timer_setting_min = timer;
             set_integer_to_storage(STORAGE_KEY_LAST_TIMER_SETTING, timer);
-
             return 0;
         }
     }
-
     return -1;
 }
 
@@ -4692,7 +4656,8 @@ int app_enable_ap_mode(bool en) {
     if (app_data) {
         if (comm_wifi_dev) {
             if (en)
-                comm_wifi_dev->wifi_ap_enable(comm_wifi_dev->wifi_ap_ssid, comm_wifi_dev->wifi_ap_pw);
+            	comm_wifi_dev->wifi_ap_enable(uniqueDeviceID, ap_password);    //testing
+                //comm_wifi_dev->wifi_ap_enable(comm_wifi_dev->wifi_ap_ssid, comm_wifi_dev->wifi_ap_pw);
             else
                 comm_wifi_dev->wifi_ap_disable();
 
@@ -4822,35 +4787,29 @@ bool app_is_night_light_auto_brightness_enabled(void) {
 void app_set_heater_state(int heater_state)
 {
 	heater_On_Off_state_by_command = heater_state ;
-
 	if(heater_On_Off_state_by_command ==1)
 	 { heater_on(); }
 	else
 	{ heater_off(); }
 
 	  app_data->lastHeaterState = heater_state;
-
 	  	if(app_data->lastHeaterState == 1)
 	    	 printf("Heater ON from app  \n ");
 	  	else
          printf("Heater OFF from app \n ");
-
 	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 	  printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 }
-
 
 void RGB_LED_ON_OFF(int value)
 {
 	if(value == 1)
 	{
-		rgb_led_state = 1;   // ON
-		//Led ON
+		rgb_led_state = 1;  printf("RGB LED ON \n");
 	}
 	else
 	{
-		rgb_led_state = 0;   // Off
-		//OFF
+		rgb_led_state = 0;   printf("RGB LED OFF \n");
 	}
 
 }
@@ -4861,21 +4820,6 @@ int app_set_night_light_config(int cfg) {
 	printf("In app_set_night_light_config function \n ");
     if (app_data) {
        int *nlight_cfg = &(app_data->night_light_cfg);
-       // check if valid
-//#define GET_LED_R_VAL(BR) ((BR & LED_R_MASK) >> LED_R_POS)
-//       if (GET_LED_R_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_R_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
-//       { printf("Back from In GET_LED_R_VAL if condition \n ");
-//    	   return -1;
-//       }
-//       if (GET_LED_G_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_G_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
-//       {  printf("Back from GET_LED_G_VAL if condition \n ");
-//    	   return -1;
-//       }
-//       if (GET_LED_B_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_B_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
-//       {   printf("Back from GET_LED_B_VAL if condition \n ");
-//    	   return -1;
-//       }
-
        // set
        *nlight_cfg = cfg;
        // save
@@ -4952,18 +4896,14 @@ int app_set_screen_brightness(int br) {
             return 0;
         }
     }
-
     return -1;
 }
-
 int app_get_screen_brightness(void) {
     if (app_data) {
         return app_data->display_settings.display_brightness;
     }
-
     return 0x80000000;
 }
-
 int app_enable_auto_screen_off(bool en) {
     if (app_data) {
         bool *is_auto_screen_off_en = &(app_data->display_settings.is_auto_screen_off_en);
@@ -4973,18 +4913,14 @@ int app_enable_auto_screen_off(bool en) {
         }
         return 0;
     }
-
     return -1;
 }
-
 bool app_is_auto_screen_off_enabled(void) {
     if (app_data) {
         return app_data->display_settings.is_auto_screen_off_en;
     }
-
     return false;
 }
-
 int app_set_auto_screen_off_delay(int delay) {
     if (app_data) {
         if (delay >= AUTO_SCREEN_OFF_DELAY_SEC_MIN
@@ -4997,7 +4933,6 @@ int app_set_auto_screen_off_delay(int delay) {
             return 0;
         }
     }
-
     return -1;
 }
 
@@ -5018,7 +4953,6 @@ int app_start_fw_update(void) {
         }
 #endif
     }
-
     return -1;
 }
 

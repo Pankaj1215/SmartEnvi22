@@ -75,10 +75,12 @@ app_data_t *app_data = NULL; // New Added for Wifi Icon
 char aws_task_flag=0,aws_task_running_status=0;
 void aws_iot_task(void *param);
 #endif
-
+unsigned char tcpServerTask=1;
 char uniqueDeviceID[12];
 
-struct comm_wifi comm_wifi_dev; // New Added for mac adress testing
+// struct comm_wifi *comm_wifi_dev; // New Added for mac adress testing
+//struct comm_wifi *comm_wifi_dev; // New Added for mac adress testing
+
 
 time_t keepAlive_ms = 0;
 unsigned char keepAliveSendDataToAWS = 0;
@@ -514,6 +516,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
            		 get_NTP_Time();
 
         	xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
+
         	ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
         	oneTimeRegistrationPacketToAWS = 1; // New added to sending First packet to AWS
 
@@ -701,9 +704,16 @@ int esp32_wifi_ap_enable(char* ssid_ap, char *pw)
     //do not call this, this will erase existing config
     //esp_wifi_stop();
     esp32_wifi_status = ESP32_WIFI_AP;
+   //
+    printf("esp32_wifi_ap_enable \n");
     esp32_wifi_config(WIFI_MODE_AP, ssid_ap, pw);
     esp_wifi_start();
-
+    printf("esp_wifi_start \n");
+    if(tcpServerTask== 1)
+    {
+    	tcpServerTask=0;
+    	xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+    }
     return 0;
 }
 
@@ -2244,6 +2254,7 @@ void initialise_wifi(void)
 
 #ifdef DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
     esp32_wifi_client_enable(username,password);
+
 #else
 
 
@@ -2293,7 +2304,12 @@ void initialise_wifi(void)
 	} else if (bits & WIFI_FAIL_BIT) {
 		ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",username, password);
 		initSoftAP();
-		xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+		//xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+		if(tcpServerTask== 1)
+		    {
+		    	tcpServerTask=0;
+		    	xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+		    }
 	} else {
 		ESP_LOGE(TAG, "UNEXPECTED EVENT");
 	}
@@ -2323,13 +2339,24 @@ void tcpServer_main()
     esp_efuse_mac_get_default(ap_mac);
     printf("\nMAC ADRESS = %02x:%02x:%02x:%02x:%02x:%02x \n\n",ap_mac[0],ap_mac[1],ap_mac[2],ap_mac[3],ap_mac[4],ap_mac[5]);
 
-    sprintf(comm_wifi_dev.wifi_ap_ssid, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
+//    sprintf(comm_wifi_dev.wifi_ap_ssid, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
+//
+//    printf("comm_wifi_dev.wifi_ap_ssid %s \n ",comm_wifi_dev.wifi_ap_ssid);
+//    strcpy(uniqueDeviceID, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
 
-    printf("comm_wifi_dev.wifi_ap_ssid %s \n ",comm_wifi_dev.wifi_ap_ssid);
-    strcpy(uniqueDeviceID, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+    /*printf("before memset \n ");
+    //memset(comm_wifi_dev-> wifi_ap_ssid,'0',sizeof(comm_wifi_dev-> wifi_ap_ssid));  // 10-11-2020 New addded for testing WIFI MAC_Address accessing from front panel
+    printf("After memset \n ");
+
+    sprintf(comm_wifi_dev-> wifi_ap_ssid, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
+    printf("comm_wifi_dev.wifi_ap_ssid %s \n ",comm_wifi_dev -> wifi_ap_ssid);
+    strcpy(uniqueDeviceID, comm_wifi_dev -> wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid*/
+
+
+    sprintf(uniqueDeviceID, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
     printf("uniqueDeviceID in TCP_server_main   %s\n", uniqueDeviceID);
 
-   // initFlash();  //
+    // initFlash();  //
 	readEEPROM();
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
 	initialise_wifi();
@@ -2349,14 +2376,24 @@ void initSoftAP()
   			},
   		};
 
-    strcpy((char *)wifi_config.ap.ssid, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
-    strcpy(uniqueDeviceID, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+//    strcpy((char *)wifi_config.ap.ssid, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+//    strcpy(uniqueDeviceID, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+//
+//    printf("(char *)wifi_config.ap.ssid:  %s\n", (char *)wifi_config.ap.ssid);
+//    printf("uniqueDeviceID in initSoftAP  %s\n", uniqueDeviceID);
+//
+//    wifi_config.ap.ssid_len = strlen(comm_wifi_dev.wifi_ap_ssid);
+//    printf("(char *)wifi_config.ap.ssid_len:  %d\n",   wifi_config.ap.ssid_len);
+
+    strcpy((char *)wifi_config.ap.ssid, uniqueDeviceID );  // New Added after mac address receiving //For changing the ssid
+    //strcpy(uniqueDeviceID, comm_wifi_dev->wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
 
     printf("(char *)wifi_config.ap.ssid:  %s\n", (char *)wifi_config.ap.ssid);
     printf("uniqueDeviceID in initSoftAP  %s\n", uniqueDeviceID);
 
-    wifi_config.ap.ssid_len = strlen(comm_wifi_dev.wifi_ap_ssid);
+    wifi_config.ap.ssid_len = strlen(uniqueDeviceID);
     printf("(char *)wifi_config.ap.ssid_len:  %d\n",   wifi_config.ap.ssid_len);
+
 
     // Last working SSID
 //    wifi_config_t wifi_config = {
@@ -2722,8 +2759,6 @@ void get_NTP_Time(void)
 {
 //	if (app_data->is_auto_time_date_en)
 //	    {
-
-
 	    	printf("\nSNTP INITIALISING\n");
 	        ntp_init(NTP_SERVER);
 	        printf("\nauto_time_date_en");

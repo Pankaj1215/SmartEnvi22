@@ -54,8 +54,11 @@
 
 #define P_TESTING_TEMP_OPERATING_RANGE_TESTING
 
-#define TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE    5
-#define TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS       5
+#define TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS    5
+#define TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS       5
+
+#define TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR    10
+#define TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR       10
 
 // As Per Manav sir instruction two temperature range defined. 1) Operating Range 50 to 90F (10 to 32C), 2) Threshold Range 40 to 100F (4 to 37C )
 
@@ -94,9 +97,9 @@
 
 #endif
 
+extern char uniqueDeviceID[12];
 
-
-
+#define ap_password "qwerty12345"
 
 
 
@@ -179,9 +182,10 @@
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
 #define STORAGE_KEY_LAST_HEATER_STATE  "htr_stat"
 
-#define STORAGE_KEY_EN_DAY_LIGHT_SAVING  "en_day_li"
+#define STORAGE_KEY_EN_DAY_LIGHT_SAVING  "en_day"
 
 // extern bool daylightSaving;
+// extern unsigned char daylightSaving;
 extern int daylightSaving;
 
 
@@ -388,7 +392,8 @@ typedef struct {
  * \return always success
  */
 esp_err_t app_init(void);
-
+extern int esp32_wifi_status;
+extern char username[32],password[64];
 /*!
  * \fn int app_set_mode(int mode)
  * \brief application set device mode
@@ -898,3 +903,55 @@ static app_mode_t menu_energy(app_data_t *data) {
     }
 */
 
+
+
+//int app_set_night_light_config(int cfg) {
+//	printf("In app_set_night_light_config function \n ");
+//    if (app_data) {
+//       int *nlight_cfg = &(app_data->night_light_cfg);
+//       // check if valid
+////#define GET_LED_R_VAL(BR) ((BR & LED_R_MASK) >> LED_R_POS)
+////       if (GET_LED_R_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_R_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
+////       { printf("Back from In GET_LED_R_VAL if condition \n ");
+////    	   return -1;
+////       }
+////       if (GET_LED_G_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_G_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
+////       {  printf("Back from GET_LED_G_VAL if condition \n ");
+////    	   return -1;
+////       }
+////       if (GET_LED_B_VAL(cfg) < NIGHT_LIGHT_BRIGHTNESS_MIN || GET_LED_B_VAL(cfg) > NIGHT_LIGHT_BRIGHTNESS_MAX)
+////       {   printf("Back from GET_LED_B_VAL if condition \n ");
+////    	   return -1;
+////       }
+//
+//       // set
+//       *nlight_cfg = cfg;
+//       // save
+//        set_integer_to_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, cfg);
+//
+//       // app_data->night_light_cfg = cfg ;  // New Added P_Test_04Oct2020_13_42PM
+//        printf("Remote command set led -*nlight_cfg - %d", *nlight_cfg);
+//        printf("app_set_night_light_config app_data->night_light_cfg %d \n ",app_data->night_light_cfg);
+//        printf("Remote command set led -nlight_cfg - %d", cfg);
+//       return 0;
+//    }
+//    return -1;
+//}
+
+
+// placed at 357 line no.
+/*
+    // test
+    for (int i = 0; i < AUTO_MODE_SCHED_NUM; i++) {
+        sched_weekday[i].en = true;
+        sched_weekday[i].hour = 0;
+        sched_weekday[i].minute = i;
+        sched_weekday[i].temp_c = TEMPERATURE_CELSIUS_VAL_DEF + i;
+        sched_weekday[i].temp_f = TEMPERATURE_FAHRENHEIT_VAL_DEF + i; //celsius_to_fahr(sched_weekday[i].temp_c);
+        sched_weekend[i].en = true;
+        sched_weekend[i].hour = 0;
+        sched_weekend[i].minute = i;
+        sched_weekend[i].temp_c = TEMPERATURE_CELSIUS_VAL_DEF + i;
+        sched_weekend[i].temp_f = TEMPERATURE_FAHRENHEIT_VAL_DEF + i; //celsius_to_fahr(sched_weekend[i].temp_c);
+    }
+*/
