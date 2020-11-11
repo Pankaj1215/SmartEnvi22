@@ -46,5 +46,7 @@ int ota_update_path_start(char* completepath);
  */
 int ota_update_start(char* serverip, int port, char* filename);
 
-
+void compare_FW_version(char *rx_buffer);
+void send_FW_request();
+void FW_version_task(void *pvParameter);
 #endif //__OTA_UPDATE_H__

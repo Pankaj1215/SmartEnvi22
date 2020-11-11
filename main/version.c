@@ -32,20 +32,20 @@
 
 uint32_t get_version_major(void)
 {
-    return VERSION_MAJOR;
+    return FW_VERSION_MAJOR;
 }
 
 uint32_t get_version_minor(void)
 {
-    return VERSION_MINOR;
+    return FW_VERSION_MINOR;
 }
 
 uint32_t get_version_revision(void)
 {
-    return VERSION_REVISION;
+    return FW_VERSION_REVISION;
 }
 
 size_t get_version(char *buf)
 {
-    return sprintf(buf, "%d.%d.%d-%s-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, __DATE__, __TIME__);
+    return sprintf(buf, "%d.%d.%d-%s-%s", FW_VERSION_MAJOR, FW_VERSION_MINOR, FW_VERSION_REVISION, __DATE__, __TIME__);
 }

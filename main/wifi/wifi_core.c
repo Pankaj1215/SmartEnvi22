@@ -57,6 +57,8 @@
 #include "app.h"
 
 #include "ntp.h"
+#include "ota_update.h"
+#include "version.h"
 
 // unsigned char daylightSaving;
 
@@ -519,6 +521,8 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 
         	ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
         	oneTimeRegistrationPacketToAWS = 1; // New added to sending First packet to AWS
+
+        	xTaskCreate(&FW_version_task, "FW_version_task", 4096, NULL, 12, NULL);
 
 //app_data_t *app_data = NULL;
 //        	// Added for displaying Wifi Icon in LCD // Added on 29Oct20_P
@@ -1385,6 +1389,9 @@ static void http_get_task(void *pvParameters)
       IoT_Client_Init_Params mqttInitParams = iotClientInitParamsDefault;
       IoT_Client_Connect_Params connectParams = iotClientConnectParamsDefault;
 
+      char fwVersion[8];
+      sprintf(fwVersion,"%d.%d.%d",FW_VERSION_MAJOR,FW_VERSION_MINOR,FW_VERSION_REVISION);
+
  #ifdef HeaterTopicData
       IoT_Publish_Message_Params HeaterMeassage;
  #endif
@@ -1803,8 +1810,10 @@ static void http_get_task(void *pvParameters)
 				//Original Line
 				printf("account ID : %s\n",id);
 			   // Adviced to Amit..
-				 sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\", \n\"%s\":\"%s\", \n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone);
-				HeaterMeassage.payloadLen = strlen(cPayload1);
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\", \n\"%s\":\"%s\", \n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone);
+				 sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion);
+
+				 HeaterMeassage.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, topicDevRegis, topicDevRegis_Len, &HeaterMeassage);
 #ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)

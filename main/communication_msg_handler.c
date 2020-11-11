@@ -60,6 +60,9 @@ struct comm_gsm* cgsm_dev;
 int message_label_value_handler(char* label, char* value, char* reply_buff);
 
 #ifdef  P_TESTING
+
+extern int version_major,version_minor,version_revision;
+
  // extern char replybuff[500];  // old
 extern char replybuff[150];  // Testing
 
@@ -278,6 +281,8 @@ int hexadecimalToDecimal(char hexVal[])
 
 int mainflux_msg_handler(char* msg, char* response)
 {
+	char major[2]={0},minor[2]={0},revision[2]={0};
+
     int i = 0;
     char label[100];
     char value[100];
@@ -377,6 +382,25 @@ int mainflux_msg_handler(char* msg, char* response)
                 strncpy(value, valuestart, valueend - valuestart); 
               //  printf("label [%s]\n", label);
               //  printf("value [%s]\n", value);
+
+                if(strcmp(label, "version_major") == 0)
+                				{
+                					strcpy(major,value); // "1"
+                					version_major= atoi(major);
+                					//printf("version_major: %s",major);
+                				}
+                				if(strcmp(label, "version_minor") == 0)
+                				{
+                					strcpy(minor, value); // "0"
+                					version_minor= atoi(minor);
+                					//printf("version_minor: %s",minor);
+                				}
+                				if(strcmp(label, "version_revision") == 0)
+                				{
+                					strcpy(revision, value);  // "6"
+                					version_revision= atoi(revision);
+                					//printf("version_revision: %s",revision);
+                				}
 
              //   if(strcmp(label, "cmd") == 0)   // Original
              	if(strcmp(label, "type") == 0)

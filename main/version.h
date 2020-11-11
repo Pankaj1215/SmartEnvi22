@@ -26,9 +26,9 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#define VERSION_MAJOR               (1)
-#define VERSION_MINOR               (6)
-#define VERSION_REVISION            (0)
+#define FW_VERSION_MAJOR               (1)
+#define FW_VERSION_MINOR               (6)
+#define FW_VERSION_REVISION           (2)// (0)  // old one was 0, 1 is only for testing ota
 
 /*!
  * \fn uint32_t get_version_major(void)

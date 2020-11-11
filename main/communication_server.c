@@ -58,15 +58,16 @@ int is_mqtt_running = 0;
 
 void ota_update_thread(void* param)
 {
-    while(1)
-    {
-//        LOG_INFO("ip %s, port %s, filename %s\n", ip, port, filename);
-        ota_update_start(ip, atoi(port), filename);
-
-//        LOG_INFO("If you are seeing this message, ota update failed\n");
-//        LOG_INFO("Retrying ota update\n");
-        delay_milli(50000);
-    }
+	// commneted for new ota logic, last firmware  ota logic
+//    while(1)
+//    {
+////        LOG_INFO("ip %s, port %s, filename %s\n", ip, port, filename);
+//        ota_update_start(ip, atoi(port), filename);
+//
+////        LOG_INFO("If you are seeing this message, ota update failed\n");
+////        LOG_INFO("Retrying ota update\n");
+//        delay_milli(50000);
+//    }
 }
 
 int load_balancing_comm_devices(void)

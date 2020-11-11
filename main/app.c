@@ -2974,53 +2974,53 @@ static app_mode_t menu_communications(app_data_t *data) {
                         btn_power_press_ms = cur_ms;
                     }
                 } else if (!((*btn >> BUTTON_UP_STAT) & 0x01)) { // up button is pressed
-                    if ((cur_ms - btn_up_press_ms) >= QUICK_SCROLL_LONG_PRESS_DUR_MS) {
-                        if ((m_comms == MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE) 
-                            || (m_comms == MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE)) {
-                            if (input_len == 0) {
-                                current_char = &(buf[0]);
-                                *current_char = MENU_COMMS_INPUT_CHARACTER_FIRST_CHAR; // set the first index value to the first char
-                                input_len = 1;
-                            } else if (*current_char == 0) {
-                                *current_char = *(current_char - 1);
-                            } else {
-                                char_fast_scroll_increment += 2;
-                                if (char_fast_scroll_increment > 10) {
-                                    char_fast_scroll_increment = 10;
-                                }
-                                *current_char += char_fast_scroll_increment;
-                                if (*current_char > MENU_COMMS_INPUT_CHARACTER_MAX_VAL) {
-                                    *current_char = MENU_COMMS_INPUT_CHARACTER_MAX_VAL;
-                                }
-                            }
-                            is_char_change = true;
-                        }
-                        btn_up_press_ms = cur_ms;
-                    }
+//                    if ((cur_ms - btn_up_press_ms) >= QUICK_SCROLL_LONG_PRESS_DUR_MS) {
+//                        if ((m_comms == MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE)
+//                            || (m_comms == MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE)) {
+//                            if (input_len == 0) {
+//                                current_char = &(buf[0]);
+//                                *current_char = MENU_COMMS_INPUT_CHARACTER_FIRST_CHAR; // set the first index value to the first char
+//                                input_len = 1;
+//                            } else if (*current_char == 0) {
+//                                *current_char = *(current_char - 1);
+//                            } else {
+//                                char_fast_scroll_increment += 2;
+//                                if (char_fast_scroll_increment > 10) {
+//                                    char_fast_scroll_increment = 10;
+//                                }
+//                                *current_char += char_fast_scroll_increment;
+//                                if (*current_char > MENU_COMMS_INPUT_CHARACTER_MAX_VAL) {
+//                                    *current_char = MENU_COMMS_INPUT_CHARACTER_MAX_VAL;
+//                                }
+//                            }
+//                            is_char_change = true;
+//                        }
+//                        btn_up_press_ms = cur_ms;
+//                    }
                 } else if (!((*btn >> BUTTON_DOWN_STAT) & 0x01)) { // down button is pressed
-                    if ((cur_ms - btn_down_press_ms) >= QUICK_SCROLL_LONG_PRESS_DUR_MS) {
-                        if ((m_comms == MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE) 
-                            || (m_comms == MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE)) {
-                            if (input_len == 0) {
-                                current_char = &(buf[0]);
-                                *current_char = MENU_COMMS_INPUT_CHARACTER_FIRST_CHAR; // set the first index value to the first char
-                                input_len = 1;
-                            } else if (*current_char == 0) {
-                                *current_char = *(current_char - 1);
-                            } else {
-                                char_fast_scroll_increment += 2;
-                                if (char_fast_scroll_increment > 10) {
-                                    char_fast_scroll_increment = 10;
-                                }
-                                *current_char -= char_fast_scroll_increment;
-                                if (*current_char < MENU_COMMS_INPUT_CHARACTER_MIN_VAL) {
-                                    *current_char = MENU_COMMS_INPUT_CHARACTER_MIN_VAL;
-                                }
-                            }
-                            is_char_change = true;
-                        }
-                        btn_down_press_ms = cur_ms;
-                    }
+//                    if ((cur_ms - btn_down_press_ms) >= QUICK_SCROLL_LONG_PRESS_DUR_MS) {
+//                        if ((m_comms == MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE)
+//                            || (m_comms == MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE)) {
+//                            if (input_len == 0) {
+//                                current_char = &(buf[0]);
+//                                *current_char = MENU_COMMS_INPUT_CHARACTER_FIRST_CHAR; // set the first index value to the first char
+//                                input_len = 1;
+//                            } else if (*current_char == 0) {
+//                                *current_char = *(current_char - 1);
+//                            } else {
+//                                char_fast_scroll_increment += 2;
+//                                if (char_fast_scroll_increment > 10) {
+//                                    char_fast_scroll_increment = 10;
+//                                }
+//                                *current_char -= char_fast_scroll_increment;
+//                                if (*current_char < MENU_COMMS_INPUT_CHARACTER_MIN_VAL) {
+//                                    *current_char = MENU_COMMS_INPUT_CHARACTER_MIN_VAL;
+//                                }
+//                            }
+//                            is_char_change = true;
+//                        }
+//                        btn_down_press_ms = cur_ms;
+//                    }
                 } else if (!((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)) { // forward button is pressed
                     if ((cur_ms - btn_forward_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         if (m_comms == MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE) {
@@ -3074,26 +3074,48 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_AP_MODE_SSID_VAL:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_SSID;
                             break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
-                            if (input_len > 0) {
-                                // delete end character
-                                *current_char = 0x00;
-                                current_char--;
-                                --input_len;
-                            } else {
-                                m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
-                            }
-                            break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
-                            if (input_len > 0) {
-                                // delete end character
-                                *current_char = 0x00;
-                                current_char--;
-                                --input_len;
-                            } else {
-                                m_comms = MENU_COMMUNICATIONS_WIFI_AP_PASSWORD;
-                            }
-                            break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
+//                            if (input_len > 0) {
+//                                // delete end character
+//                                *current_char = 0x00;
+//                                current_char--;
+//                                --input_len;
+//                            } else {
+//                                m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
+//                            }
+//                            break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
+//                            if (input_len > 0) {
+//                                // delete end character
+//                                *current_char = 0x00;
+//                                current_char--;
+//                                --input_len;
+//                            } else {
+//                                m_comms = MENU_COMMUNICATIONS_WIFI_AP_PASSWORD;
+//                            }
+//                            break;
+
+											case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
+//												if (input_len > 0) {
+//													// delete end character
+//													*current_char = 0x00;
+//													current_char--;
+//													--input_len;
+//												} else {
+													m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
+												//}
+												break;
+											case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
+//												if (input_len > 0) {
+//													// delete end character
+//													*current_char = 0x00;
+//													current_char--;
+//													--input_len;
+//												} else {
+													m_comms = MENU_COMMUNICATIONS_WIFI_AP_PASSWORD;
+												//}
+												break;
+
                         case MENU_COMMUNICATIONS_WPS_EN_INST:
                             // do nothing
                             break;
@@ -3136,23 +3158,23 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_WPS_EN_INST:
                             // do nothing
                             break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
-                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
+//                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
+//                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
                             // reset multiplier
-                            char_fast_scroll_increment = 0;
-                            if (input_len == 0) {
-                                current_char = &(buf[0]);
-                                *current_char = MENU_COMMS_INPUT_CHARACTER_FIRST_CHAR; // set the first index value to the first char
-                                input_len = 1;
-                            } else if (*current_char == 0) {
-                                *current_char = *(current_char - 1);
-                            } else if (*current_char == MENU_COMMS_INPUT_CHARACTER_MAX_VAL) {
-                                *current_char = MENU_COMMS_INPUT_CHARACTER_MIN_VAL;
-                            } else {
-                                *current_char += 1;
-                            }
-                            is_char_change = true;
-                            break;
+//                            char_fast_scroll_increment = 0;
+//                            if (input_len == 0) {
+//                                current_char = &(buf[0]);
+//                                *current_char = MENU_COMMS_INPUT_CHARACTER_FIRST_CHAR; // set the first index value to the first char
+//                                input_len = 1;
+//                            } else if (*current_char == 0) {
+//                                *current_char = *(current_char - 1);
+//                            } else if (*current_char == MENU_COMMS_INPUT_CHARACTER_MAX_VAL) {
+//                                *current_char = MENU_COMMS_INPUT_CHARACTER_MIN_VAL;
+//                            } else {
+//                                *current_char += 1;
+//                            }
+//                            is_char_change = true;
+//                            break;
                         }
 
                         update_display = true;
@@ -3194,24 +3216,24 @@ static app_mode_t menu_communications(app_data_t *data) {
                             comm_wifi_dev->wps_disable();
                             m_comms = MENU_COMMUNICATIONS_WPS;
                             break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
-                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
-                            // input
-                            // reset multiplier
-                            char_fast_scroll_increment = 0;
-                            if (input_len == 0) {
-                                current_char = &(buf[0]);
-                                *current_char = MENU_COMMS_INPUT_CHARACTER_FIRST_CHAR; // set the first index value to the first char
-                                input_len = 1;
-                            } else if (*current_char == 0) {
-                                *current_char = *(current_char - 1);
-                            } else if (*current_char == MENU_COMMS_INPUT_CHARACTER_MIN_VAL) {
-                                *current_char = MENU_COMMS_INPUT_CHARACTER_MAX_VAL;
-                            } else {
-                                *current_char -= 1;
-                            }
-                            is_char_change = true;
-                            break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
+//                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
+//                            // input
+//                            // reset multiplier
+//                            char_fast_scroll_increment = 0;
+//                            if (input_len == 0) {
+//                                current_char = &(buf[0]);
+//                                *current_char = MENU_COMMS_INPUT_CHARACTER_FIRST_CHAR; // set the first index value to the first char
+//                                input_len = 1;
+//                            } else if (*current_char == 0) {
+//                                *current_char = *(current_char - 1);
+//                            } else if (*current_char == MENU_COMMS_INPUT_CHARACTER_MIN_VAL) {
+//                                *current_char = MENU_COMMS_INPUT_CHARACTER_MAX_VAL;
+//                            } else {
+//                                *current_char -= 1;
+//                            }
+//                            is_char_change = true;
+//                            break;
                         }
                         update_display = true;
                     } else {
@@ -3290,13 +3312,13 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_AP_MODE_SSID_VAL:
                             // do nothing
                             break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
-                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
-                            current_char++;
-                            *current_char = 0;
-                            ++input_len;
-                            is_char_change = true;
-                            break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
+//                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
+//                            current_char++;
+//                            *current_char = 0;
+//                            ++input_len;
+//                            is_char_change = true;
+//                            break;
                         case MENU_COMMUNICATIONS_WPS_EN_INST:
                             // do nothing
                             break;
@@ -3342,7 +3364,7 @@ static app_mode_t menu_communications(app_data_t *data) {
                 printf("MENU_COMMUNICATIONS_AP_MODE\r\n");
                 display_menu("AP Mode", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
-            case MENU_COMMUNICATIONS_WIFI_AP:
+            case MENU_COMMUNICATIONS_WIFI_AP:  // removed wifi from lcd..11Nov20
                 display_menu("Wi-Fi", DISPLAY_COLOR, "connection", DISPLAY_COLOR);
                 printf("MENU_COMMUNICATIONS_WIFI_AP\r\n");
                 break;
@@ -3384,11 +3406,10 @@ static app_mode_t menu_communications(app_data_t *data) {
 //                // display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);  // Original
 //                display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);   //Testing
 
-                printf("comm_wifi_dev->wifi_ap_ssid %s\n",comm_wifi_dev->wifi_ap_ssid);
+                printf("uniqueDeviceID %s\n",uniqueDeviceID);
 
                 // display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);  // Original
                 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
-
 
                 break;
             case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
