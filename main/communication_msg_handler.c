@@ -87,6 +87,7 @@ unsigned char rgb_led_state;
 // unsigned char daylightSaving;
 // bool daylightSaving;
 unsigned char heater_On_Off_state_by_command;
+unsigned char TimerIntervalThresholdOffset;
 
 #endif
 
@@ -831,18 +832,18 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 				{  daylightSaving = 0;
 	 				   printf(" REMOTE_CMD_DAY_LIGHT_TIME_STATE OFF \n  ");
 	 				}
-
 	 				 set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)daylightSaving);
 	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "day_light_time_on", "status","success",  "value",value);
 	 				}
 	 else if (strcmp(label, REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME) == 0) {
-		 			   printf("REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME \n");
-		 			   CommandAck = SET_THRESHOLD_OFFSET_TIME_ACK;
-                       //Put this value in the variable for threshold offset value
-		 			  printf("REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME %s\r\n", value);
-
+		 			  CommandAck = SET_THRESHOLD_OFFSET_TIME_ACK;
+                      //Put this value in the variable for threshold offset value
+		 			 printf("REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME %s\r\n", value);
+		 			 TimerIntervalThresholdOffset = atoi(value);
+		 			 set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)TimerIntervalThresholdOffset);
+		 			 printf("TimerIntervalThresholdOffset %d \r\n", TimerIntervalThresholdOffset);
 		 			 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_threshold_offset_time", "status","success",  "value",value);
-		 				}
+		 			}
 	 else
 	 {
         printf("unhandled label %s %s\r\n", label, value);

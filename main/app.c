@@ -156,10 +156,17 @@ extern unsigned char manaully_Set_Temp_change;
 extern unsigned char manaully_night_Light_State_change;
 extern unsigned char manaully_child_Lock_State_change;
 
+unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
 // Threshold_Offset 30Minute calculation ..
 time_t TempChange_ms = 0;
 int time_OneMinuteOver = 0;
 int time_count = 0;
+
+extern unsigned char TimerIntervalThresholdOffset;
+extern unsigned char Hysteris_Thresh_Off_Set_UnderWarning;
+extern unsigned char Hysteris_Thresh_Off_Set_OverWarning;
+extern unsigned char TimeInterval_Thresh_OffSet_UnderWarning;
+extern unsigned char TimeInterval_Thresh_OffSet_OverWarning;
 
 #endif
 
@@ -213,10 +220,14 @@ en_anti_freeze = 1;  // It is used to enable anti freeze logic defualt ON.
 rgb_led_state = 1;
 heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
 
+// heater_On_Off_state_by_command =1;
+// while(1){
 if(heater_On_Off_state_by_command ==1)
-	heater_on();
+	{heater_on();printf("heater_On");}
 else
-	heater_off();
+	{heater_off();printf("heater_Off");}
+// }
+
 
 printf("heater_On_Off_state_by_command %d",heater_On_Off_state_by_command);
 }
@@ -306,31 +317,45 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, &(app_data->manual_temperature_fahrenheit));
     get_integer_from_storage(STORAGE_KEY_LAST_TIMER_SETTING, &(app_data->last_timer_setting_min));
     get_integer_from_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int *) &(app_data->is_auto_time_date_en));
-   // get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
+    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
+
+	//TimerIntervalThresholdOffset = 30;
+	// set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)TimerIntervalThresholdOffset);
+    get_integer_from_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int *) &(TimerIntervalThresholdOffset));
+    printf("TimerIntervalThresholdOffset %d \n",TimerIntervalThresholdOffset);
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     printf("before app_data->lastHeaterState %d \n",app_data->lastHeaterState);
     get_integer_from_storage(STORAGE_KEY_LAST_HEATER_STATE, (int *) &(app_data->lastHeaterState));
     printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-    if(app_data->lastHeaterState == 1)
-    	printf("After get integer Last heater state is ON \n");
-    else if (app_data->lastHeaterState == 0)
-    	printf("After get integer Last heater state is OFF \n");
-    else
-    	printf("Last heater status is unidentified \n");
+//    if(app_data->lastHeaterState == 1)
+//    	printf("After get integer Last heater state is ON \n");
+//    else if (app_data->lastHeaterState == 0)
+//    	printf("After get integer Last heater state is OFF \n");
+//    else
+//    	printf("Last heater status is unidentified \n");
+
+        if(TimerIntervalThresholdOffset == 1)
+        	printf("TimerIntervalThresholdOffset value 1 \n");
+        else if (TimerIntervalThresholdOffset == 0)
+        	printf("TimerIntervalThresholdOffset value 0 \n");
+        else
+        	printf("TimerIntervalThresholdOffset \n");
 #endif
 
     init_Variables();
     get_integer_from_storage(STORAGE_KEY_TIMEZONE_OFFSET_INDEX, &(app_data->timezone_offset_idx));
     get_integer_from_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, &(app_data->night_light_cfg));
     get_data_from_storage(STORAGE_KEY_SETTINGS, &(app_data->settings));
+    printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
+
     get_data_from_storage(STORAGE_KEY_DISPLAY_SETTINGS, &(app_data->display_settings));
-// get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
+    // get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
 
      if(daylightSaving == 1)
-     printf("daylightSaving  is One %d \n",daylightSaving);
+        printf("daylightSaving  is One %d \n",daylightSaving);
      else if(daylightSaving ==0)
-     	 printf("daylightSaving zero %d \n",daylightSaving);
+     	printf("daylightSaving zero %d \n",daylightSaving);
      else
      	printf("unvalid state\n ");
 
@@ -478,6 +503,10 @@ static void standby_mode_task(app_data_t *data) {
            - long press DOWN button to enter Menu mode
            - long press UP and TIMER buttons to enter Temperature sensor offset set mode
         */
+
+     if(heater_On_Off_state_by_command_ExistFromStandByMode ==1  || heater_On_Off_state_by_command ==1 ){ // New Added for Coming out of stand by mode  //
+    	 *mode = APP_MODE_MANUAL_TEMPERATURE; printf(" Out of stand by mode by Heater ON commmand \n");}
+
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
@@ -857,7 +886,6 @@ static void manual_temperature_mode_task(app_data_t *data) {
         }
         vTaskDelay(1 / portTICK_RATE_MS);
     }
-
     // exit with display on
     if (screen_off)
        display_on();
@@ -1194,8 +1222,6 @@ static void debug_mode_task(app_data_t *data) {
     if (screen_off)
        display_on();
 }
-
-
 
 static void timer_increment_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -2026,9 +2052,9 @@ static void menu_mode_task(app_data_t *data) {
                             *mode = menu_energy(data);
                             break;
 */
-                        case MENU_CALENDAR:
-                            *mode = menu_calendar(data);
-                            break;
+//                        case MENU_CALENDAR:   // Earlier Working in last firmware..
+//                            *mode = menu_calendar(data);
+//                            break;
                         case MENU_TIME_DATE:
                             *mode = menu_time_and_date(data);
                             break;
@@ -3068,9 +3094,9 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD:
                             m_comms = MENU_COMMUNICATIONS_WIFI_AP;
                             break;
-                        case MENU_COMMUNICATIONS_WPS_EN:
-                            m_comms = MENU_COMMUNICATIONS_WPS;
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS_EN:// commented for testing
+//                            m_comms = MENU_COMMUNICATIONS_WPS;
+//                            break;
                         case MENU_COMMUNICATIONS_AP_MODE_SSID_VAL:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_SSID;
                             break;
@@ -3116,9 +3142,9 @@ static app_mode_t menu_communications(app_data_t *data) {
 												//}
 												break;
 
-                        case MENU_COMMUNICATIONS_WPS_EN_INST:
-                            // do nothing
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS_EN_INST:// commented for testing
+//                            // do nothing
+//                            break;
                         }
 
                         update_display = true;
@@ -3131,12 +3157,12 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_AP_MODE:
                             m_comms = MENU_COMMUNICATIONS_WIFI_AP;
                             break;
-                        case MENU_COMMUNICATIONS_WIFI_AP:
-                            m_comms = MENU_COMMUNICATIONS_WPS;
-                            break;
-                        case MENU_COMMUNICATIONS_WPS:
-                            m_comms = MENU_COMMUNICATIONS_AP_MODE;
-                            break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP:// commented for testing
+//                            m_comms = MENU_COMMUNICATIONS_WPS;
+//                            break;
+//                        case MENU_COMMUNICATIONS_WPS:// commented for testing
+//                            m_comms = MENU_COMMUNICATIONS_AP_MODE;
+//                            break;
                         case MENU_COMMUNICATIONS_AP_MODE_EN:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_SSID;
                             break;
@@ -3149,15 +3175,15 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD:
                             m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
                             break;
-                        case MENU_COMMUNICATIONS_WPS_EN:
-                            // do nothing
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS_EN:  // commented for testing
+//                            // do nothing
+//                            break;
                         case MENU_COMMUNICATIONS_AP_MODE_SSID_VAL:
                             // do nothing
                             break;
-                        case MENU_COMMUNICATIONS_WPS_EN_INST:
-                            // do nothing
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS_EN_INST:  // commented for testing
+//                            // do nothing
+//                            break;
 //                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
 //                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
                             // reset multiplier
@@ -3184,9 +3210,9 @@ static app_mode_t menu_communications(app_data_t *data) {
                 } else if ((*btn & (1 << BUTTON_DOWN_STAT)) != (prev_btn & (1 << BUTTON_DOWN_STAT))) { // down button toggles
                     if ((*btn >> BUTTON_DOWN_STAT) & 0x01) { // unpressed
                         switch (m_comms) {
-                        case MENU_COMMUNICATIONS_AP_MODE:
-                            m_comms = MENU_COMMUNICATIONS_WPS;
-                            break;
+//                        case MENU_COMMUNICATIONS_AP_MODE: // commented for testing
+//                            m_comms = MENU_COMMUNICATIONS_WPS;
+//                            break;
                         case MENU_COMMUNICATIONS_WIFI_AP:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE;
                             break;
@@ -3205,17 +3231,17 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD:
                             m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
                             break;
-                        case MENU_COMMUNICATIONS_WPS_EN:
-                            // do nothing
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS_EN:// commented for testing
+//                            // do nothing
+//                            break;
                         case MENU_COMMUNICATIONS_AP_MODE_SSID_VAL:
                             // do nothing
                             break;
-                        case MENU_COMMUNICATIONS_WPS_EN_INST:
-                            // disable WPS
-                            comm_wifi_dev->wps_disable();
-                            m_comms = MENU_COMMUNICATIONS_WPS;
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS_EN_INST:// commented for testing
+//                            // disable WPS
+//                            comm_wifi_dev->wps_disable();
+//                            m_comms = MENU_COMMUNICATIONS_WPS;
+//                            break;
 //                        case MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE:
 //                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE:
 //                            // input
@@ -3253,9 +3279,9 @@ static app_mode_t menu_communications(app_data_t *data) {
                             memcpy(data->sta_ssid, ap_info.ssid, strlen((char *) ap_info.ssid));
                             m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
                             break;
-                        case MENU_COMMUNICATIONS_WPS:
-                            m_comms = MENU_COMMUNICATIONS_WPS_EN;
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS:// commented for testing
+//                            m_comms = MENU_COMMUNICATIONS_WPS_EN;
+//                            break;
                         case MENU_COMMUNICATIONS_AP_MODE_EN:
                         	printf("Line no 3238 \n ");
 //                            // enable AP mode
@@ -3303,12 +3329,12 @@ static app_mode_t menu_communications(app_data_t *data) {
                             t_last_char_blink_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                             last_char_blink = false;
                             break;
-                        case MENU_COMMUNICATIONS_WPS_EN:
-                            // WPS
-                            // start WPS
-                            comm_wifi_dev->wps_enable();
-                            m_comms = MENU_COMMUNICATIONS_WPS_EN_INST;
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS_EN:  // commented for testing
+//                            // WPS
+//                            // start WPS
+//                            comm_wifi_dev->wps_enable();
+//                            m_comms = MENU_COMMUNICATIONS_WPS_EN_INST;
+//                            break;
                         case MENU_COMMUNICATIONS_AP_MODE_SSID_VAL:
                             // do nothing
                             break;
@@ -3319,9 +3345,9 @@ static app_mode_t menu_communications(app_data_t *data) {
 //                            ++input_len;
 //                            is_char_change = true;
 //                            break;
-                        case MENU_COMMUNICATIONS_WPS_EN_INST:
-                            // do nothing
-                            break;
+//                        case MENU_COMMUNICATIONS_WPS_EN_INST:// commented for testing
+//                            // do nothing
+//                            break;
                         }
 
                         update_display = true;
@@ -3368,10 +3394,10 @@ static app_mode_t menu_communications(app_data_t *data) {
                 display_menu("Wi-Fi", DISPLAY_COLOR, "connection", DISPLAY_COLOR);
                 printf("MENU_COMMUNICATIONS_WIFI_AP\r\n");
                 break;
-            case MENU_COMMUNICATIONS_WPS:
-                printf("MENU_COMMUNICATIONS_WPS\r\n");
-                display_menu("WPS", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
-                break;
+//            case MENU_COMMUNICATIONS_WPS:
+//                printf("MENU_COMMUNICATIONS_WPS\r\n");  // commented for testing
+//                display_menu("WPS", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+//                break;
             case MENU_COMMUNICATIONS_AP_MODE_EN:
                 printf("MENU_COMMUNICATIONS_AP_MODE_EN\r\n" );
                // comm_wifi_dev->is_wifi_ap_enabled() = (&esp32_wifi_is_ap_enabled); // New Added for testing omnly ..
@@ -3428,10 +3454,10 @@ static app_mode_t menu_communications(app_data_t *data) {
                     printf("\r\nlast char %c\r\n", *current_char);
                 }
                 break;
-            case MENU_COMMUNICATIONS_WPS_EN_INST:
-                printf("MENU_COMMUNICATIONS_WPS_EN_INST\r\n");
-                display_wps_mode_msg(DISPLAY_COLOR);
-                break;
+//            case MENU_COMMUNICATIONS_WPS_EN_INST:
+//                printf("MENU_COMMUNICATIONS_WPS_EN_INST\r\n");  // commented for testing
+//                display_wps_mode_msg(DISPLAY_COLOR);
+//                break;
             }
 
             update_display = false;
@@ -3642,9 +3668,7 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Auto <--> Off
                             data->settings.is_night_light_auto_brightness_en = !data->settings.is_night_light_auto_brightness_en;
-
                             manaully_night_Light_State_change= 1;  // New Added for manaully_night_Light_State_change notification to AWS
-
                             break;
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
@@ -3767,8 +3791,6 @@ static app_mode_t menu_settings(app_data_t *data) {
     // return new mode
     return next_mode;
 }
-
-
 
 static app_mode_t menu_display_settings(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -4170,9 +4192,10 @@ static void temp_sensor_task(void *param) {
     printf("In Temp task \n ");
 
     while(1) {
-
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
+       // *ambient_temp_c = 7;
         tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);// Calcius converted to Fehranite..
+       // tempInFehrenniete = 45;
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
    if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
 		  if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
@@ -4187,7 +4210,7 @@ static void temp_sensor_task(void *param) {
 
 		  if(en_anti_freeze == 1){
 			  printf("en_anti_freeze in calsius minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
-			  if(*ambient_temp_c  < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) {
+			  if(*ambient_temp_c  < ANTI_FREEZE_LIMIT_CELSIUS) {
 			  heater_on();
 			  heater_On_Off_state_by_command =1 ;
 			 app_data->lastHeaterState = true;
@@ -4202,7 +4225,6 @@ static void temp_sensor_task(void *param) {
 //		     printf("Alert meassage for passing SET TEMP");
 //		     setTempThresholdOffsetCrossed = 1;
 //		   }
-
      }
    else{
 	   if(tempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
@@ -4210,29 +4232,30 @@ static void temp_sensor_task(void *param) {
 	      	 heater_On_Off_state_by_command = 0 ;
 	  		 app_data->lastHeaterState = false;
 	  		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-	  		 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+	  		// printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 	      	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
-	      	  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX);
-	      	  printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
+	      	//  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX);
+	      	 // printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
 	        }
 
-	   printf("en_anti_freeze : %d\n ",en_anti_freeze);
+	  // printf("en_anti_freeze : %d\n ",en_anti_freeze);
 	   if(en_anti_freeze == 1){
-	       printf("en_anti_freeze logic Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
-	       printf("en_anti_freeze logic tempInFehrenniete %d\n ",tempInFehrenniete);
-		   if(tempInFehrenniete  < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN)  {
+	      // printf("en_anti_freeze logic Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
+	     //  printf("en_anti_freeze logic tempInFehrenniete %d\n ",tempInFehrenniete);
+		   if(tempInFehrenniete  < ANTI_FREEZE_LIMIT_FEHRANEITE)  {
 	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
 	          heater_on();
 	          heater_On_Off_state_by_command = 1 ; // As there is waring which will indicate that heater is in ON state.
 	  		  app_data->lastHeaterState = true;
 	  		  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-	  		  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+	  		//  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 	      	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
-	      	  printf("\n In Fahrenite minTemperatureThresholdReachedWarning \n ");
+	      	 // printf("\n In Fahrenite minTemperatureThresholdReachedWarning \n ");
 	        }
 	      } // end of  if(en_anti_freeze ==1){
 
-
+ #define comment_MalFun
+#ifdef comment_MalFun
 	     unsigned char hysterisFlag =0;
 	     if(tempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)  // ambient temperature in fahraneit
 	     {
@@ -4240,29 +4263,32 @@ static void temp_sensor_task(void *param) {
 	     }
 	     if(hysterisFlag == 1)
 	       {
-	    	 if( tempInFehrenniete < (*target_temp_f - TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
+	    	 if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
 			 {
-	    		 printf("Alert meassage for hysterisFlag once true  under \n ");
+	    		// printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
+	    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
 			 }
-
-	    	 if( tempInFehrenniete > (*target_temp_f + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
+	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
 			 {
-				 printf("Alert meassage for hysterisFlag once true  over Alert meassage for passing SET TEMP\n ");
+	    		 Hysteris_Thresh_Off_Set_OverWarning =1;
+	    		// printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
 			 }
-
 	       } // end of  if(hysterisFlag == 1)
         }// end of else
 
        // printf("temp_offset_c in calsius=%d\r\n", *temp_offset_c);
-      //  printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
-     //   printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
-
+      //printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
+      // printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
+      // printf("Set Temp in fehraneite =%d\r\n", *target_temp_f);
         if( Prev_SetTemp != *target_temp_f )
         {
         	Prev_SetTemp = *target_temp_f;
-        	time_t TempChange_ms = 0;
-        	int time_OneMinuteOver = 0;
-        	int time_count = 0;
+//        	time_t TempChange_ms = 0;
+//        	int time_OneMinuteOver = 0;
+//        	int time_count = 0;
+        	 TempChange_ms = 0;
+        	 time_OneMinuteOver = 0;
+        	 time_count = 0;
         }
 
 	  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -4270,28 +4296,35 @@ static void temp_sensor_task(void *param) {
 				TempChange_ms = cur_ms;
 				time_OneMinuteOver = 1;
 			}
-		printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
+		//printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
 		if(time_OneMinuteOver == 1)
 		{
 		  time_count++;
 		  time_OneMinuteOver = 0;
 		}
-		printf("time_count %d \n", time_count);
+		//printf("time_count %d \n", time_count);
+
+	//	unsigned char TimerIntervalThresholdOffset;
 #define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
+
 		if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
-		   printf("2 minutes over \n ");
+		 //  printf("2 minutes over \n ");
 		   time_OneMinuteOver =0;
 		   time_count = 0;
 
-			if( tempInFehrenniete < (*target_temp_f - TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
+			if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
 			 {
-				 printf("Alert meassage for hysterisFlag once true  under \n ");
+				// printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
+				 TimeInterval_Thresh_OffSet_UnderWarning = 1;
 			 }
-			 if( tempInFehrenniete > (*target_temp_f + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
+			 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
 			 {
-				 printf("Alert meassage for hysterisFlag once true  over \n ");
+				// printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
+				 TimeInterval_Thresh_OffSet_OverWarning = 1;
 			 }
 		}
+
+#endif
 
 #endif
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
@@ -4347,7 +4380,6 @@ static void pilot_light_task(void *param) {
             }
             on = true;
         }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 }
@@ -4377,7 +4409,7 @@ static void night_light_task(void *param) {
                     }
 
                    // *nlight_cfg = 0xFFFFFF;
-                    nlight_br = 76 ;  // Added for Testing // 77 bright will be less // 99 brightness will be high
+                //     nlight_br = 76 ;  // Added for Testing // 77 bright will be less // 99 brightness will be high
 //                    int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;  // Exsiting logic
 //                    int g_br = nlight_br * GET_LED_G_VAL(*nlight_cfg) / 100;
 //                    int b_br = nlight_br * GET_LED_B_VAL(*nlight_cfg) / 100;
@@ -4411,7 +4443,6 @@ static void night_light_task(void *param) {
                    // uint_32 temp = 0;
                    // temp = ((b_br | temp) << 16) | (( g_br | temp) <<8) |( r_br | temp);
                   //  printf("\n temp : %d vs nlight_cfg  %d\n ",temp,*nlight_cfg );
-
                    // night_light_set_br(0, 255, 0);       //  night_light_set_br(50, 255, 50);
                     t_set_brightness_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                    // printf("nlight_br %d \n ",nlight_br);                        // printf("\n\n*ambient_light %d \n ",*ambient_light);         // printf("*nlight_cfg %d \n ",*nlight_cfg);                  // printf("night light %d %d %d\r\n", r_br, g_br, b_br);
@@ -4581,7 +4612,6 @@ int app_set_target_temp(int temp_c) {
     }//  if (app_data)
     return -1;
 }
-
 int app_get_target_temp(void) {
     if (app_data) { // Original Lines
         printf("From app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
@@ -4590,7 +4620,6 @@ int app_get_target_temp(void) {
      printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
 	 return 0x80000000;  // Original Line
 }
-
 int app_set_timer(int timer) {
     if (app_data) {
         if (timer >= 0
@@ -4603,48 +4632,37 @@ int app_set_timer(int timer) {
     }
     return -1;
 }
-
 int app_get_timer(void) {
     if (app_data) {
         return app_data->current_timer_setting_min;
     }
-
     return 0x80000000;
 }
-
 int app_activate_child_lock(bool en) {
     if (app_data) {
         app_data->is_child_lock_active = en;
         return 0;
     }
-
     return -1;
 }
-
 bool app_is_child_lock_activated(void) {
     if (app_data) {
         return app_data->is_child_lock_active;
     }
-
     return false;
 }
-
 int app_set_sched(void) {
     if (app_data) {
         return 0;
     }
-
     return -1;
 }
-
 int app_get_sched(void) {
     if (app_data) {
         return 0;
     }
-
     return -1;
 }
-
 int app_enable_autoset_time_date(bool en) {
     if (app_data) {
         bool *is_auto_time_date_en = &(app_data->is_auto_time_date_en);
@@ -4655,13 +4673,11 @@ int app_enable_autoset_time_date(bool en) {
                 ntp_init(NTP_SERVER);
             else if (ntp_is_enabled() && en == false)
                 ntp_deinit();
-
             // save new value to flash
             set_integer_to_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int) *is_auto_time_date_en);
             return 0;
         }
     }
-
     return -1;
 }
 
@@ -4669,7 +4685,6 @@ bool app_is_autoset_time_date_enabled(void) {
     if (app_data) {
         return app_data->is_auto_time_date_en;
     }
-
     return false;
 }
 
@@ -4685,7 +4700,6 @@ int app_enable_ap_mode(bool en) {
             return 0;
         }
     }
-
     return -1;
 }
 
@@ -4695,25 +4709,20 @@ bool app_is_ap_mode_enabled(void) {
             return comm_wifi_dev->is_wifi_ap_enabled();
         }
     }
-
     return false;
 }
-
 int app_set_sta_mode_ssid(char *ssid, size_t len) {
     if (app_data) {
         set_string_to_storage(NVS_LUCIDTRON_SSID_KEY, ssid);
         return 0;
     }
-
     return -1;
 }
-
 int app_set_sta_mode_password(char *pw, size_t len) {
     if (app_data) {
         set_string_to_storage(NVS_LUCIDTRON_PW_KEY, pw);
         return 0;
     }
-
     return -1;
 }
 
@@ -4724,12 +4733,10 @@ int app_enable_sta_mode(bool en) {
                 get_string_from_storage(NVS_LUCIDTRON_SSID_KEY, app_data->sta_ssid);
                 get_string_from_storage(NVS_LUCIDTRON_PW_KEY, app_data->sta_pw);
                 comm_wifi_dev->wifi_client_enable(app_data->sta_ssid, app_data->sta_pw);
-
                 return 0;
             }
         }
     }
-
     return -1;
 }
 
@@ -4737,10 +4744,8 @@ bool app_is_sta_mode_enabled(void) {
     if (app_data) {
         return true;
     }
-
     return false;
 }
-
 int app_set_temp_unit(int unit) {
     if (app_data) {
         if (unit == TEMP_UNIT_CELSIUS
@@ -4750,18 +4755,14 @@ int app_set_temp_unit(int unit) {
             return 0;
         }
     }
-
     return -1;
 }
-
 int app_get_temp_unit(void) {
     if (app_data) {
         return app_data->settings.temperature_unit;
     }
-
     return -1;
 }
-
 int app_enable_autodim_pilot_light(bool en) {
     if (app_data) {
         bool *is_dim_pilot_light_en = &(app_data->settings.is_dim_pilot_light_en);
@@ -4771,7 +4772,6 @@ int app_enable_autodim_pilot_light(bool en) {
         }
         return 0;
     }
-
     return -1;
 }
 
@@ -4779,7 +4779,6 @@ bool app_is_autodim_pilot_light_enabled(void) {
     if (app_data) {
         return app_data->settings.is_dim_pilot_light_en;
     }
-
     return false;
 }
 
@@ -4793,7 +4792,6 @@ int app_enable_night_light_auto_brightness(bool en) {
         }
         return 0;
     }
-
     return -1;
 }
 
@@ -4801,7 +4799,6 @@ bool app_is_night_light_auto_brightness_enabled(void) {
     if (app_data) {
         return app_data->settings.is_night_light_auto_brightness_en;
     }
-
     return false;
 }
 
@@ -4809,9 +4806,14 @@ void app_set_heater_state(int heater_state)
 {
 	heater_On_Off_state_by_command = heater_state ;
 	if(heater_On_Off_state_by_command ==1)
-	 { heater_on(); }
+	 { heater_On_Off_state_by_command_ExistFromStandByMode = 1; heater_on(); }
 	else
-	{ heater_off(); }
+	{ heater_On_Off_state_by_command_ExistFromStandByMode = 0; heater_off(); }
+
+    if(heater_On_Off_state_by_command_ExistFromStandByMode == 0){ // New Added for Coming out of stand by mode
+    	app_data->mode  = APP_MODE_STANDBY; printf(" Come to stand by mode by Heater OFF commmand \n");}
+    if(heater_On_Off_state_by_command_ExistFromStandByMode == 1){ // New Added for Coming out of stand by mode
+    	app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; printf(" Come to stand by mode by Heater OFF commmand \n");}
 
 	  app_data->lastHeaterState = heater_state;
 	  	if(app_data->lastHeaterState == 1)
@@ -4821,22 +4823,13 @@ void app_set_heater_state(int heater_state)
 	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 	  printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 }
-
 void RGB_LED_ON_OFF(int value)
-{
-	if(value == 1)
-	{
-		rgb_led_state = 1;  printf("RGB LED ON \n");
-	}
+{	if(value == 1)
+	{	rgb_led_state = 1;  printf("RGB LED ON \n");}
 	else
-	{
-		rgb_led_state = 0;   printf("RGB LED OFF \n");
+	{rgb_led_state = 0;   printf("RGB LED OFF \n");
 	}
-
 }
-
-//void
-
 int app_set_night_light_config(int cfg) {
 	printf("In app_set_night_light_config function \n ");
     if (app_data) {
@@ -4845,11 +4838,7 @@ int app_set_night_light_config(int cfg) {
        *nlight_cfg = cfg;
        // save
         set_integer_to_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, cfg);
-
-       // app_data->night_light_cfg = cfg ;  // New Added P_Test_04Oct2020_13_42PM
-        printf("Remote command set led -*nlight_cfg - %d", *nlight_cfg);
-        printf("app_set_night_light_config app_data->night_light_cfg %d \n ",app_data->night_light_cfg);
-        printf("Remote command set led -nlight_cfg - %d", cfg);
+        printf("Remote command set led -*nlight_cfg - %d", *nlight_cfg);  printf("app_set_night_light_config app_data->night_light_cfg %d \n ",app_data->night_light_cfg);         printf("Remote command set led -nlight_cfg - %d", cfg);
        return 0;
     }
     return -1;
@@ -4859,7 +4848,6 @@ int app_get_night_light_config(void) {
     if (app_data) {
         return app_data->night_light_cfg;
     }
-
     return -1;
 }
 
@@ -4872,7 +4860,6 @@ int app_enable_child_lock(bool en) {
         }
         return 0;
     }
-
     return -1;
 }
 
@@ -4880,7 +4867,6 @@ bool app_is_child_lock_enabled(void) {
     if (app_data) {
         return app_data->settings.is_child_lock_en;
     }
-
     return false;
 }
 
@@ -4893,7 +4879,6 @@ int app_enable_autodim_display(bool en) {
         }
         return 0;
     }
-
     return -1;
 }
 
@@ -4956,15 +4941,12 @@ int app_set_auto_screen_off_delay(int delay) {
     }
     return -1;
 }
-
 int app_get_auto_screen_off_delay(void) {
     if (app_data) {
         return app_data->display_settings.auto_screen_off_delay_sec;
     }
-
     return 0x80000000;
 }
-
 int app_start_fw_update(void) {
     if (app_data) {
 #if 0 //TODO:
