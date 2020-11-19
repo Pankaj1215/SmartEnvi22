@@ -439,6 +439,9 @@ static void app_task(void *param) {
      xTaskCreate(night_light_task, "nlight_task", 4096, (void *)app_data, 12, NULL);
     // start task that controls display brightness
     xTaskCreate(display_brightness_task, "dbright_task", 4096, (void *)app_data, 12, NULL);
+
+    xTaskCreate(heater_state_change_task, "hscan_task", 4096, (void *)app_data, 12, NULL);
+
     while (1) {
         switch (*mode) {
         case APP_MODE_STANDBY:
@@ -673,7 +676,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
         if (*ambient_temp_c < data->manual_temperature_celsius) {
             if (!is_heater_on) {
 
-            	if(heater_On_Off_state_by_command == 1){
+            	// if(heater_On_Off_state_by_command == 1){
             	heater_on();
                 is_heater_on = true;
 
@@ -681,7 +684,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                     app_data->lastHeaterState = true;
                     set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
                #endif
-            	}
+            	// }
                // printf("MANUAL: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
             }
         } else {
@@ -693,7 +696,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
             if (*ambient_temp_c >= (data->manual_temperature_celsius + hysteresis_c)) {
                 if (is_heater_on) {
 
-                 if(heater_On_Off_state_by_command == 1){
+                  // if(heater_On_Off_state_by_command == 1){
                 	heater_off();
                     is_heater_on = false;
 
@@ -702,7 +705,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                     	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
                     	printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 					#endif
-                 } // end of if(heater_On_Off_state_by_command == 1)
+                // } // end of if(heater_On_Off_state_by_command == 1)
                   //  printf("MANUAL heater off ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
                 }
             }
@@ -1325,7 +1328,7 @@ static void timer_increment_mode_task(app_data_t *data) {
             if (*ambient_temp_c < *target_temp_c) {
                 if (!is_heater_on) {
 
-                	if(heater_On_Off_state_by_command == 1){
+                	// if(heater_On_Off_state_by_command == 1){
 
                 	heater_on();
                     is_heater_on = true;
@@ -1334,7 +1337,7 @@ static void timer_increment_mode_task(app_data_t *data) {
 						 app_data->lastHeaterState = true;
 						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 					#endif
-                	}
+                	// }
                   //  printf("TIMER: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
                 }
               }
@@ -1348,7 +1351,7 @@ static void timer_increment_mode_task(app_data_t *data) {
 					if (*ambient_temp_c >= (*target_temp_c + hysteresis_c)) {
 						if (is_heater_on) {
 
-							if(heater_On_Off_state_by_command == 1){
+							// if(heater_On_Off_state_by_command == 1){
 
 							heater_off();
 							is_heater_on = false;
@@ -1358,7 +1361,7 @@ static void timer_increment_mode_task(app_data_t *data) {
 								 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 								 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 							#endif
-							}
+							// }
 							// printf("TIMER: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
 						}
 					}// end of if (*ambient_temp_c >= (*target_temp_c + hysteresis_c))
@@ -1799,7 +1802,7 @@ static void auto_mode_task(app_data_t *data) {
         if (*ambient_temp_c < auto_temp_c) {
             if (!is_heater_on) {
 
-            	if(heater_On_Off_state_by_command == 1){
+             //	if(heater_On_Off_state_by_command == 1){
                 heater_on();
                 is_heater_on = true;
 
@@ -1807,7 +1810,7 @@ static void auto_mode_task(app_data_t *data) {
 					 app_data->lastHeaterState = true;
 					 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 				#endif
-            	}
+            	// }
               //  printf("AUTO: heater on ambient=%d target=%d\r\n", *ambient_temp_c, auto_temp_c);
             }
         } else {
@@ -1819,7 +1822,7 @@ static void auto_mode_task(app_data_t *data) {
             if (*ambient_temp_c >= (auto_temp_c + hysteresis_c)) {
                 if (is_heater_on) {
 
-                	if(heater_On_Off_state_by_command == 1){
+                	// if(heater_On_Off_state_by_command == 1){
                 	heater_off();
                     is_heater_on = false;
 
@@ -1829,7 +1832,7 @@ static void auto_mode_task(app_data_t *data) {
 						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 						 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 					#endif
-                	}// endof if(heater_On_Off_state_by_command == 1)
+                	// }// endof if(heater_On_Off_state_by_command == 1)
                   //  printf("AUTO: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, auto_temp_c);
                 }
             }
@@ -3169,12 +3172,12 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_AP_MODE_SSID:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_EN;
                             break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_SSID:
-                            m_comms = MENU_COMMUNICATIONS_WIFI_AP_PASSWORD;
+//                        case MENU_COMMUNICATIONS_WIFI_AP_SSID:// commented on 19Nov2020
+//                            m_comms = MENU_COMMUNICATIONS_WIFI_AP_PASSWORD;
                             break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD:
-                            m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
-                            break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD:  // commented on 19Nov2020
+//                            m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
+//                            break;
 //                        case MENU_COMMUNICATIONS_WPS_EN:  // commented for testing
 //                            // do nothing
 //                            break;
@@ -3225,12 +3228,12 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_AP_MODE_SSID:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_EN;
                             break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_SSID:
-                            m_comms = MENU_COMMUNICATIONS_WIFI_AP_PASSWORD;
-                            break;
-                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD:
-                            m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
-                            break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP_SSID:  // commented on 19Nov2020
+//                            m_comms = MENU_COMMUNICATIONS_WIFI_AP_PASSWORD;
+//                            break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP_PASSWORD:// commented on 19Nov2020
+//                            m_comms = MENU_COMMUNICATIONS_WIFI_AP_SSID;
+//                            break;
 //                        case MENU_COMMUNICATIONS_WPS_EN:// commented for testing
 //                            // do nothing
 //                            break;
@@ -4184,7 +4187,6 @@ static void temp_sensor_task(void *param) {
     int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
     int tempInFehrenniete = 0;
     int Prev_SetTemp = 0;
-
     int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
     int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
 
@@ -4235,7 +4237,7 @@ static void temp_sensor_task(void *param) {
 	  		// printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 	      	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
 	      	//  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX);
-	      	 // printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
+	      	  printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
 	        }
 
 	  // printf("en_anti_freeze : %d\n ",en_anti_freeze);
@@ -4277,10 +4279,10 @@ static void temp_sensor_task(void *param) {
         }// end of else
 
        // printf("temp_offset_c in calsius=%d\r\n", *temp_offset_c);
-      //printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
-      // printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
-      // printf("Set Temp in fehraneite =%d\r\n", *target_temp_f);
-        if( Prev_SetTemp != *target_temp_f )
+       //printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
+       printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
+       printf("Set Temp in fehraneite =%d\r\n", *target_temp_f);
+         if( Prev_SetTemp != *target_temp_f )
         {
         	Prev_SetTemp = *target_temp_f;
 //        	time_t TempChange_ms = 0;
@@ -4306,26 +4308,26 @@ static void temp_sensor_task(void *param) {
 
 	//	unsigned char TimerIntervalThresholdOffset;
 #define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
+		printf("TimerIntervalThresholdOffset %d \n", TimerIntervalThresholdOffset);
+	  	if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
+	    //if(time_count >= TimerIntervalThresholdOffset){
 
-		if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
 		 //  printf("2 minutes over \n ");
 		   time_OneMinuteOver =0;
 		   time_count = 0;
 
 			if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
 			 {
-				// printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
+				 printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
 				 TimeInterval_Thresh_OffSet_UnderWarning = 1;
 			 }
 			 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
 			 {
-				// printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
+				 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
 				 TimeInterval_Thresh_OffSet_OverWarning = 1;
 			 }
 		}
-
 #endif
-
 #endif
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
     }// end of while
@@ -4431,12 +4433,12 @@ static void night_light_task(void *param) {
                     {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
                         night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
                     	// night_light_set_br(99, 0, 0); //  night_light_set_br(0, 255, 0);
-                      printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
-                     printf("Led ON in night light task function \n ");
+                        printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
+                       // printf("Led ON in night light task function \n ");
                     }
                     if(rgb_led_state == 0)
                     {     night_light_off();
-                    printf("Led OFF in night light task function \n ");
+                        // printf("Led OFF in night light task function \n ");
                     }
 
                    // int temp = 0;

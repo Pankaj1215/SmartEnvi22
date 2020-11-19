@@ -46,6 +46,8 @@
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 
  int  getSubString(char *source, char *target,int from, int to);
+void heater_state_change_task(void *param);
+
 
 #define ESP32_WIFI_UNKNOWN      0
 #define ESP32_WIFI_CLIENT       1
