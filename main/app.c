@@ -126,7 +126,7 @@ static void display_brightness_task(void *param);
 static int wifi_conn_stat(int stat);
 
 // app_data_t *app_data = NULL;  // Original
-extern app_data_t *app_data; // TESTING // changed for wifi Icon
+//extern app_data_t *app_data; // TESTING // changed for wifi Icon
 
 //static struct comm_wifi *comm_wifi_dev = NULL;  // Original  Commented only for Testing
 extern struct comm_wifi *comm_wifi_dev = NULL; // Testing
@@ -148,7 +148,10 @@ extern unsigned char rgb_led_state;
 // extern unsigned char daylightSaving;   // New Added for Day light on Off
 // bool daylightSaving;   // New Added for Day light on Off
 // unsigned char daylightSaving;   // New Added for Day light on Off
-int daylightSaving;   // New Added for Day light on Off
+// int daylightSaving;   // New Added for Day light on Off
+
+#define NTP_Testing_dayLightSaving  // New testing Added ..on 15_51pm
+
 
 extern unsigned char en_anti_freeze;
 extern unsigned char heater_On_Off_state_by_command;
@@ -317,30 +320,22 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, &(app_data->manual_temperature_fahrenheit));
     get_integer_from_storage(STORAGE_KEY_LAST_TIMER_SETTING, &(app_data->last_timer_setting_min));
     get_integer_from_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int *) &(app_data->is_auto_time_date_en));
-    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
+    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, &(app_data->daylightSaving));
 
 	//TimerIntervalThresholdOffset = 30;
-	// set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)TimerIntervalThresholdOffset);
-    get_integer_from_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int *) &(TimerIntervalThresholdOffset));
-    printf("TimerIntervalThresholdOffset %d \n",TimerIntervalThresholdOffset);
+	// set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)app_data-> TimerIntervalThresholdOffset);
+    app_data-> TimerIntervalThresholdOffset = 15; /// Default Value
+   // set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)app_data-> TimerIntervalThresholdOffset);
+    get_integer_from_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, &(app_data-> TimerIntervalThresholdOffset));
+
+    TimerIntervalThresholdOffset = app_data-> TimerIntervalThresholdOffset;
+
+    printf("TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset);
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-    printf("before app_data->lastHeaterState %d \n",app_data->lastHeaterState);
     get_integer_from_storage(STORAGE_KEY_LAST_HEATER_STATE, (int *) &(app_data->lastHeaterState));
     printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-//    if(app_data->lastHeaterState == 1)
-//    	printf("After get integer Last heater state is ON \n");
-//    else if (app_data->lastHeaterState == 0)
-//    	printf("After get integer Last heater state is OFF \n");
-//    else
-//    	printf("Last heater status is unidentified \n");
 
-        if(TimerIntervalThresholdOffset == 1)
-        	printf("TimerIntervalThresholdOffset value 1 \n");
-        else if (TimerIntervalThresholdOffset == 0)
-        	printf("TimerIntervalThresholdOffset value 0 \n");
-        else
-        	printf("TimerIntervalThresholdOffset \n");
 #endif
 
     init_Variables();
@@ -350,12 +345,12 @@ esp_err_t app_init(void) {
     printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
 
     get_data_from_storage(STORAGE_KEY_DISPLAY_SETTINGS, &(app_data->display_settings));
-    // get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING,(int *) &(daylightSaving));
 
-     if(daylightSaving == 1)
-        printf("daylightSaving  is One %d \n",daylightSaving);
-     else if(daylightSaving ==0)
-     	printf("daylightSaving zero %d \n",daylightSaving);
+
+     if(app_data->daylightSaving == 1)
+        printf("daylightSaving  is One %d \n",app_data->daylightSaving);
+     else if(app_data->daylightSaving ==0)
+     	printf("daylightSaving zero %d \n",app_data->daylightSaving);
      else
      	printf("unvalid state\n ");
 
@@ -2560,7 +2555,7 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
 
 //#define NTP_Testing_dayLightSaving
 #ifdef NTP_Testing_dayLightSaving
-    if(daylightSaving == 1)
+    if(app_data->daylightSaving == 1)
 	{
 		if(hour==23)
 			hour=0;
@@ -2883,6 +2878,11 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
             } else if (display_time_change_en) {
                 display_time_change_en = false;
                 clock_get_time(&hour, &minute, NULL);
+
+				#ifdef NTP_Testing_dayLightSaving
+					if(app_data->daylightSaving==1)  { if(hour==23)   hour=0;   else   hour++; }
+				#endif
+
                 display_time(hour, minute, DISPLAY_COLOR);
                 vTaskDelay(DISPLAY_TIME_AFTER_CHANGE_MS / portTICK_RATE_MS);
                 display_time(hour, minute, !DISPLAY_COLOR);
@@ -2939,6 +2939,11 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
                 break;
             case MENU_TIME_AND_DATE_MANUAL_TIME_HOUR_CHANGE:
                 clock_get_time(&hour, NULL, NULL);
+
+				#ifdef NTP_Testing_dayLightSaving
+					if(app_data->daylightSaving==1)  { if(hour==23)   hour=0;   else   hour++; }
+				#endif
+
                 display_hour(hour, DISPLAY_COLOR);
                 break;
             case MENU_TIME_AND_DATE_MANUAL_TIME_MINUTE_CHANGE:
@@ -3564,11 +3569,12 @@ static app_mode_t menu_settings(app_data_t *data) {
                     if ((*btn >> BUTTON_UP_STAT) & 0x01) { // unpressed
                         switch (m_settings) {
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
-                            m_settings = MENU_SETTINGS_CHILD_LOCK;
-                            break;
-                        case MENU_SETTINGS_CHILD_LOCK:
+                           // m_settings = MENU_SETTINGS_CHILD_LOCK;
                             m_settings = MENU_SETTINGS_PILOT_LIGHT;
                             break;
+//                        case MENU_SETTINGS_CHILD_LOCK:
+//                            m_settings = MENU_SETTINGS_PILOT_LIGHT;
+//                            break;
                         case MENU_SETTINGS_PILOT_LIGHT:
                             m_settings = MENU_SETTINGS_NIGHT_LIGHT;
                             break;
@@ -3586,14 +3592,14 @@ static app_mode_t menu_settings(app_data_t *data) {
                             else
                                 data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
                             break;
-                        case MENU_SETTINGS_CHILD_LOCK_EN:
-                            is_settings_changed = true;
-                            // Enable <--> Disable
-                            data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
-
-                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
-
-                            break;
+//                        case MENU_SETTINGS_CHILD_LOCK_EN:
+//                            is_settings_changed = true;
+//                            // Enable <--> Disable
+//                            data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
+//
+//                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+//
+//                            break;
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
                             // Enable <--> Disable
@@ -3603,9 +3609,7 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Auto <--> Off
                             data->settings.is_night_light_auto_brightness_en = !data->settings.is_night_light_auto_brightness_en;
-
                             manaully_night_Light_State_change= 1;  // New Added for manaully_night_Light_State_change notification to AWS
-
                             break;
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
@@ -3625,7 +3629,6 @@ static app_mode_t menu_settings(app_data_t *data) {
                             }
                             break;
                         }
-
                         update_display = true;
                     }
                 } else if ((*btn & (1 << BUTTON_DOWN_STAT)) != (prev_btn & (1 << BUTTON_DOWN_STAT))) { // down button toggles
@@ -3634,11 +3637,12 @@ static app_mode_t menu_settings(app_data_t *data) {
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
                             break;
-                        case MENU_SETTINGS_CHILD_LOCK:
-                            m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
-                            break;
+//                        case MENU_SETTINGS_CHILD_LOCK:
+//                            m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+//                            break;
                         case MENU_SETTINGS_PILOT_LIGHT:
-                            m_settings = MENU_SETTINGS_CHILD_LOCK;
+                           // m_settings = MENU_SETTINGS_CHILD_LOCK;
+                            m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
                             break;
                         case MENU_SETTINGS_NIGHT_LIGHT:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT;
@@ -3654,14 +3658,14 @@ static app_mode_t menu_settings(app_data_t *data) {
                             else
                                 data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
                             break;
-                        case MENU_SETTINGS_CHILD_LOCK_EN:
-                            is_settings_changed = true;
-                            // Enable <--> Disable
-                            data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
-
-                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
-
-                            break;
+//                        case MENU_SETTINGS_CHILD_LOCK_EN:
+//                            is_settings_changed = true;
+//                            // Enable <--> Disable
+//                            data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
+//
+//                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+//
+//                            break;
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
                             // Enable <--> Disable
@@ -3700,9 +3704,9 @@ static app_mode_t menu_settings(app_data_t *data) {
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
                             m_settings = MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE;
                             break;
-                        case MENU_SETTINGS_CHILD_LOCK:
-                            m_settings = MENU_SETTINGS_CHILD_LOCK_EN;
-                            break;
+//                        case MENU_SETTINGS_CHILD_LOCK:
+//                            m_settings = MENU_SETTINGS_CHILD_LOCK_EN;
+//                            break;
                         case MENU_SETTINGS_PILOT_LIGHT:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT_EN;
                             break;
@@ -3737,10 +3741,10 @@ static app_mode_t menu_settings(app_data_t *data) {
                 printf("MENU_SETTINGS_TEMPERATURE_UNIT\r\n");
                 display_menu("Temp Unit", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
-            case MENU_SETTINGS_CHILD_LOCK:
-                printf("MENU_SETTINGS_CHILD_LOCK\r\n");
-                display_menu("Child Lock", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
-                break;
+//            case MENU_SETTINGS_CHILD_LOCK:
+//                printf("MENU_SETTINGS_CHILD_LOCK\r\n");
+//                display_menu("Child Lock", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+//                break;
             case MENU_SETTINGS_PILOT_LIGHT:
                 printf("MENU_SETTINGS_PILOT_LIGHT\r\n");
                 display_menu("Auto Dim", DISPLAY_COLOR, "Pilot Light", DISPLAY_COLOR);
@@ -3757,10 +3761,10 @@ static app_mode_t menu_settings(app_data_t *data) {
                 printf("MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE\r\n");
                 display_menu(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? "Metric(°C)" : "US(°F)", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
-            case MENU_SETTINGS_CHILD_LOCK_EN:
-                printf("MENU_SETTINGS_CHILD_LOCK_EN\r\n");
-                display_menu(data->settings.is_child_lock_en ? "Enabled" : "Disabled", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
-                break;
+//            case MENU_SETTINGS_CHILD_LOCK_EN:
+//                printf("MENU_SETTINGS_CHILD_LOCK_EN\r\n");
+//                display_menu(data->settings.is_child_lock_en ? "Enabled" : "Disabled", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+//                break;
             case MENU_SETTINGS_PILOT_LIGHT_EN:
                 printf("MENU_SETTINGS_PILOT_LIGHT_EN\r\n");
                 display_menu(data->settings.is_dim_pilot_light_en ? "Enabled" : "Disabled", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
@@ -3808,7 +3812,6 @@ static app_mode_t menu_display_settings(app_data_t *data) {
     time_t btn_power_press_ms = 0;
 
     bool is_display_settings_changed = false;
-
     bool screen_off = false;
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
@@ -4040,11 +4043,9 @@ static app_mode_t menu_display_settings(app_data_t *data) {
             case MENU_DISPLAY_SETTINGS_BRIGHTNESS_AUTO_EN:
                 display_menu(data->display_settings.is_auto_display_brightness_en ? "Enabled" : "Disabled", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
-	    }
-
+    	    }
 	        update_display = false;
 	    }
-
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 
@@ -4172,27 +4173,29 @@ static app_mode_t menu_update(app_data_t *data) {
             }
         vTaskDelay(1 / portTICK_RATE_MS);
     }
-
     // exit with display on
     if (screen_off)
        display_on();
-
     // return new mode
     return next_mode;
 }
 
 static void temp_sensor_task(void *param) {
     app_data_t *data = (app_data_t *) param;
+    bool *currentHeaterState = &(data->lastHeaterState);
+
     int *ambient_temp_c = &(data->ambient_temperature_celsius);
     int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
     int tempInFehrenniete = 0;
     int Prev_SetTemp = 0;
     int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
     int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
-
     int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
-    printf("In Temp task \n ");
-
+    unsigned char hysterisFlag = 0;
+    int prevAmbientTemp_Fahraneite = 0;
+    int prevAmbientTemp_Calcius = 0;
+   // unsigned char *TimerIntervalThresholdOffset = &(data-> TimerIntervalThresholdOffset);
+	#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
     while(1) {
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
        // *ambient_temp_c = 7;
@@ -4203,9 +4206,9 @@ static void temp_sensor_task(void *param) {
 		  if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
 			  heater_off();
 			  heater_On_Off_state_by_command = 0 ;
-			 app_data->lastHeaterState = false;
-			 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-			 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+			  app_data->lastHeaterState = false;
+			  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+			  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 			  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
 			  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
 			  printf("\n In calsius maxTemperatureThresholdReachedWarning \n\n "); }
@@ -4223,10 +4226,59 @@ static void temp_sensor_task(void *param) {
 			  printf("\n minTemperatureThresholdReachedWarning \n ");
 		  }	}// endof  if(en_anti_freeze == 1){
 
-//		 if( *ambient_temp_c > (*target_temp_c + TRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS)){
-//		     printf("Alert meassage for passing SET TEMP");
-//		     setTempThresholdOffsetCrossed = 1;
-//		   }
+		     if(*ambient_temp_c >= *target_temp_c - *temp_hysteresis_c)  // ambient temperature in fahraneit
+		     {		        hysterisFlag = 1;	 printf("\n hysterisFlag %d\n ", hysterisFlag);	     }
+		     if(hysterisFlag == 1)
+		       { hysterisFlag = 0;
+		    	 if( *ambient_temp_c < (*target_temp_c - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS))
+				 {
+		    		// printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
+		    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
+				 }
+		    	 if( *ambient_temp_c > (*target_temp_c + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS))
+				 {
+		    		 Hysteris_Thresh_Off_Set_OverWarning =1;
+		    		// printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
+				 }
+		       } // end of  if(hysterisFlag == 1)
+//	        }// end of else
+	         if( Prev_SetTemp != *target_temp_c )
+	        {
+	        	Prev_SetTemp = *target_temp_c;
+	        	 TempChange_ms = 0;
+	        	 time_OneMinuteOver = 0;
+	        	 time_count = 0; prevAmbientTemp_Calcius = *ambient_temp_c;
+	        }
+		  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+				if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
+					TempChange_ms = cur_ms;
+					time_OneMinuteOver = 1;
+				}
+			//printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
+			if(time_OneMinuteOver == 1)
+			{
+			  time_count++;
+			  time_OneMinuteOver = 0;
+			}
+//		//printf("time_count %d \n", time_count);
+//		//	unsigned char TimerIntervalThresholdOffset;
+			printf("app_data-> TimerIntervalThresholdOffset %d \n", app_data-> TimerIntervalThresholdOffset);
+		  	if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
+		    //if(time_count >= app_data-> TimerIntervalThresholdOffset){
+			 //  printf("2 minutes over \n ");
+			   time_OneMinuteOver = 0;
+			   time_count = 0;
+			 if( *ambient_temp_c < (prevAmbientTemp_Calcius - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR))
+				 {
+					printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
+					TimeInterval_Thresh_OffSet_UnderWarning = 1;
+				 }
+//				 if( *ambient_temp_c > (*target_temp_c + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR))
+//				 {
+//					 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
+//					 TimeInterval_Thresh_OffSet_OverWarning = 1;
+//				 }
+			}
      }
    else{
 	   if(tempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
@@ -4256,48 +4308,45 @@ static void temp_sensor_task(void *param) {
 	        }
 	      } // end of  if(en_anti_freeze ==1){
 
- #define comment_MalFun
-#ifdef comment_MalFun
-	     unsigned char hysterisFlag =0;
+	  // tempInFehrenniete = 36 ;
+	  // *target_temp_f = 40 ;
+	  // *temp_hysteresis_f = 5;
+	   // THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS =5;
 	     if(tempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)  // ambient temperature in fahraneit
-	     {
-	        hysterisFlag = 1;
-	     }
+	     {	        hysterisFlag = 1;	printf("\n hysterisFlag %d\n ", hysterisFlag);  }
 	     if(hysterisFlag == 1)
-	       {
-	    	 if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
-			 {
-	    		// printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
+	       {  hysterisFlag = 0;
+	        // tempInFehrenniete =30;
+	    	// if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))  // 36 < 40 -5 // Include heater ON state
+		   	 if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))  // 36 < 40 -5 // Include heater ON state
+	    	 {
+	    		 printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
 	    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
 			 }
-	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
-			 {
+	    	// tempInFehrenniete =60;
+//	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
+	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))
+	    	 {
 	    		 Hysteris_Thresh_Off_Set_OverWarning =1;
-	    		// printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
+	    		 printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
 			 }
 	       } // end of  if(hysterisFlag == 1)
-        }// end of else
 
        // printf("temp_offset_c in calsius=%d\r\n", *temp_offset_c);
        //printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
        printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
        printf("Set Temp in fehraneite =%d\r\n", *target_temp_f);
          if( Prev_SetTemp != *target_temp_f )
-        {
-        	Prev_SetTemp = *target_temp_f;
-//        	time_t TempChange_ms = 0;
-//        	int time_OneMinuteOver = 0;
-//        	int time_count = 0;
+        {      	Prev_SetTemp = *target_temp_f;
         	 TempChange_ms = 0;
         	 time_OneMinuteOver = 0;
-        	 time_count = 0;
+        	 time_count = 0; printf("\n set Temp changed.. \n");
+        	// prevAmbientTemp_Fahraneite = tempInFehrenniete;
         }
-
 	  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 			if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
 				TempChange_ms = cur_ms;
-				time_OneMinuteOver = 1;
-			}
+				time_OneMinuteOver = 1;			}
 		//printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
 		if(time_OneMinuteOver == 1)
 		{
@@ -4305,29 +4354,34 @@ static void temp_sensor_task(void *param) {
 		  time_OneMinuteOver = 0;
 		}
 		//printf("time_count %d \n", time_count);
+#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation  // app_data-> TimerIntervalThresholdOffset
+		//printf("(data-> TimerIntervalThresholdOffset %d app_data-> TimerIntervalThresholdOffset  %d *TimerIntervalThresholdOffset %d \n", data-> TimerIntervalThresholdOffset,app_data-> TimerIntervalThresholdOffset , *TimerIntervalThresholdOffset);
 
-	//	unsigned char TimerIntervalThresholdOffset;
-#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
-		printf("TimerIntervalThresholdOffset %d \n", TimerIntervalThresholdOffset);
-	  	if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
-	    //if(time_count >= TimerIntervalThresholdOffset){
+	     printf("app_data-> TimerIntervalThresholdOffset  %d TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset , TimerIntervalThresholdOffset);
 
-		 //  printf("2 minutes over \n ");
+		// if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
+	   // if(time_count >= *TimerIntervalThresholdOffset){
+		if(time_count >= TimerIntervalThresholdOffset){
+		//if(time_count >= app_data-> TimerIntervalThresholdOffset){
+		//  printf("2 minutes over \n ");
 		   time_OneMinuteOver =0;
 		   time_count = 0;
 
-			if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
-			 {
+		   *target_temp_f = 40;  // Only for Testing..
+		   tempInFehrenniete = 30;
+		 	          // 40                // 30                            // 10
+			if(((*target_temp_f - tempInFehrenniete) >= THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR)	&& (*currentHeaterState == 1))// target_temp_f- > replace with previouvs ambient temp.
+			{
 				 printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
 				 TimeInterval_Thresh_OffSet_UnderWarning = 1;
 			 }
-			 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
-			 {
-				 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
-				 TimeInterval_Thresh_OffSet_OverWarning = 1;
-			 }
+//			 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
+//			 {
+//				 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
+//				 TimeInterval_Thresh_OffSet_OverWarning = 1;
+//			 }
 		}
-#endif
+   }// end of else
 #endif
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
     }// end of while
@@ -4550,16 +4604,10 @@ int app_set_mode(int mode) {
             default:
                 return -1;
         }
-        return 0;}
-    return -1;
+        return 0;}    return -1;
 }
-
 int app_get_mode(void) {
-    if (app_data) {
-        return app_data->mode;}
-    return -1;
-}
-
+    if (app_data) {        return app_data->mode;}    return -1;}
 int app_get_ambient_temp(void) {
    int temperatureInFehrannite;
 	if (app_data) {
@@ -4629,67 +4677,33 @@ int app_set_timer(int timer) {
             app_data->current_timer_setting_min = timer;
             app_data->last_timer_setting_min = timer;
             set_integer_to_storage(STORAGE_KEY_LAST_TIMER_SETTING, timer);
-            return 0;
-        }
-    }
-    return -1;
+            return 0;        }    }    return -1;
 }
 int app_get_timer(void) {
-    if (app_data) {
-        return app_data->current_timer_setting_min;
-    }
-    return 0x80000000;
-}
+    if (app_data) {        return app_data->current_timer_setting_min;    }    return 0x80000000;}
 int app_activate_child_lock(bool en) {
-    if (app_data) {
-        app_data->is_child_lock_active = en;
-        return 0;
-    }
-    return -1;
-}
+    if (app_data) {        app_data->is_child_lock_active = en;        return 0;    }    return -1;}
 bool app_is_child_lock_activated(void) {
-    if (app_data) {
-        return app_data->is_child_lock_active;
-    }
-    return false;
-}
+    if (app_data) {        return app_data->is_child_lock_active;    }    return false;}
 int app_set_sched(void) {
-    if (app_data) {
-        return 0;
-    }
-    return -1;
-}
+    if (app_data) {        return 0;    }    return -1;}
 int app_get_sched(void) {
-    if (app_data) {
-        return 0;
-    }
-    return -1;
-}
+    if (app_data) {        return 0;    }    return -1;}
 int app_enable_autoset_time_date(bool en) {
     if (app_data) {
         bool *is_auto_time_date_en = &(app_data->is_auto_time_date_en);
         if (en != *is_auto_time_date_en) {
             *is_auto_time_date_en = en;
-
             if (!ntp_is_enabled() && en) 
                 ntp_init(NTP_SERVER);
             else if (ntp_is_enabled() && en == false)
                 ntp_deinit();
             // save new value to flash
             set_integer_to_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int) *is_auto_time_date_en);
-            return 0;
-        }
-    }
-    return -1;
+            return 0;        }    }    return -1;
 }
-
 bool app_is_autoset_time_date_enabled(void) {
-    if (app_data) {
-        return app_data->is_auto_time_date_en;
-    }
-    return false;
-}
-
+    if (app_data) {        return app_data->is_auto_time_date_en;    }    return false;}
 int app_enable_ap_mode(bool en) {
     if (app_data) {
         if (comm_wifi_dev) {
@@ -4698,36 +4712,14 @@ int app_enable_ap_mode(bool en) {
                 //comm_wifi_dev->wifi_ap_enable(comm_wifi_dev->wifi_ap_ssid, comm_wifi_dev->wifi_ap_pw);
             else
                 comm_wifi_dev->wifi_ap_disable();
-
-            return 0;
-        }
-    }
-    return -1;
+            return 0;        }    }    return -1;
 }
-
 bool app_is_ap_mode_enabled(void) {
-    if (app_data) {
-        if (comm_wifi_dev) {
-            return comm_wifi_dev->is_wifi_ap_enabled();
-        }
-    }
-    return false;
-}
+    if (app_data) {        if (comm_wifi_dev) {            return comm_wifi_dev->is_wifi_ap_enabled();        }    }    return false;}
 int app_set_sta_mode_ssid(char *ssid, size_t len) {
-    if (app_data) {
-        set_string_to_storage(NVS_LUCIDTRON_SSID_KEY, ssid);
-        return 0;
-    }
-    return -1;
-}
+    if (app_data) {        set_string_to_storage(NVS_LUCIDTRON_SSID_KEY, ssid);        return 0;    }    return -1;}
 int app_set_sta_mode_password(char *pw, size_t len) {
-    if (app_data) {
-        set_string_to_storage(NVS_LUCIDTRON_PW_KEY, pw);
-        return 0;
-    }
-    return -1;
-}
-
+    if (app_data) {        set_string_to_storage(NVS_LUCIDTRON_PW_KEY, pw);        return 0;    }    return -1;}
 int app_enable_sta_mode(bool en) {
     if (app_data) {
         if (en) {
@@ -4736,18 +4728,10 @@ int app_enable_sta_mode(bool en) {
                 get_string_from_storage(NVS_LUCIDTRON_PW_KEY, app_data->sta_pw);
                 comm_wifi_dev->wifi_client_enable(app_data->sta_ssid, app_data->sta_pw);
                 return 0;
-            }
-        }
-    }
-    return -1;
+            }        }    }    return -1;
 }
-
 bool app_is_sta_mode_enabled(void) {
-    if (app_data) {
-        return true;
-    }
-    return false;
-}
+    if (app_data) {        return true;    }    return false;}
 int app_set_temp_unit(int unit) {
     if (app_data) {
         if (unit == TEMP_UNIT_CELSIUS
@@ -4755,35 +4739,21 @@ int app_set_temp_unit(int unit) {
             app_data->settings.temperature_unit = unit;
             set_data_to_storage(STORAGE_KEY_SETTINGS, (void *) &app_data->settings, sizeof(settings_t));
             return 0;
-        }
-    }
-    return -1;
+        }    }    return -1;
 }
 int app_get_temp_unit(void) {
-    if (app_data) {
-        return app_data->settings.temperature_unit;
-    }
-    return -1;
-}
+    if (app_data) {        return app_data->settings.temperature_unit;    }    return -1;}
 int app_enable_autodim_pilot_light(bool en) {
     if (app_data) {
         bool *is_dim_pilot_light_en = &(app_data->settings.is_dim_pilot_light_en);
         if (en != *is_dim_pilot_light_en) {
             *is_dim_pilot_light_en = en;
             set_data_to_storage(STORAGE_KEY_SETTINGS, (void *) &app_data->settings, sizeof(settings_t));
-        }
-        return 0;
-    }
-    return -1;
+        }        return 0;
+    }    return -1;
 }
-
 bool app_is_autodim_pilot_light_enabled(void) {
-    if (app_data) {
-        return app_data->settings.is_dim_pilot_light_en;
-    }
-    return false;
-}
-
+    if (app_data) {        return app_data->settings.is_dim_pilot_light_en;    }    return false;}
 int app_enable_night_light_auto_brightness(bool en) {
     if (app_data) {
         bool *is_nlight_auto_br_en = &(app_data->settings.is_night_light_auto_brightness_en);
@@ -4791,19 +4761,10 @@ int app_enable_night_light_auto_brightness(bool en) {
             *is_nlight_auto_br_en = en;
             set_data_to_storage(STORAGE_KEY_SETTINGS, (void *) &app_data->settings, sizeof(settings_t));
             printf("is_nlight_auto_br_en :  %d", *is_nlight_auto_br_en );
-        }
-        return 0;
-    }
-    return -1;
+        }        return 0;    }    return -1;
 }
-
 bool app_is_night_light_auto_brightness_enabled(void) {
-    if (app_data) {
-        return app_data->settings.is_night_light_auto_brightness_en;
-    }
-    return false;
-}
-
+    if (app_data) {        return app_data->settings.is_night_light_auto_brightness_en;    }    return false;}
 void app_set_heater_state(int heater_state)
 {
 	heater_On_Off_state_by_command = heater_state ;
@@ -4826,11 +4787,8 @@ void app_set_heater_state(int heater_state)
 	  printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 }
 void RGB_LED_ON_OFF(int value)
-{	if(value == 1)
-	{	rgb_led_state = 1;  printf("RGB LED ON \n");}
-	else
-	{rgb_led_state = 0;   printf("RGB LED OFF \n");
-	}
+{	if(value == 1)	{	rgb_led_state = 1;  printf("RGB LED ON \n");}
+	else	{rgb_led_state = 0;   printf("RGB LED OFF \n");	}
 }
 int app_set_night_light_config(int cfg) {
 	printf("In app_set_night_light_config function \n ");
@@ -4841,57 +4799,30 @@ int app_set_night_light_config(int cfg) {
        // save
         set_integer_to_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, cfg);
         printf("Remote command set led -*nlight_cfg - %d", *nlight_cfg);  printf("app_set_night_light_config app_data->night_light_cfg %d \n ",app_data->night_light_cfg);         printf("Remote command set led -nlight_cfg - %d", cfg);
-       return 0;
-    }
-    return -1;
+       return 0;    }    return -1;
 }
-
 int app_get_night_light_config(void) {
-    if (app_data) {
-        return app_data->night_light_cfg;
-    }
-    return -1;
-}
-
+    if (app_data) {        return app_data->night_light_cfg;    }    return -1;}
 int app_enable_child_lock(bool en) {
     if (app_data) {
         bool *is_child_lock_en = &(app_data->settings.is_child_lock_en);
         if (en != *is_child_lock_en) {
             *is_child_lock_en = en;
             set_data_to_storage(STORAGE_KEY_SETTINGS, (void *) &app_data->settings, sizeof(settings_t));
-        }
-        return 0;
-    }
-    return -1;
+        }        return 0;    }    return -1;
 }
-
 bool app_is_child_lock_enabled(void) {
-    if (app_data) {
-        return app_data->settings.is_child_lock_en;
-    }
-    return false;
-}
-
+    if (app_data) {        return app_data->settings.is_child_lock_en;    }    return false;}
 int app_enable_autodim_display(bool en) {
     if (app_data) {
         bool *is_auto_display_brightness_en = &(app_data->display_settings.is_auto_display_brightness_en);
         if (en != *is_auto_display_brightness_en) {
             *is_auto_display_brightness_en = en;
             set_data_to_storage(STORAGE_KEY_DISPLAY_SETTINGS, (void *) &app_data->display_settings, sizeof(display_settings_t));
-        }
-        return 0;
-    }
-    return -1;
+        }        return 0;    }    return -1;
 }
-
 bool app_is_autodim_display_enabled(void) {
-    if (app_data) {
-        return app_data->display_settings.is_auto_display_brightness_en;
-    }
-
-    return false;
-}
-
+    if (app_data) {        return app_data->display_settings.is_auto_display_brightness_en;    }    return false;}
 int app_set_screen_brightness(int br) {
     if (app_data) {
         if (br >= DISPLAY_BRIGHTNESS_MIN
@@ -4900,35 +4831,20 @@ int app_set_screen_brightness(int br) {
             if (br != *display_brightness) {
                 *display_brightness = br;
                 set_data_to_storage(STORAGE_KEY_DISPLAY_SETTINGS, (void *) &app_data->display_settings, sizeof(display_settings_t));
-            }
-            return 0;
-        }
-    }
-    return -1;
+            }            return 0;        }    }    return -1;
 }
 int app_get_screen_brightness(void) {
-    if (app_data) {
-        return app_data->display_settings.display_brightness;
-    }
-    return 0x80000000;
-}
+    if (app_data) {        return app_data->display_settings.display_brightness;    }    return 0x80000000;}
 int app_enable_auto_screen_off(bool en) {
     if (app_data) {
         bool *is_auto_screen_off_en = &(app_data->display_settings.is_auto_screen_off_en);
         if (en != *is_auto_screen_off_en) {
             *is_auto_screen_off_en = en;
             set_data_to_storage(STORAGE_KEY_DISPLAY_SETTINGS, (void *) &app_data->display_settings, sizeof(display_settings_t));
-        }
-        return 0;
-    }
-    return -1;
+        }        return 0;    }    return -1;
 }
 bool app_is_auto_screen_off_enabled(void) {
-    if (app_data) {
-        return app_data->display_settings.is_auto_screen_off_en;
-    }
-    return false;
-}
+    if (app_data) {        return app_data->display_settings.is_auto_screen_off_en;    }    return false;}
 int app_set_auto_screen_off_delay(int delay) {
     if (app_data) {
         if (delay >= AUTO_SCREEN_OFF_DELAY_SEC_MIN
@@ -4937,18 +4853,10 @@ int app_set_auto_screen_off_delay(int delay) {
             if (delay != *auto_screen_off_delay_sec) {
                 *auto_screen_off_delay_sec = delay;
                 set_data_to_storage(STORAGE_KEY_DISPLAY_SETTINGS, (void *) &app_data->display_settings, sizeof(display_settings_t));
-            }
-            return 0;
-        }
-    }
-    return -1;
+            }            return 0;        }    }    return -1;
 }
 int app_get_auto_screen_off_delay(void) {
-    if (app_data) {
-        return app_data->display_settings.auto_screen_off_delay_sec;
-    }
-    return 0x80000000;
-}
+    if (app_data) {        return app_data->display_settings.auto_screen_off_delay_sec;    }    return 0x80000000;}
 int app_start_fw_update(void) {
     if (app_data) {
 #if 0 //TODO:
@@ -4957,12 +4865,8 @@ int app_start_fw_update(void) {
             return 0;
         }
 #endif
-    }
-    return -1;
+    }    return -1;
 }
-
 int app_ota_start(char* loc)
-{  
-    return ota_start(loc);  
-}
+{      return ota_start(loc);  }
 

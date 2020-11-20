@@ -171,7 +171,7 @@ void FW_version_task(void *pvParameter)
 		printf("\nOTA FIRMWARE TASK");
 		int yr,mnt,day,hr,min,sec;
 		clock_get_date_and_time(&yr,&mnt,&day,&hr, &min, &sec);
-		if(daylightSaving)
+		if(app_data->daylightSaving)
 		{
 			if(hr==23)
 				hr=0;

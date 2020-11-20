@@ -193,7 +193,7 @@ extern char uniqueDeviceID[12];
 
 // extern bool daylightSaving;
 // extern unsigned char daylightSaving;
-extern int daylightSaving;
+// extern int daylightSaving;
 
 
 #define NVS_DEVICE_ID				"id"
@@ -387,11 +387,18 @@ typedef struct {
     char ap_pw[65];
     char sta_ssid[33];
     char sta_pw[65];
-
+    bool daylightSaving;
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     bool lastHeaterState; // New Added for storing the last heater status in the Flash.
+    unsigned char TimerIntervalThresholdOffset;
+
 #endif
 } app_data_t;
+
+
+extern app_data_t *app_data; // TESTING // changed for wifi Icon
+
+
 
 /*!
  * \fn esp_err_t app_init(void)

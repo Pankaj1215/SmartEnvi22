@@ -17,7 +17,7 @@ set(COMPONENT_ADD_INCLUDEDIRS "." "C:/SmartEnvi22/longhorn_fw_v1.6.0/components/
                      "./sdk_util/include"
                      "./common/include"
                      "./wifi/include"
-                     "C:/EHeater/longhorn_fw_v1.6.0/components/mqtt_client/include"
+                     "C:/SmartEnvi22/longhorn_fw_v1.6.0/components/mqtt_client/include"
                      "C:/esp-idf_v4.0.1/components/esp32/include"
                      "C:/esp-idf_v4.0.1/components/soc/esp32/include/soc"
                      "C:/esp-idf_v4.0.1/components/esp32/include"

@@ -2986,7 +2986,7 @@ void get_NTP_Time(void)
 						vTaskDelay(2000 / portTICK_PERIOD_MS);
 					}
 				clock_get_date_and_time(&yr,&mnt,&day,&hr, &min, &sec);
-				if(daylightSaving)
+				if(app_data->daylightSaving)
 				{
 					if(hr==23)
 						hr=0;

@@ -825,23 +825,24 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 			   CommandAck = DAY_LIGHT_TIME_STATE_ACK;
 
 	 				if (strcmp(value, "01") == 0)
-	 				{  daylightSaving = 1;
+	 				{  app_data->daylightSaving = 1;
 	 				   printf("REMOTE_CMD_DAY_LIGHT_TIME_STATE ON \n ");
 	 				}
 	 				if (strcmp(value, "00") == 0)
-	 				{  daylightSaving = 0;
+	 				{  app_data->daylightSaving = 0;
 	 				   printf(" REMOTE_CMD_DAY_LIGHT_TIME_STATE OFF \n  ");
 	 				}
-	 				 set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)daylightSaving);
+	 				 set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
 	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "day_light_time_on", "status","success",  "value",value);
 	 				}
 	 else if (strcmp(label, REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME) == 0) {
-		 			  CommandAck = SET_THRESHOLD_OFFSET_TIME_ACK;
+		 			 CommandAck = SET_THRESHOLD_OFFSET_TIME_ACK;
                       //Put this value in the variable for threshold offset value
 		 			 printf("REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME %s\r\n", value);
-		 			 TimerIntervalThresholdOffset = atoi(value);
-		 			 set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)TimerIntervalThresholdOffset);
-		 			 printf("TimerIntervalThresholdOffset %d \r\n", TimerIntervalThresholdOffset);
+		 			 app_data-> TimerIntervalThresholdOffset = atoi(value);
+ 		 			 TimerIntervalThresholdOffset = app_data-> TimerIntervalThresholdOffset;
+		 			 set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)app_data-> TimerIntervalThresholdOffset);
+		 			 printf("app_data-> TimerIntervalThresholdOffset %d  app_data-> TimerIntervalThresholdOffset %d\r\n", app_data-> TimerIntervalThresholdOffset, app_data-> TimerIntervalThresholdOffset);
 		 			 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_threshold_offset_time", "status","success",  "value",value);
 		 			}
 	 else
