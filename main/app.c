@@ -320,16 +320,19 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, &(app_data->manual_temperature_fahrenheit));
     get_integer_from_storage(STORAGE_KEY_LAST_TIMER_SETTING, &(app_data->last_timer_setting_min));
     get_integer_from_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int *) &(app_data->is_auto_time_date_en));
-    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, &(app_data->daylightSaving));
+
+   //    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, &(app_data->daylightSaving));  // working..
+    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int *) &(app_data->daylightSaving));
 
 	//TimerIntervalThresholdOffset = 30;
 	// set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)app_data-> TimerIntervalThresholdOffset);
     app_data-> TimerIntervalThresholdOffset = 15; /// Default Value
    // set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)app_data-> TimerIntervalThresholdOffset);
-    get_integer_from_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, &(app_data-> TimerIntervalThresholdOffset));
+
+ //   get_integer_from_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, &(app_data-> TimerIntervalThresholdOffset));
+    get_integer_from_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int *) &(app_data-> TimerIntervalThresholdOffset));
 
     TimerIntervalThresholdOffset = app_data-> TimerIntervalThresholdOffset;
-
     printf("TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset);
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
@@ -4367,8 +4370,8 @@ static void temp_sensor_task(void *param) {
 		   time_OneMinuteOver =0;
 		   time_count = 0;
 
-		   *target_temp_f = 40;  // Only for Testing..
-		   tempInFehrenniete = 30;
+		  // *target_temp_f = 40;  // Only for Testing..
+		  //  tempInFehrenniete = 30;
 		 	          // 40                // 30                            // 10
 			if(((*target_temp_f - tempInFehrenniete) >= THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR)	&& (*currentHeaterState == 1))// target_temp_f- > replace with previouvs ambient temp.
 			{
@@ -4780,9 +4783,9 @@ void app_set_heater_state(int heater_state)
 
 	  app_data->lastHeaterState = heater_state;
 	  	if(app_data->lastHeaterState == 1)
-	    	 printf("Heater ON from app  \n ");
+	       printf("Heater ON from app  \n ");
 	  	else
-         printf("Heater OFF from app \n ");
+          printf("Heater OFF from app \n ");
 	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 	  printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 }
