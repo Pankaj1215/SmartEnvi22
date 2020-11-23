@@ -96,6 +96,10 @@ unsigned char keepAliveSendDataToAWS = 0;
 
 time_t heaterStateChangeScan_ms = 0;
 unsigned char HeaterStateChangeDataToAWS = 0;
+
+
+
+
 #define HeaterStateChangeSacn_Duration_MS  5000 // 30000
 
 // char replybuff[500];  //  newadded for ack
@@ -117,7 +121,7 @@ unsigned char CommandAck;  // CommandACk for all commands triggered from Server
 unsigned char manaully_Set_Temp_change;
 unsigned char manaully_night_Light_State_change;
 unsigned char manaully_child_Lock_State_change;
-
+unsigned char manaully_Temp_unit_change;
 
 #define TimeZoneAdded
 
@@ -1694,8 +1698,27 @@ static void http_get_task(void *pvParameters)
 				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time_Response subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
-//
-//
+
+				 // temp unit temp..
+				const char *topic_set_temp_unit = "aws/device/command/set_temp_unit";  // testing for param key..
+				const int topic_set_temp_unit_Len = strlen(topic_set_temp_unit);
+				ESP_LOGI(TAG, "Subscribing.topic_Set_Threshold_Offset_Time..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_set_temp_unit, topic_set_temp_unit_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_set_temp_unit_response = "aws/device/command/set_temp_unit/response";  // testing for param key..
+				const int topic_set_temp_unit_response_Len = strlen(topic_set_temp_unit_response);
+				ESP_LOGI(TAG, "Subscribing.topic_Set_Threshold_Offset_Time..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+
 				const char *topic_Manual_Set_Temp_change = "aws/device/event/temp_change";  // testing for param key..
 				const int topic_Manual_Set_Temp_change_Len = strlen(topic_Manual_Set_Temp_change);
 				ESP_LOGI(TAG, "Subscribing.topic_Manual_Set_Temp_change..");
@@ -1758,6 +1781,15 @@ static void http_get_task(void *pvParameters)
 				rc = aws_iot_mqtt_subscribe(&client, topic_Manual_Child_Lock_change, topic_Manual_Child_Lock_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
 				ESP_LOGE(TAG, "Error topic_Manual_Child_Lock_change subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				const char *topic_Manual_temp_unit_change = "aws/device/event/temp_unit_changed";  // testing for param key..
+				const int topic_Manual_temp_unit_change_Len = strlen(topic_Manual_temp_unit_change);
+				ESP_LOGI(TAG, "Subscribing.topic_Manual_temp_unit_change..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Manual_temp_unit_change, topic_Manual_temp_unit_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Manual_temp_unit_change subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
 
@@ -1918,6 +1950,11 @@ static void http_get_task(void *pvParameters)
 				    case SET_THRESHOLD_OFFSET_TIME_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, &HeaterMeassage);
 				    			     	 break;
+
+				    case SET_TEMP_UNIT_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, &HeaterMeassage);
+				    			     	 break;
+
 				    default:   break;
 				}
 
@@ -2184,6 +2221,26 @@ static void http_get_task(void *pvParameters)
 				HeaterStateChangeDataToAWS= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
 
+				// TempUnitChangeDataToAWS
+				if(manaully_Temp_unit_change ==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_temp_unit_change", "status","success",  "value", app_data->settings.temperature_unit);
+				printf("\n \n TempUnitChangeDataToAWS app_data->settings.temperature_unit : %d \n \n ", app_data->settings.temperature_unit);
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, topic_Manual_temp_unit_change, topic_Manual_temp_unit_change_Len, &HeaterMeassage);
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Temp_unit_change= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 #endif
 		//  printf("After publish HeaterParameterSendingToAWS\n ");
@@ -2302,7 +2359,9 @@ nvs_handle_t my_handle;
 
 
 #define EXAMPLE_ESP_WIFI_SSID "WESP321"
-#define EXAMPLE_ESP_WIFI_PASS "qwerty12345"
+
+// #define EXAMPLE_ESP_WIFI_PASS "qwerty12345"
+#define EXAMPLE_ESP_WIFI_PASS ""
 
 // static const char *TAG = "example";  // Original Lines
 static const char *TCP_SERVER_TAG = "example";
@@ -2589,7 +2648,8 @@ void initSoftAP()
   		.ap = {
   			.password = EXAMPLE_ESP_WIFI_PASS,
   			.max_connection = 2,
-  			.authmode = WIFI_AUTH_WPA_WPA2_PSK
+  			// .authmode = WIFI_AUTH_WPA_WPA2_PSK  // original
+			.authmode = WIFI_AUTH_OPEN       //23nov2020
   			},
   		};
 

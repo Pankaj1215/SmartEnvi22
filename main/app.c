@@ -58,6 +58,7 @@
 #include "wifi_core.h"   // New Added for accessing macro #define P_TESTING which is placed in wifi_core.h
 
 
+
 #define pilot_light_on() led1_on(); led2_on();
 #define pilot_light_off() led1_off(); led2_off();
 #define pilot_light_set_brightness(x) led1_set_brightness(x); led2_set_brightness(x);
@@ -158,6 +159,7 @@ extern unsigned char heater_On_Off_state_by_command;
 extern unsigned char manaully_Set_Temp_change;
 extern unsigned char manaully_night_Light_State_change;
 extern unsigned char manaully_child_Lock_State_change;
+extern unsigned char manaully_Temp_unit_change;
 
 unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
 // Threshold_Offset 30Minute calculation ..
@@ -3095,8 +3097,17 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_AP_MODE:
                         case MENU_COMMUNICATIONS_WIFI_AP:
                         case MENU_COMMUNICATIONS_WPS:
+#ifdef RESET_SSID_PASS
+                        case MENU_COMMUNICATIONS_RESET_SSID_PASS:
+#endif
                             exit = true;
                             break;
+#ifdef RESET_SSID_PASS
+                        case MENU_COMMUNICATIONS_RESET_ARE_YOU_SURE_CONFIRM:
+                        	  m_comms = MENU_COMMUNICATIONS_RESET_SSID_PASS;
+                        	break;
+#endif
+
                         case MENU_COMMUNICATIONS_AP_MODE_EN:
                         case MENU_COMMUNICATIONS_AP_MODE_SSID:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE;
@@ -3168,6 +3179,20 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_AP_MODE:
                             m_comms = MENU_COMMUNICATIONS_WIFI_AP;
                             break;
+
+#ifdef RESET_SSID_PASS
+//						case MENU_COMMUNICATIONS_AP_MODE: // commented for testing
+//							m_comms = MENU_COMMUNICATIONS_WIFI_AP;
+//							break;
+                        case MENU_COMMUNICATIONS_WIFI_AP:
+                        	 m_comms = MENU_COMMUNICATIONS_RESET_SSID_PASS;
+                        	break;
+						case MENU_COMMUNICATIONS_RESET_SSID_PASS:
+							m_comms = MENU_COMMUNICATIONS_AP_MODE;
+							break;
+#endif
+
+
 //                        case MENU_COMMUNICATIONS_WIFI_AP:// commented for testing
 //                            m_comms = MENU_COMMUNICATIONS_WPS;
 //                            break;
@@ -3224,12 +3249,27 @@ static app_mode_t menu_communications(app_data_t *data) {
 //                        case MENU_COMMUNICATIONS_AP_MODE: // commented for testing
 //                            m_comms = MENU_COMMUNICATIONS_WPS;
 //                            break;
+#ifdef RESET_SSID_PASS
+						case MENU_COMMUNICATIONS_AP_MODE: // commented for testing
+							m_comms = MENU_COMMUNICATIONS_WIFI_AP;
+							break;
+//                        case MENU_COMMUNICATIONS_WIFI_AP:
+//                        	 m_comms = MENU_COMMUNICATIONS_RESET_SSID_PASS;
+//                        	break;
+						case MENU_COMMUNICATIONS_RESET_SSID_PASS:
+							m_comms = MENU_COMMUNICATIONS_AP_MODE;
+							break;
+
                         case MENU_COMMUNICATIONS_WIFI_AP:
-                            m_comms = MENU_COMMUNICATIONS_AP_MODE;
+                            m_comms = MENU_COMMUNICATIONS_RESET_SSID_PASS;
                             break;
-                        case MENU_COMMUNICATIONS_WPS:
-                            m_comms = MENU_COMMUNICATIONS_WIFI_AP;
-                            break;
+#endif
+//                        case MENU_COMMUNICATIONS_WIFI_AP:  // Commented only for testing
+//                            m_comms = MENU_COMMUNICATIONS_AP_MODE;
+//                            break;
+//                        case MENU_COMMUNICATIONS_WPS:   // Commented only for testing
+//                            m_comms = MENU_COMMUNICATIONS_WIFI_AP;
+//                            break;
                         case MENU_COMMUNICATIONS_AP_MODE_EN:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_SSID;
                             break;
@@ -3282,6 +3322,14 @@ static app_mode_t menu_communications(app_data_t *data) {
                         case MENU_COMMUNICATIONS_AP_MODE:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_EN;
                             break;
+#ifdef RESET_SSID_PASS
+                        case MENU_COMMUNICATIONS_RESET_SSID_PASS:
+                        	 m_comms = MENU_COMMUNICATIONS_RESET_ARE_YOU_SURE_CONFIRM;
+                        	break;
+                        case MENU_COMMUNICATIONS_RESET_ARE_YOU_SURE_CONFIRM:
+                        	  m_comms = MENU_COMMUNICATIONS_RESET_CONFIRMED;
+                        	break;
+#endif
                         case MENU_COMMUNICATIONS_WIFI_AP:
                             // get Wi-Fi AP info
                         	printf("Line no 3228 \n ");
@@ -3439,7 +3487,6 @@ static app_mode_t menu_communications(app_data_t *data) {
                 printf("MENU_COMMUNICATIONS_AP_MODE_SSID_VAL\r\n");
 
 //                printf("comm_wifi_dev->wifi_ap_ssid %s\n",comm_wifi_dev->wifi_ap_ssid);
-//
 //                // display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);  // Original
 //                display_ssid(comm_wifi_dev->wifi_ap_ssid, DISPLAY_COLOR);   //Testing
 
@@ -3469,7 +3516,29 @@ static app_mode_t menu_communications(app_data_t *data) {
 //                printf("MENU_COMMUNICATIONS_WPS_EN_INST\r\n");  // commented for testing
 //                display_wps_mode_msg(DISPLAY_COLOR);
 //                break;
-            }
+
+#ifdef RESET_SSID_PASS
+			case MENU_COMMUNICATIONS_RESET_SSID_PASS:
+				printf("MENU_COMMUNICATIONS_RESET_SSID_PASS\r\n");
+				display_menu("Reset", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+				break;
+			case MENU_COMMUNICATIONS_RESET_ARE_YOU_SURE_CONFIRM:
+				 printf("MENU_COMMUNICATIONS_RESET_ARE_YOU_SURE_CONFIRM\r\n");
+				 display_menu("Are you", DISPLAY_COLOR, "sure?", DISPLAY_COLOR);
+				break;
+			case MENU_COMMUNICATIONS_RESET_CONFIRMED:
+				 printf("MENU_COMMUNICATIONS_RESET_CONFIRMED\r\n");
+				 display_menu("Reset", DISPLAY_COLOR, "confirmed!", DISPLAY_COLOR);
+
+				//esp_wifi_start();
+
+				// erase_storage_all(); // erase flash..
+
+				 esp_restart();
+				break;
+#endif
+
+            } // end of
 
             update_display = false;
         }
@@ -4739,7 +4808,7 @@ int app_set_temp_unit(int unit) {
     if (app_data) {
         if (unit == TEMP_UNIT_CELSIUS
             || unit == TEMP_UNIT_FAHRENHEIT) {
-            app_data->settings.temperature_unit = unit;
+            app_data->settings.temperature_unit = unit;  printf("\n app_set_temp_unit app_data->settings.temperature_unit %d \n", app_data->settings.temperature_unit);
             set_data_to_storage(STORAGE_KEY_SETTINGS, (void *) &app_data->settings, sizeof(settings_t));
             return 0;
         }    }    return -1;

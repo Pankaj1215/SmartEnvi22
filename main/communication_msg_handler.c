@@ -685,6 +685,12 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         sprintf(reply_buff, "%d", app_is_autoset_time_date_enabled());
     } else if (strcmp(label, REMOTE_CMD_SET_TEMP_UNIT) == 0) {
         printf("REMOTE_CMD_SET_TEMP_UNIT %s\r\n", value);
+
+        CommandAck = SET_TEMP_UNIT_ACK;  //
+
+		 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_temp_unit", "status","success",  "value",value);
+
+
         app_set_temp_unit(atoi(value));
     } else if (strcmp(label, REMOTE_CMD_GET_TEMP_UNIT) == 0) {
         printf("REMOTE_CMD_GET_TEMP_UNIT %s\r\n", value);

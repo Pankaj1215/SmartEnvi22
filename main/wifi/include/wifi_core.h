@@ -42,6 +42,7 @@
 
 #define SET_THRESHOLD_OFFSET_TIME_ACK     10
 
+#define SET_TEMP_UNIT_ACK     11
 
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 

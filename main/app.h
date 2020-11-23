@@ -104,8 +104,8 @@
 
 extern char uniqueDeviceID[12];
 
-#define ap_password "qwerty12345"
-
+// #define ap_password "qwerty12345"
+#define ap_password ""
 
 
 
@@ -263,6 +263,8 @@ enum menu_time_and_date {
     MENU_TIME_AND_DATE_MANUAL_TIME_MINUTE_CHANGE,
 };
 
+
+#define RESET_SSID_PASS
 enum menu_communications {
     MENU_COMMUNICATIONS_AP_MODE = 1,
     MENU_COMMUNICATIONS_WIFI_AP,
@@ -276,6 +278,11 @@ enum menu_communications {
     MENU_COMMUNICATIONS_WIFI_AP_SSID_CHANGE,
     MENU_COMMUNICATIONS_WIFI_AP_PASSWORD_CHANGE,
     MENU_COMMUNICATIONS_WPS_EN_INST,
+#ifdef RESET_SSID_PASS
+	MENU_COMMUNICATIONS_RESET_SSID_PASS,   //  New Added for
+	MENU_COMMUNICATIONS_RESET_ARE_YOU_SURE_CONFIRM,
+	MENU_COMMUNICATIONS_RESET_CONFIRMED,
+#endif
 };
 
 enum menu_settings {
