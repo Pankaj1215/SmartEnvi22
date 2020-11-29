@@ -381,8 +381,8 @@ int mainflux_msg_handler(char* msg, char* response)
 
                 strncpy(label, labelstart, labelend - labelstart); 
                 strncpy(value, valuestart, valueend - valuestart); 
-              //  printf("label [%s]\n", label);
-              //  printf("value [%s]\n", value);
+               // printf("label [%s]\n", label);
+               // printf("value [%s]\n", value);
 
                 if(strcmp(label, "version_major") == 0)
                 				{
@@ -643,16 +643,29 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         printf("REMOTE_CMD_SET_TARGET_TEMP %s\r\n", value);
         app_set_target_temp(atoi(value));
 
-       //	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success"); // Working one
-       //	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set","type", "set_temp", "status","success", "value", value);
-    	// sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "cmd", "set_temp","type", "set", "status","success", "value", value);
-    	sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "type", "set","cmd", "set_temp", "status","success", "value", value);
+        // working one..
+       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "type", "set","cmd", "set_temp", "status","success", "value", value);
+        // Testing one ..
+        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%d\"", "type", "set","cmd", "set_temp", "status","success", "value", value,"temp_unit", app_get_temp_unit());
+
     	CommandAck = SET_TEMP_ACK;
 
     } else if (strcmp(label, REMOTE_CMD_GET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
         // This for get set temperature command..
-        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp());
+
+        // Working string ..
+       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp());
+
+        // ONly for Testing ...
+        //   sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(), "set_temp", app_get_target_temp(),"temp_unit",app_get_temp_unit(), "Heater_state", app_get_heater_state());
+
+        // Working one
+        //  sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(), "s_t", app_get_target_temp(),"t_u",app_get_temp_unit(), "h_s", app_get_heater_state());
+
+        // testing one.with get Temp and Temp unit ..
+        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(),"temp_unit", app_get_temp_unit());
+
         CommandAck = GET_TEMP_ACK;
 
     } else if (strcmp(label, REMOTE_CMD_SET_TIMER_SETTING) == 0) {
@@ -687,9 +700,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         printf("REMOTE_CMD_SET_TEMP_UNIT %s\r\n", value);
 
         CommandAck = SET_TEMP_UNIT_ACK;  //
-
-		 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_temp_unit", "status","success",  "value",value);
-
+	    sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_temp_unit", "status","success",  "value",value);
 
         app_set_temp_unit(atoi(value));
     } else if (strcmp(label, REMOTE_CMD_GET_TEMP_UNIT) == 0) {
@@ -851,6 +862,26 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 		 			 printf("app_data-> TimerIntervalThresholdOffset %d  app_data-> TimerIntervalThresholdOffset %d\r\n", app_data-> TimerIntervalThresholdOffset, app_data-> TimerIntervalThresholdOffset);
 		 			 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_threshold_offset_time", "status","success",  "value",value);
 		 			}
+	 else if (strcmp(label, REMOTE_CMD_HEATER_CONFIG_SYCH) == 0) {
+				 CommandAck = HEATER_CONFIG_SYNCH_ACK;
+				 //Put this value in the variable for threshold offset value
+				 printf("REMOTE_CMD_HEATER_CONFIG_SYCH \r\n");
+				 // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_threshold_offset_time", "status","success",  "value",value);
+//				 sprintf(reply_buff,"\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\,\n\"%s\":\"%s\,\n\"%s\":\"%s\,\n\"%s\":\"%s\",\n\"%s\":\"%s\"","cmd","h_c_s","type","get","status","success","lds","01","nls","01","cs","01","afs","01","dls","01","ps","01","at","65","st","65","tu","01","hs","01");
+
+				 // compiled..
+				// sprintf(reply_buff,"\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"","cmd","h_c_s","type","get", "status","success", "lds","01","lds","01","nls","01","cs","01","afs","01","dls","01","ps","01", "at","65","st","65","tu","01", "hs","01");
+
+				 // Testing..
+				 // sprintf(reply_buff,"\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"","cmd","h_c_s","type","get", "status","success","lds",rgb_led_state,"nls",app_is_night_light_auto_brightness_enabled(),"cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"ps","01", "at",app_get_ambient_temp(),"st",app_get_target_temp(),"tu",app_get_temp_unit(), "hs",app_get_heater_state());
+
+				 // Compiled..
+				// sprintf(reply_buff,"\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%s\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\"","cmd","h_c_s","type","get", "status","success","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(), "ps","01","at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
+
+				// sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","t","get", "s","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
+				 sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
+
+	 }
 	 else
 	 {
         printf("unhandled label %s %s\r\n", label, value);

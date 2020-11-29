@@ -73,7 +73,7 @@ app_data_t *app_data = NULL; // New Added for Wifi Icon
  unsigned char Hysteris_Thresh_Off_Set_OverWarning;
  unsigned char TimeInterval_Thresh_OffSet_UnderWarning;
  unsigned char TimeInterval_Thresh_OffSet_OverWarning;
-
+ unsigned char ambientTempChangeDataToAWS;
 
 #define DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
 
@@ -457,7 +457,6 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 #ifdef wifi_AP_STA_COMBINE
 			aws_task_flag= 1;
 #endif
-
 			printf("connected\n");
 			app_data->is_connected = true; // wifi icon
 
@@ -531,7 +530,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
            	if (app_data->is_auto_time_date_en)
            		 get_NTP_Time();
 
-        	xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
+            xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);
 
         	ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
         	oneTimeRegistrationPacketToAWS = 1; // New added to sending First packet to AWS
@@ -1719,6 +1718,21 @@ static void http_get_task(void *pvParameters)
 				}
 
 
+				const char *topic_h_c_s = "aws/device/command/h_cn_s";  // testing for param key..
+				const int topic_h_c_s_Len = strlen(topic_h_c_s);
+				ESP_LOGI(TAG, "Subscribing.topic_h_c_s..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_h_c_s, topic_h_c_s_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_h_c_s subscribing : %d ", rc);
+				// abort();  // Commneted for testing}
+				}
+				const char *topic_h_c_s_response = "aws/device/command/h_cn_s/response";  // testing for param key..
+				const int topic_h_c_s_response_Len = strlen(topic_h_c_s_response);
+				ESP_LOGI(TAG, "Subscribing.topic_h_c_s_response..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_h_c_s_response, topic_h_c_s_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_h_c_s_response_Len subscribing : %d ", rc);
+				}
 				const char *topic_Manual_Set_Temp_change = "aws/device/event/temp_change";  // testing for param key..
 				const int topic_Manual_Set_Temp_change_Len = strlen(topic_Manual_Set_Temp_change);
 				ESP_LOGI(TAG, "Subscribing.topic_Manual_Set_Temp_change..");
@@ -1792,6 +1806,24 @@ static void http_get_task(void *pvParameters)
 				ESP_LOGE(TAG, "Error topic_Manual_temp_unit_change subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
+
+				const char *topic_ambient_temp_change = "aws/device/event/ambient_temp_changed";  // testing for param key..
+				const int topic_ambient_temp_change_Len = strlen(topic_ambient_temp_change);
+				ESP_LOGI(TAG, "Subscribing.topic_ambient_temp_change..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_ambient_temp_change, topic_ambient_temp_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_ambient_temp_change subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+//				const char *topic_Manual_temp_unit_change = "aws/device/event/temp_unit_changed";  // testing for param key..
+//				const int topic_Manual_temp_unit_change_Len = strlen(topic_Manual_temp_unit_change);
+//				ESP_LOGI(TAG, "Subscribing.topic_Manual_temp_unit_change..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Manual_temp_unit_change, topic_Manual_temp_unit_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_Manual_temp_unit_change subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
 
 				//				const char *topic_activate_child_lock = "aws/device/command/activateChildLock";  // testing for param key..
 //				const int topic_activate_child_lock_Len = strlen(topic_activate_child_lock);
@@ -1886,7 +1918,13 @@ static void http_get_task(void *pvParameters)
 				printf("account ID : %s\n",id);
 			   // Adviced to Amit..
 				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\", \n\"%s\":\"%s\", \n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone);
+
+				// working one
 				 sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion);
+
+				// Testing one ..
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"st", app_get_target_temp(),"tu",app_get_temp_unit(), "hs", app_get_heater_state());
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"gt", app_get_ambient_temp(),"st", app_get_target_temp(),"tu",app_get_temp_unit(), "hs", app_get_heater_state());
 
 				 HeaterMeassage.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, topicDevRegis, topicDevRegis_Len, &HeaterMeassage);
@@ -1912,13 +1950,13 @@ static void http_get_task(void *pvParameters)
 				switch(CommandAck)
 				{
 				    case SET_TEMP_ACK :
-					                     rc = aws_iot_mqtt_publish(&client, topicSetTemp_Res, topicSetTemp_Res_Len, &HeaterMeassage);
+					                     rc = aws_iot_mqtt_publish(&client, topicSetTemp_Res, topicSetTemp_Res_Len, &HeaterMeassage);CommandAck = 0;
 					                     break;
 				    case GET_TEMP_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topicGetTemp_Res, topicGetTemp_Res_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicGetTemp_Res, topicGetTemp_Res_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case HEATER_ON_OFF_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topicHeaterOnOffResponse, topicHeaterOnOffResponse_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicHeaterOnOffResponse, topicHeaterOnOffResponse_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 
 				    			     	// not active
@@ -1927,10 +1965,10 @@ static void http_get_task(void *pvParameters)
 //				    			     	 break;
 
 				    case SET_RGB_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case EN_NIGHT_LIGHT_MODE_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Enable_Night_Light_Mode_Response, topic_Enable_Night_Light_Mode_Response_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Enable_Night_Light_Mode_Response, topic_Enable_Night_Light_Mode_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 
 				    			     	 // not active
@@ -1939,22 +1977,24 @@ static void http_get_task(void *pvParameters)
 //				    			     	 break;
 
 				    case EN_ANTI_FREEZE_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case RGB_LED_STATE_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case DAY_LIGHT_TIME_STATE_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case SET_THRESHOLD_OFFSET_TIME_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 
 				    case SET_TEMP_UNIT_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, &HeaterMeassage);
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-
+				    case HEATER_CONFIG_SYNCH_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_h_c_s_response, topic_h_c_s_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
 				    default:   break;
 				}
 
@@ -1979,7 +2019,8 @@ static void http_get_task(void *pvParameters)
 					keepAliveSendDataToAWS = 1;
 				  }
 			 }
-			 if(keepAliveSendDataToAWS==1)
+			// if(keepAliveSendDataToAWS==1)
+			 if((keepAliveSendDataToAWS==1)&&( CommandAck == 0))
 			 {
 				printf("I am sendig Kepp Alive packet \n");
 				memset(cPayload1,0,sizeof(cPayload1));
@@ -1988,8 +2029,8 @@ static void http_get_task(void *pvParameters)
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","everythingFineHere"); // WorkingOne..
 
 				HeaterMeassage.payloadLen = strlen(cPayload1);
+			    rc = aws_iot_mqtt_publish(&client, topicKeepAlive, topicKeepAlive_Len, &HeaterMeassage);
 				// rc = aws_iot_mqtt_publish(&client, topicKeepAlive, topicKeepAlive_Len, &HeaterMeassage);
-				rc = aws_iot_mqtt_publish(&client, topicKeepAlive, topicKeepAlive_Len, &HeaterMeassage);
 #ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
 				{
@@ -2027,9 +2068,10 @@ static void http_get_task(void *pvParameters)
 					memset(cPayload1,0,sizeof(cPayload1));
 					// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing
 					//sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\"\n}", "deviceID", "Heater2","type", "alert","warning", "Anti Freezing ON - Heater ON");
-					sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","minThresholedReached");
+
+					 sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","minThresholedReached");
 					HeaterMeassage.payloadLen = strlen(cPayload1);
-					rc = aws_iot_mqtt_publish(&client, topicMinThresholdReached, topicMinThresholdReached_Len, &HeaterMeassage);
+				 rc = aws_iot_mqtt_publish(&client, topicMinThresholdReached, topicMinThresholdReached_Len, &HeaterMeassage);
 #ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
 				{
@@ -2047,7 +2089,7 @@ static void http_get_task(void *pvParameters)
 				memset(cPayload1,0,sizeof(cPayload1));
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","setTempThresholdOffsetCrossed");
 				HeaterMeassage.payloadLen = strlen(cPayload1);
-				rc = aws_iot_mqtt_publish(&client, topicMinThresholdReached, topicMinThresholdReached_Len, &HeaterMeassage);
+				// rc = aws_iot_mqtt_publish(&client, topicMinThresholdReached, topicMinThresholdReached_Len, &HeaterMeassage);
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
 				{
@@ -2062,7 +2104,15 @@ static void http_get_task(void *pvParameters)
 
 			if(manaully_Set_Temp_change==1){
 				memset(cPayload1,0,sizeof(cPayload1));
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit);
+
+				// working one
+//				if(app_data->settings.temperature_unit ==1)
+//				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit);
+//				else
+//				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_celsius);
+
+				// testing one
+    			sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_celsius,"temp_unit",app_get_temp_unit());
 
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, &HeaterMeassage);
@@ -2221,8 +2271,31 @@ static void http_get_task(void *pvParameters)
 				HeaterStateChangeDataToAWS= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
 
+
+// ambient_temp_change_event
+				if(ambientTempChangeDataToAWS ==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "ambient_temp_change", "status","success",  "value", app_get_ambient_temp(),"temp_unit",app_get_temp_unit());
+
+			    printf("\n \n Ambient Temp change");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, topic_ambient_temp_change, topic_ambient_temp_change_Len, &HeaterMeassage);
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				ambientTempChangeDataToAWS= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
 				// TempUnitChangeDataToAWS
 				if(manaully_Temp_unit_change ==1){
+
 				memset(cPayload1,0,sizeof(cPayload1));
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_temp_unit_change", "status","success",  "value", app_data->settings.temperature_unit);
 				printf("\n \n TempUnitChangeDataToAWS app_data->settings.temperature_unit : %d \n \n ", app_data->settings.temperature_unit);
@@ -2239,7 +2312,6 @@ static void http_get_task(void *pvParameters)
 				memset(cPayload1,0,sizeof(cPayload1));
 				manaully_Temp_unit_change= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
-
 
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 #endif
@@ -2303,12 +2375,220 @@ while(1){
 				printf("\n \n heater state change task  data->lastHeaterState : %d \n \n ", data->lastHeaterState);
 			}
 		  }
-
 	 vTaskDelay(1 / portTICK_RATE_MS);
   }// end of while(1)
 }
 
 
+// #define MalfunctionTask
+#ifdef MalfunctionTask
+void Temp_MalfunctionTask(void *param)
+{
+    app_data_t *data = (app_data_t *) param;
+    bool *currentHeaterState = &(data->lastHeaterState);
+    int *amb_temp_c = &(data->ambient_temperature_celsius);
+    int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
+    int ltempInFehrenniete = 0;
+    int Prev_SetTemp = 0;
+    int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
+    int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
+    int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
+    unsigned char hysterisFlag = 0;
+    int prevAmbientTemp_Fahraneite = 0;
+    int prevAmbientTemp_Calcius = 0;  int lprevAmbientTempForEventTrigger = 0;
+   // unsigned char *TimerIntervalThresholdOffset = &(data-> TimerIntervalThresholdOffset);
+	#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
+
+    lprevAmbientTempForEventTrigger = *amb_temp_c;
+    while(1){
+    	  	*amb_temp_c = app_get_ambient_temp();
+            ltempInFehrenniete = celsius_to_fahr(*amb_temp_c);// Calcius converted to Fehranite..
+        if(lprevAmbientTempForEventTrigger != *amb_temp_c)
+        	{lprevAmbientTempForEventTrigger = *amb_temp_c; ambientTempChangeDataToAWS = 1; }
+
+        if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
+		 if(*amb_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
+			  heater_off();
+		      heater_On_Off_state_by_command = 0 ;
+			  app_data->lastHeaterState = false;
+			  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState); printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+			  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
+//			  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
+			  printf("\n In calsius maxTemperatureThresholdReachedWarning \n\n "); }
+
+		  if(en_anti_freeze == 1){
+			  printf("en_anti_freeze in calsius minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
+			  if(*amb_temp_c  < ANTI_FREEZE_LIMIT_CELSIUS) {
+			  heater_on();
+			  heater_On_Off_state_by_command =1 ;
+			 app_data->lastHeaterState = true;
+			 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+			 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+			  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
+			  printf("minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
+			  printf("\n minTemperatureThresholdReachedWarning \n ");
+		  }	}// endof  if(en_anti_freeze == 1){
+
+//		   if(*amb_temp_c >= *target_temp_c - *temp_hysteresis_c)  // ambient temperature in fahraneit
+//		     {		        hysterisFlag = 1;	 printf("\n hysterisFlag %d\n ", hysterisFlag);	     }
+//		     if(hysterisFlag == 1)
+//		       { hysterisFlag = 0;
+//		    	 if( *amb_temp_c < (*target_temp_c - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS))
+//				 {
+//		    		// printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
+//		    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
+//				 }
+//		    	 if( *amb_temp_c > (*target_temp_c + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS))
+//				 {
+//		    		 Hysteris_Thresh_Off_Set_OverWarning =1;
+//		    		// printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
+//				 }
+//		       } // end of  if(hysterisFlag == 1)
+//	        //}// end of else
+//
+//	         if( Prev_SetTemp != *target_temp_c )
+//	        {
+//	        	Prev_SetTemp = *target_temp_c;
+//	        	 TempChange_ms = 0;
+//	        	 time_OneMinuteOver = 0;
+//	        	 time_count = 0; prevAmbientTemp_Calcius = *amb_temp_c;
+//	        }
+//		  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+//				if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
+//					TempChange_ms = cur_ms;
+//					time_OneMinuteOver = 1;
+//				}
+////			//printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
+//			if(time_OneMinuteOver == 1)
+//			{
+//			  time_count++;
+//			  time_OneMinuteOver = 0;
+//			}
+//		//printf("time_count %d \n", time_count);
+//		//	unsigned char TimerIntervalThresholdOffset;
+//			printf("app_data-> TimerIntervalThresholdOffset %d \n", app_data-> TimerIntervalThresholdOffset);
+//		  	if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
+		    //if(time_count >= app_data-> TimerIntervalThresholdOffset){
+			 //  printf("2 minutes over \n ");
+//			   time_OneMinuteOver = 0;
+//			   time_count = 0;
+//			 if( *ambient_temp_c < (prevAmbientTemp_Calcius - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR))
+//				 {
+//					printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
+//					TimeInterval_Thresh_OffSet_UnderWarning = 1;
+//				 }
+////				 if( *ambient_temp_c > (*target_temp_c + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR))
+////				 {
+////					 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
+////					 TimeInterval_Thresh_OffSet_OverWarning = 1;
+////				 }
+//			}
+     }
+   else{
+
+//	   if(tempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
+//	      	 heater_off();
+//	      	 heater_On_Off_state_by_command = 0 ;
+//	  		 app_data->lastHeaterState = false;
+//	  		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+//	  		// printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+//	      	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
+//	      	//  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX);
+//	      	  printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
+//	        }
+//
+//	  // printf("en_anti_freeze : %d\n ",en_anti_freeze);
+//	   if(en_anti_freeze == 1){
+//	      // printf("en_anti_freeze logic Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
+//	     //  printf("en_anti_freeze logic tempInFehrenniete %d\n ",tempInFehrenniete);
+//		   if(tempInFehrenniete  < ANTI_FREEZE_LIMIT_FEHRANEITE)  {
+//	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
+//	          heater_on();
+//	          heater_On_Off_state_by_command = 1 ; // As there is waring which will indicate that heater is in ON state.
+//	  		  app_data->lastHeaterState = true;
+//	  		  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+//	  		//  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+//	      	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
+//	      	 // printf("\n In Fahrenite minTemperatureThresholdReachedWarning \n ");
+//	        }
+//	      } // end of  if(en_anti_freeze ==1){
+//
+//	  // tempInFehrenniete = 36 ;
+//	  // *target_temp_f = 40 ;
+//	  // *temp_hysteresis_f = 5;
+//	   // THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS =5;
+//	     if(tempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)  // ambient temperature in fahraneit
+//	     {	        hysterisFlag = 1;	printf("\n hysterisFlag %d\n ", hysterisFlag);  }
+//	     if(hysterisFlag == 1)
+//	       {  hysterisFlag = 0;
+//	        // tempInFehrenniete =30;
+//	    	// if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))  // 36 < 40 -5 // Include heater ON state
+//		   	 if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))  // 36 < 40 -5 // Include heater ON state
+//	    	 {
+//	    		 printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
+//	    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
+//			 }
+//	    	// tempInFehrenniete =60;
+////	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
+//	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))
+//	    	 {
+//	    		 Hysteris_Thresh_Off_Set_OverWarning =1;
+//	    		 printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
+//			 }
+//	       } // end of  if(hysterisFlag == 1)
+//
+//       // printf("temp_offset_c in calsius=%d\r\n", *temp_offset_c);
+//       //printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
+//       printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
+//       printf("Set Temp in fehraneite =%d\r\n", *target_temp_f);
+//         if( Prev_SetTemp != *target_temp_f )
+//        {      	Prev_SetTemp = *target_temp_f;
+//        	 TempChange_ms = 0;
+//        	 time_OneMinuteOver = 0;
+//        	 time_count = 0; printf("\n set Temp changed.. \n");
+//        	// prevAmbientTemp_Fahraneite = tempInFehrenniete;
+//        }
+//	  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+//			if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
+//				TempChange_ms = cur_ms;
+//				time_OneMinuteOver = 1;			}
+//		//printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
+//		if(time_OneMinuteOver == 1)
+//		{
+//		  time_count++;
+//		  time_OneMinuteOver = 0;
+//		}
+//		//printf("time_count %d \n", time_count);
+//#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation  // app_data-> TimerIntervalThresholdOffset
+//		//printf("(data-> TimerIntervalThresholdOffset %d app_data-> TimerIntervalThresholdOffset  %d *TimerIntervalThresholdOffset %d \n", data-> TimerIntervalThresholdOffset,app_data-> TimerIntervalThresholdOffset , *TimerIntervalThresholdOffset);
+//
+//	    // printf("app_data-> TimerIntervalThresholdOffset  %d TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset , TimerIntervalThresholdOffset);
+//
+//		// if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
+//	   // if(time_count >= *TimerIntervalThresholdOffset){
+//		if(time_count >= TimerIntervalThresholdOffset){
+//		//if(time_count >= app_data-> TimerIntervalThresholdOffset){
+//		//  printf("2 minutes over \n ");
+//		   time_OneMinuteOver =0;
+//		   time_count = 0;
+//
+//		  // *target_temp_f = 40;  // Only for Testing..
+//		  //  tempInFehrenniete = 30;
+//		 	          // 40                // 30                            // 10
+//			if(((*target_temp_f - tempInFehrenniete) >= THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR)	&& (*currentHeaterState == 1))// target_temp_f- > replace with previouvs ambient temp.
+//			{
+//				 printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
+//				 TimeInterval_Thresh_OffSet_UnderWarning = 1;
+//			 }
+////			 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
+////			 {
+////				 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
+////				 TimeInterval_Thresh_OffSet_OverWarning = 1;
+			 }
+	}// end of while
+}//void Temp_MalfunctionTask(void)
+
+#endif
 
 //#define Addition_INITIALISE_WIFI_HANDLER
 #ifdef Addition_INITIALISE_WIFI_HANDLER
@@ -2527,7 +2807,7 @@ void initialise_wifi(void)
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
 
-
+// printf("");
 #ifdef DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
     esp32_wifi_client_enable(username,password);
 

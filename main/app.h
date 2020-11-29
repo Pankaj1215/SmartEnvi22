@@ -66,8 +66,8 @@
 
 #define DEFAULT_LAST_HEATER_STATE   0
 
-#define ANTI_FREEZE_LIMIT_FEHRANEITE  50
-#define ANTI_FREEZE_LIMIT_CELSIUS  10
+#define ANTI_FREEZE_LIMIT_FEHRANEITE  40 // 50
+#define ANTI_FREEZE_LIMIT_CELSIUS   4 // 10
 
 #define TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN  40
 
@@ -697,8 +697,10 @@ int app_ota_start(char* loc);
 void RGB_LED_ON_OFF(int value);
 
 void app_set_heater_state(int heater_state);
-
-
+bool app_get_heater_state(void);
+int app_get_day_light_Saving_status(void);
+bool app_get_anti_freeze_status(void);
+bool app_get_rgb_state(void);
 #endif /* MAIN_APP_H */
 
 

@@ -105,7 +105,7 @@
 #define REMOTE_CMD_DAY_LIGHT_TIME_STATE   "day_light_time_on"
 #define REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME   "set_threshold_offset_time"
 
-
+#define REMOTE_CMD_HEATER_CONFIG_SYCH   "hcs"// "heater_config_sync"// "h_c_s"
 
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)

@@ -145,7 +145,7 @@ extern unsigned char maxTemperatureThresholdReachedWarning;
 extern unsigned char minTemperatureThresholdReachedWarning;
 extern unsigned char setTempThresholdOffsetCrossed;
 extern unsigned char rgb_led_state;
-
+extern unsigned char ambientTempChangeDataToAWS;
 // extern unsigned char daylightSaving;   // New Added for Day light on Off
 // bool daylightSaving;   // New Added for Day light on Off
 // unsigned char daylightSaving;   // New Added for Day light on Off
@@ -236,12 +236,17 @@ else
 
 printf("heater_On_Off_state_by_command %d",heater_On_Off_state_by_command);
 }
-// #define Test_Storage
+
+//#define Test_Storage
 static void print_fw_version(void)
 {
     char fw_version[100]; 
     get_version(fw_version); 
     ESP_LOGI("firmware_version", "%s", fw_version);
+    // Added For testing only ..
+    display_clear_screen();
+    display_menu("Firm_ver", DISPLAY_COLOR, fw_version, DISPLAY_COLOR);
+    vTaskDelay(3000); //    // wait for at least Firmware version..
 }
 
 esp_err_t app_init(void) {
@@ -249,7 +254,7 @@ esp_err_t app_init(void) {
 
 #ifdef Test_Storage
  printf("Before erase \n");
- // erase_storage_all();
+  erase_storage_all();
  printf("After erase \n");
 #endif
 
@@ -419,6 +424,7 @@ esp_err_t app_init(void) {
     // wait for at least APP_WELCOME_SCREEN_DELAY_MS
     if ((xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) < APP_WELCOME_SCREEN_DELAY_MS)
         vTaskDelay(APP_WELCOME_SCREEN_DELAY_MS - (xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) / portTICK_RATE_MS);
+
     // start app task
     xTaskCreate(app_task, "app_task", 4096, (void *)app_data, 12, NULL);
     return ret;
@@ -632,6 +638,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
     int hysteresis_c = 0;
     temp_unit_t *temp_unit = &(data->settings.temperature_unit);
 
+    bool prevTempUnit =0 ;
+
     bool update_display = true;
     bool screen_off = false;
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -671,8 +679,27 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
 #endif
 
+       prevTempUnit = data->settings.temperature_unit ;
     while(*mode == APP_MODE_MANUAL_TEMPERATURE) {
-        // turn off/on the heater based on temperature
+       // Added for testing ctof
+    	// data->settings.temperature_unit =1;
+    	// data->settings.temperature_unit =0;
+
+    	if(prevTempUnit != data->settings.temperature_unit){
+    	   prevTempUnit = data->settings.temperature_unit ;update_display = true;  }
+
+    	   if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
+    	        temp_max = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX;
+    	        temp_min = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN;
+    	        temp = &(data->manual_temperature_celsius);
+    	    } else {
+    	        temp_max = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX;
+    	        temp_min = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MIN;  //
+    	        temp = &(data->manual_temperature_fahrenheit);
+    	    }
+
+
+    	// turn off/on the heater based on temperature
         if (*ambient_temp_c < data->manual_temperature_celsius) {
             if (!is_heater_on) {
 
@@ -3532,7 +3559,7 @@ static app_mode_t menu_communications(app_data_t *data) {
 
 				//esp_wifi_start();
 
-				// erase_storage_all(); // erase flash..
+				 erase_storage_all(); // erase flash..
 
 				 esp_restart();
 				break;
@@ -3658,6 +3685,7 @@ static app_mode_t menu_settings(app_data_t *data) {
                             break;
                         case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
                             is_settings_changed = true;
+                            manaully_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
                             // Fahrenheit <--> Celsius
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
                                 data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
@@ -3724,6 +3752,7 @@ static app_mode_t menu_settings(app_data_t *data) {
                             break;
                         case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
                             is_settings_changed = true;
+                            manaully_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
                             // Fahrenheit <--> Celsius
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
                                 data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
@@ -4265,13 +4294,16 @@ static void temp_sensor_task(void *param) {
     int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
     unsigned char hysterisFlag = 0;
     int prevAmbientTemp_Fahraneite = 0;
-    int prevAmbientTemp_Calcius = 0;
+    int prevAmbientTemp_Calcius = 0;  int lprevAmbientTempForEventTrigger = 0;
    // unsigned char *TimerIntervalThresholdOffset = &(data-> TimerIntervalThresholdOffset);
 	#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
+    lprevAmbientTempForEventTrigger = *ambient_temp_c;
     while(1) {
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
        // *ambient_temp_c = 7;
         tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);// Calcius converted to Fehranite..
+        if(lprevAmbientTempForEventTrigger != *ambient_temp_c)
+        	{lprevAmbientTempForEventTrigger = *ambient_temp_c; ambientTempChangeDataToAWS = 1; }
        // tempInFehrenniete = 45;
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
    if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
@@ -4684,21 +4716,25 @@ int app_get_ambient_temp(void) {
    int temperatureInFehrannite;
 	if (app_data) {
     	printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
-    	 if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+//    	 if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
           	 return app_data->ambient_temperature_celsius;
-    	 else  //     			app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT
-    	 {
-    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
-    	     return temperatureInFehrannite;
-    	 }
+//    	 else  //     			app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT
+//    	 {
+//    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
+//    	     return temperatureInFehrannite;
+//    	 }
     }
     return 0x80000000;
 }
 
-int app_set_target_temp(int temp_c) {
-    if (app_data)
+int app_set_target_temp(int temp) {
+   int temp_c = 0;
+   int temp_f = 0 ; float ftemp_f =0;
+   temp_c = temp; printf("temp_c %d\n",temp_c);
+   temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
+	if (app_data)
     {
-// fahr_to_celsius
+// _celsius
     if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
         if (temp_c >= TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX)
@@ -4706,29 +4742,25 @@ int app_set_target_temp(int temp_c) {
         if (temp_c >= TEMPERATURE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_CELSIUS_VAL_MAX)  	  // Original Last Firmware Line
 #endif
         {
-            app_data->manual_temperature_celsius = temp_c;
-            app_data->manual_temperature_fahrenheit = celsius_to_fahr(temp_c);
+            app_data->manual_temperature_celsius = temp_c; printf("app_data->manual_temperature_celsius %d\n",app_data->manual_temperature_celsius );
+            app_data->manual_temperature_fahrenheit = temp_f;  printf("app_data->manual_temperature_fahrenheit %d\n",app_data->manual_temperature_fahrenheit );
             // update target temperature in flash
             set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, app_data->manual_temperature_celsius);
-            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit);
-            printf("Temp set by command: %d \n ",temp_c );
-            return 0;
+            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit); printf("Temp set by command: %d \n ",temp_c );  return 0;
         }
      }
     else{ // Temperature Value in Fehreanite
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-        if (temp_c >= TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MIN   && temp_c <= TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX)
+        if (temp_f >= TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MIN   && temp_f <= TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX)
 #else
-        if (temp_c >= TEMPERATURE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_CELSIUS_VAL_MAX)  	  // Original Last Firmware Line
+        if (temp_f >= TEMPERATURE_CELSIUS_VAL_MIN   && temp_f <= TEMPERATURE_CELSIUS_VAL_MAX)  	  // Original Last Firmware Line
 #endif
         {
-            app_data->manual_temperature_fahrenheit = temp_c;
-            app_data->manual_temperature_celsius = fahr_to_celsius(temp_c);
+            app_data->manual_temperature_fahrenheit = temp_f; printf("app_data->manual_temperature_fahrenheit: %d\n",app_data->manual_temperature_fahrenheit );
+            app_data->manual_temperature_celsius = temp_c; printf("app_data->manual_temperature_celsius %d\n",app_data->manual_temperature_celsius );
             // update target temperature in flash
             set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, app_data->manual_temperature_celsius);
-            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit);
-            printf("Temp set by command in fahrenheit: %d \n ",app_data->manual_temperature_fahrenheit );
-            return 0;
+            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit);  printf("Temp set by command in fahrenheit: %d \n ",app_data->manual_temperature_fahrenheit );   return 0;
         } // if
        } // else
     }//  if (app_data)
@@ -4736,9 +4768,13 @@ int app_set_target_temp(int temp_c) {
 }
 int app_get_target_temp(void) {
     if (app_data) { // Original Lines
-        printf("From app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
-        return app_data->manual_temperature_celsius;
-    }
+    //	if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
+        printf("From app_get_target_temp in calcius: %d\n", app_data->manual_temperature_celsius);
+        return app_data->manual_temperature_celsius; }
+      //  else{
+      //      printf("From app_get_target_temp in fahreneite: %d\n", app_data->manual_temperature_fahrenheit);
+      //      return app_data->manual_temperature_fahrenheit;}
+    //}
      printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
 	 return 0x80000000;  // Original Line
 }
@@ -4815,6 +4851,16 @@ int app_set_temp_unit(int unit) {
 }
 int app_get_temp_unit(void) {
     if (app_data) {        return app_data->settings.temperature_unit;    }    return -1;}
+bool app_get_rgb_state(void) {
+      return rgb_led_state; }
+bool app_get_anti_freeze_status(void) {
+          return en_anti_freeze;}
+bool app_get_anti_free_state(void) {
+          return en_anti_freeze;}
+int app_get_day_light_Saving_status(void) {
+    if (app_data) {        return app_data->daylightSaving;    }    return -1;}
+int app_get_night_light_state_status(void) {
+    if (app_data) {        return app_data->daylightSaving;    }    return -1;}
 int app_enable_autodim_pilot_light(bool en) {
     if (app_data) {
         bool *is_dim_pilot_light_en = &(app_data->settings.is_dim_pilot_light_en);
@@ -4836,7 +4882,9 @@ int app_enable_night_light_auto_brightness(bool en) {
         }        return 0;    }    return -1;
 }
 bool app_is_night_light_auto_brightness_enabled(void) {
-    if (app_data) {        return app_data->settings.is_night_light_auto_brightness_en;    }    return false;}
+    if (app_data) {        return app_data->settings.is_night_light_auto_brightness_en;    }    return false;}   // data->settings.is_night_light_auto_brightness_en
+bool app_get_heater_state(void) {
+    if (app_data) {        return app_data->lastHeaterState;    }    return false;}
 void app_set_heater_state(int heater_state)
 {
 	heater_On_Off_state_by_command = heater_state ;
