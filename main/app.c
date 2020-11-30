@@ -153,7 +153,6 @@ extern unsigned char ambientTempChangeDataToAWS;
 
 #define NTP_Testing_dayLightSaving  // New testing Added ..on 15_51pm
 
-
 extern unsigned char en_anti_freeze;
 extern unsigned char heater_On_Off_state_by_command;
 extern unsigned char manaully_Set_Temp_change;
@@ -163,9 +162,13 @@ extern unsigned char manaully_Temp_unit_change;
 
 unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
 // Threshold_Offset 30Minute calculation ..
+
+//#define MalfunctionTaskIncludedInTempTask
+#ifdef MalfunctionTaskIncludedInTempTask
 time_t TempChange_ms = 0;
 int time_OneMinuteOver = 0;
 int time_count = 0;
+#endif
 
 extern unsigned char TimerIntervalThresholdOffset;
 extern unsigned char Hysteris_Thresh_Off_Set_UnderWarning;
@@ -418,9 +421,10 @@ esp_err_t app_init(void) {
 //   initialize_communication_service();
 //    comm_wifi_dev = get_wifi_dev();
 
-#ifdef P_TESTING   // Added for Testing
-     tcpServer_main();
-#endif
+
+//#ifdef P_TESTING   // Added for Testing  commented on 30Nov shifting it after other tasks get operational
+//     tcpServer_main();
+//#endif
     // wait for at least APP_WELCOME_SCREEN_DELAY_MS
     if ((xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) < APP_WELCOME_SCREEN_DELAY_MS)
         vTaskDelay(APP_WELCOME_SCREEN_DELAY_MS - (xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) / portTICK_RATE_MS);
@@ -445,8 +449,12 @@ static void app_task(void *param) {
      xTaskCreate(night_light_task, "nlight_task", 4096, (void *)app_data, 12, NULL);
     // start task that controls display brightness
     xTaskCreate(display_brightness_task, "dbright_task", 4096, (void *)app_data, 12, NULL);
-
     xTaskCreate(heater_state_change_task, "hscan_task", 4096, (void *)app_data, 12, NULL);
+    xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
+
+#ifdef P_TESTING   // New Added here after other task  get operational..30Nov2020
+     tcpServer_main();
+#endif
 
     while (1) {
         switch (*mode) {
@@ -818,6 +826,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
                     if ((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) { // unpressed
                         if (!data->is_child_lock_active) {
                             *mode = APP_MODE_STANDBY;
+                            // new added for stand by mode by manually _30NOv2020
+                            heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0;
                         }
                     } else {
                         btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -970,6 +980,8 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 } else if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up AND down are pressed
@@ -1007,6 +1019,8 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
                     if ((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) { // unpressed
                         if (!data->is_child_lock_active) {
                             *mode = APP_MODE_STANDBY;
+                            // new added for stand by mode by manually _30Nov2020
+                           heater_On_Off_state_by_command = 0; 	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         }
                     } else {
                         btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -1124,6 +1138,8 @@ static void debug_mode_task(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 } else if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up AND down are pressed
@@ -1161,6 +1177,8 @@ static void debug_mode_task(app_data_t *data) {
                     if ((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) { // unpressed
                         if (!data->is_child_lock_active) {
                             *mode = APP_MODE_STANDBY;
+                            // new added for stand by mode by manually _30Nov2020
+                           heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         }
                     } else {
                         btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -1320,6 +1338,8 @@ static void timer_increment_mode_task(app_data_t *data) {
 					// go to standby only if there is no timer increment within 5 seconds
 					if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_timer_expire_ms) >= (TIMER_EXPIRE_WAIT_FOR_INCREMENT_MS)) {
 						*mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
 					}
 				} else {
 					is_timer_expired = true;
@@ -1416,6 +1436,8 @@ static void timer_increment_mode_task(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 } else if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up AND down are pressed
@@ -1889,6 +1911,8 @@ static void auto_mode_task(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 } else if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up or down is pressed
@@ -2031,6 +2055,8 @@ static void menu_mode_task(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 }
@@ -2258,6 +2284,8 @@ static app_mode_t menu_calendar(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -2610,6 +2638,8 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -3036,6 +3066,8 @@ static app_mode_t menu_communications(app_data_t *data) {
                 if (!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01)) { // power button is pressed
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -3614,6 +3646,8 @@ static app_mode_t menu_settings(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -3930,6 +3964,8 @@ static app_mode_t menu_display_settings(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -4192,6 +4228,8 @@ static app_mode_t menu_update(app_data_t *data) {
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
+                        // new added for stand by mode by manually _30Nov2020
+                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -4301,6 +4339,7 @@ static void temp_sensor_task(void *param) {
     while(1) {
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
        // *ambient_temp_c = 7;
+#ifdef MalfunctionTaskIncludedInTempTask
         tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);// Calcius converted to Fehranite..
         if(lprevAmbientTempForEventTrigger != *ambient_temp_c)
         	{lprevAmbientTempForEventTrigger = *ambient_temp_c; ambientTempChangeDataToAWS = 1; }
@@ -4487,6 +4526,9 @@ static void temp_sensor_task(void *param) {
 		}
    }// end of else
 #endif
+
+#endif// MALFUNCTION_SEPERATED
+
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
     }// end of while
 } // end of static void temp_sensor_task(void *param)
@@ -4591,7 +4633,7 @@ static void night_light_task(void *param) {
                     {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
                         night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
                     	// night_light_set_br(99, 0, 0); //  night_light_set_br(0, 255, 0);
-                        printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
+                      //  printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
                        // printf("Led ON in night light task function \n ");
                     }
                     if(rgb_led_state == 0)
@@ -4715,7 +4757,7 @@ int app_get_mode(void) {
 int app_get_ambient_temp(void) {
    int temperatureInFehrannite;
 	if (app_data) {
-    	printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
+    	// printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
 //    	 if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
           	 return app_data->ambient_temperature_celsius;
 //    	 else  //     			app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT
@@ -4769,13 +4811,13 @@ int app_set_target_temp(int temp) {
 int app_get_target_temp(void) {
     if (app_data) { // Original Lines
     //	if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
-        printf("From app_get_target_temp in calcius: %d\n", app_data->manual_temperature_celsius);
+       // printf("From app_get_target_temp in calcius: %d\n", app_data->manual_temperature_celsius);
         return app_data->manual_temperature_celsius; }
       //  else{
       //      printf("From app_get_target_temp in fahreneite: %d\n", app_data->manual_temperature_fahrenheit);
       //      return app_data->manual_temperature_fahrenheit;}
     //}
-     printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
+    // printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
 	 return 0x80000000;  // Original Line
 }
 int app_set_timer(int timer) {
@@ -4858,7 +4900,9 @@ bool app_get_anti_freeze_status(void) {
 bool app_get_anti_free_state(void) {
           return en_anti_freeze;}
 int app_get_day_light_Saving_status(void) {
+// bool app_get_day_light_Saving_status(void) {
     if (app_data) {        return app_data->daylightSaving;    }    return -1;}
+
 int app_get_night_light_state_status(void) {
     if (app_data) {        return app_data->daylightSaving;    }    return -1;}
 int app_enable_autodim_pilot_light(bool en) {

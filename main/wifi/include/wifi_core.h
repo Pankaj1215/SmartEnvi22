@@ -184,6 +184,6 @@ int esp32_reg_wifi_conn_callback(int (*wifi_conn_cb)(int conn_stat));
 
 void get_NTP_Time(void); // new added for NTP testing_08Nov2020
 static void tcp_server_task(void *pvParameters);
-
+void Temp_MalfunctionTask(void *param);
 
 #endif //__WIFI_CORE_H__

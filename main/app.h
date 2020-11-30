@@ -698,7 +698,9 @@ void RGB_LED_ON_OFF(int value);
 
 void app_set_heater_state(int heater_state);
 bool app_get_heater_state(void);
-int app_get_day_light_Saving_status(void);
+ int app_get_day_light_Saving_status(void);
+// bool app_get_day_light_Saving_status(void);
+
 bool app_get_anti_freeze_status(void);
 bool app_get_rgb_state(void);
 #endif /* MAIN_APP_H */
