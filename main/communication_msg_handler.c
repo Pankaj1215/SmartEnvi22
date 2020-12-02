@@ -866,21 +866,12 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 				 CommandAck = HEATER_CONFIG_SYNCH_ACK;
 				 //Put this value in the variable for threshold offset value
 				 printf("REMOTE_CMD_HEATER_CONFIG_SYCH \r\n");
-				 // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_threshold_offset_time", "status","success",  "value",value);
-//				 sprintf(reply_buff,"\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\,\n\"%s\":\"%s\,\n\"%s\":\"%s\,\n\"%s\":\"%s\",\n\"%s\":\"%s\"","cmd","h_c_s","type","get","status","success","lds","01","nls","01","cs","01","afs","01","dls","01","ps","01","at","65","st","65","tu","01","hs","01");
 
-				 // compiled..
-				// sprintf(reply_buff,"\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"","cmd","h_c_s","type","get", "status","success", "lds","01","lds","01","nls","01","cs","01","afs","01","dls","01","ps","01", "at","65","st","65","tu","01", "hs","01");
+				 // working upto thermo state problem..
+				 // sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
 
-				 // Testing..
-				 // sprintf(reply_buff,"\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"","cmd","h_c_s","type","get", "status","success","lds",rgb_led_state,"nls",app_is_night_light_auto_brightness_enabled(),"cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"ps","01", "at",app_get_ambient_temp(),"st",app_get_target_temp(),"tu",app_get_temp_unit(), "hs",app_get_heater_state());
-
-				 // Compiled..
-				// sprintf(reply_buff,"\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%s\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\",\n\"%s\":\"%d\"","cmd","h_c_s","type","get", "status","success","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(), "ps","01","at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
-
-				// sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","t","get", "s","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
-				 sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
-
+				 // Testing for app get mode
+				 sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
 	 }
 	 else
 	 {

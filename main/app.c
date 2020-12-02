@@ -226,19 +226,30 @@ void init_Variables(void);
 void init_Variables(void){
 en_anti_freeze = 1;  // It is used to enable anti freeze logic defualt ON.
 rgb_led_state = 1;
-heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
 
+// app_data->mode
+ heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
+
+ heater_off();//initially heater will be off ..added on 02Dec2020
+
+//   app_data->mode = app_data->lastHeaterState;
+//   if (app_data->lastHeaterState == 0)
+//     app_data->mode = APP_MODE_STANDBY;
+//   else
+//	   app_data->mode = APP_MODE_MANUAL_TEMPERATURE;
+
+// heater_On_Off_state_by_command = app_data->mode; //New added for state of heater
 // heater_On_Off_state_by_command =1;
 // while(1){
-if(heater_On_Off_state_by_command ==1)
-	{heater_on();printf("heater_On");}
-else
-	{heater_off();printf("heater_Off");}
+//if(heater_On_Off_state_by_command ==1)
+//	{heater_on();printf("heater_On");}
+//else
+//	{heater_off();printf("heater_Off");}
 // }
 
-
-printf("heater_On_Off_state_by_command %d",heater_On_Off_state_by_command);
+printf("init variables heater_On_Off_state_by_command %d app_data->lastHeaterState %d",heater_On_Off_state_by_command,app_data->lastHeaterState);
 }
+
 
 //#define Test_Storage
 static void print_fw_version(void)
@@ -348,7 +359,6 @@ esp_err_t app_init(void) {
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     get_integer_from_storage(STORAGE_KEY_LAST_HEATER_STATE, (int *) &(app_data->lastHeaterState));
     printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-
 #endif
 
     init_Variables();
@@ -358,7 +368,6 @@ esp_err_t app_init(void) {
     printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
 
     get_data_from_storage(STORAGE_KEY_DISPLAY_SETTINGS, &(app_data->display_settings));
-
 
      if(app_data->daylightSaving == 1)
         printf("daylightSaving  is One %d \n",app_data->daylightSaving);
@@ -437,8 +446,10 @@ esp_err_t app_init(void) {
 static void app_task(void *param) {
     app_data_t *data = (app_data_t *) param;
     app_mode_t *mode = &(data->mode);
+
     // start at default mode
-    *mode = APP_MODE_ON_STARTUP;
+     *mode = APP_MODE_ON_STARTUP;   // original ...// commented only for testing...
+
     // start task that reads ambient temperature
      xTaskCreate(temp_sensor_task, "tsensor_task", 4096, (void *)app_data, 12, NULL);
     // start task that reads ambient light
@@ -449,12 +460,13 @@ static void app_task(void *param) {
      xTaskCreate(night_light_task, "nlight_task", 4096, (void *)app_data, 12, NULL);
     // start task that controls display brightness
     xTaskCreate(display_brightness_task, "dbright_task", 4096, (void *)app_data, 12, NULL);
-    xTaskCreate(heater_state_change_task, "hscan_task", 4096, (void *)app_data, 12, NULL);
-    xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
 
+   //  xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
 #ifdef P_TESTING   // New Added here after other task  get operational..30Nov2020
      tcpServer_main();
 #endif
+     xTaskCreate(heater_state_change_task, "hscan_task", 4096, (void *)app_data, 12, NULL);
+     xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
 
     while (1) {
         switch (*mode) {
@@ -502,15 +514,15 @@ static void standby_mode_task(app_data_t *data) {
     prev_btn = *btn;
 
    // if(heater_On_Off_state_by_command == 1){
-   if(heater_On_Off_state_by_command == 0){
+  // if(heater_On_Off_state_by_command == 0){
     // turn off heater
     heater_off();
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-     app_data->lastHeaterState = false;
-     set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-     printf("in Stand by Mode app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+    // app_data->lastHeaterState = false;
+    // set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+     printf("in Stand by Mode initial status of  app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 #endif
-    } //end of if(heater_On_Off_state_by_command == 1){
+   // } //end of if(heater_On_Off_state_by_command == 1){
 
     while(*mode == APP_MODE_STANDBY) {
         /* button
@@ -520,9 +532,10 @@ static void standby_mode_task(app_data_t *data) {
            - long press DOWN button to enter Menu mode
            - long press UP and TIMER buttons to enter Temperature sensor offset set mode
         */
-
-     if(heater_On_Off_state_by_command_ExistFromStandByMode ==1  || heater_On_Off_state_by_command ==1 ){ // New Added for Coming out of stand by mode  //
-    	 *mode = APP_MODE_MANUAL_TEMPERATURE; printf(" Out of stand by mode by Heater ON commmand \n");}
+     printf(" before out of stand by mode by Heater ON commmand \n");
+     if(heater_On_Off_state_by_command_ExistFromStandByMode ==1  || heater_On_Off_state_by_command == 1 ){ // New Added for Coming out of stand by mode  //
+    	 *mode = APP_MODE_MANUAL_TEMPERATURE; printf(" Out of stand by mode by Heater ON commmand \n"); heater_On_Off_state_by_command =0; heater_On_Off_state_by_command_ExistFromStandByMode =0;}
+     //    printf(" After Out of stand by mode by Heater ON commmand \n");
 
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
@@ -716,8 +729,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
                 is_heater_on = true;
 
                 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-                    app_data->lastHeaterState = true;
-                    set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+                //    app_data->lastHeaterState = true;
+                //    set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
                #endif
             	// }
                // printf("MANUAL: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
@@ -736,9 +749,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
                     is_heater_on = false;
 
 					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-                    	app_data->lastHeaterState = false;
-                    	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-                    	printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+                    //	app_data->lastHeaterState = false;
+                    //	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+                    //	printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 					#endif
                 // } // end of if(heater_On_Off_state_by_command == 1)
                   //  printf("MANUAL heater off ambient=%d taget=%d\r\n", *ambient_temp_c, data->manual_temperature_celsius);
@@ -1354,9 +1367,9 @@ static void timer_increment_mode_task(app_data_t *data) {
 				is_heater_on = false;
 
 				#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-					 app_data->lastHeaterState = false;
-					 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-					 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+				//	 app_data->lastHeaterState = false;
+				//	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+				//	 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 				#endif
 
         }
@@ -1381,8 +1394,8 @@ static void timer_increment_mode_task(app_data_t *data) {
                     is_heater_on = true;
 
 					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-						 app_data->lastHeaterState = true;
-						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+					//	 app_data->lastHeaterState = true;
+					//	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 					#endif
                 	// }
                   //  printf("TIMER: heater on ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
@@ -1404,9 +1417,9 @@ static void timer_increment_mode_task(app_data_t *data) {
 							is_heater_on = false;
 
 							#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-								 app_data->lastHeaterState = false;
-								 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-								 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+								// app_data->lastHeaterState = false;
+								// set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+								//  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 							#endif
 							// }
 							// printf("TIMER: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, *target_temp_c);
@@ -1856,8 +1869,8 @@ static void auto_mode_task(app_data_t *data) {
                 is_heater_on = true;
 
 				#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-					 app_data->lastHeaterState = true;
-					 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+				//	 app_data->lastHeaterState = true;
+				//	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 				#endif
             	// }
               //  printf("AUTO: heater on ambient=%d target=%d\r\n", *ambient_temp_c, auto_temp_c);
@@ -1876,10 +1889,10 @@ static void auto_mode_task(app_data_t *data) {
                     is_heater_on = false;
 
 					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-                         printf("Heater Off \n ");
-						 app_data->lastHeaterState = false;
-						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-						 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+                      //   printf("Heater Off \n ");
+					//	 app_data->lastHeaterState = false;
+					//	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+					//	 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 					#endif
                 	// }// endof if(heater_On_Off_state_by_command == 1)
                   //  printf("AUTO: heater off ambient=%d taget=%d\r\n", *ambient_temp_c, auto_temp_c);
@@ -4752,8 +4765,16 @@ int app_set_mode(int mode) {
         }
         return 0;}    return -1;
 }
+
 int app_get_mode(void) {
-    if (app_data) {        return app_data->mode;}    return -1;}
+    if (app_data) {
+   // printf("app_get_mode app_data->mode %d",app_data->mode);
+    if (app_data->mode == APP_MODE_STANDBY) return (0);
+    else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO) // || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
+    // else
+    return (1);}
+    return -1;}
+
 int app_get_ambient_temp(void) {
    int temperatureInFehrannite;
 	if (app_data) {
@@ -4933,9 +4954,9 @@ void app_set_heater_state(int heater_state)
 {
 	heater_On_Off_state_by_command = heater_state ;
 	if(heater_On_Off_state_by_command ==1)
-	 { heater_On_Off_state_by_command_ExistFromStandByMode = 1; heater_on(); }
+	 { heater_On_Off_state_by_command_ExistFromStandByMode = 1;}// heater_on(); }
 	else
-	{ heater_On_Off_state_by_command_ExistFromStandByMode = 0; heater_off(); }
+	{ heater_On_Off_state_by_command_ExistFromStandByMode = 0;}// heater_off(); }
 
     if(heater_On_Off_state_by_command_ExistFromStandByMode == 0){ // New Added for Coming out of stand by mode
     	app_data->mode  = APP_MODE_STANDBY; printf(" Come to stand by mode by Heater OFF commmand \n");}
