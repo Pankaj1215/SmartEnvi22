@@ -122,6 +122,7 @@ unsigned char manaully_Set_Temp_change;
 unsigned char manaully_night_Light_State_change;
 unsigned char manaully_child_Lock_State_change;
 unsigned char manaully_Temp_unit_change;
+unsigned char manaully_reset_ssid_pass_enable;
 
 #define TimeZoneAdded
 
@@ -1881,6 +1882,16 @@ static void http_get_task(void *pvParameters)
 			ESP_LOGE(TAG, "Error topic_Thermostat_State_Change subscribing : %d ", rc);
 			// abort();  // Commneted for testing
 			}
+
+			const char *topic_manually_Reset_SSID_Pass = "aws/device/event/manually_reset_ssid_pass";  // testing for param key..// heater ON_OFF
+			const int topic_manually_Reset_SSID_Pass_Len = strlen(topic_manually_Reset_SSID_Pass);
+			ESP_LOGI(TAG, "Subscribing.topic_Manually_Reset_SSID_Pass..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_Manually_Reset_SSID_Pass subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
 #endif
 
 #ifdef HeaterTopicData
@@ -2347,6 +2358,27 @@ static void http_get_task(void *pvParameters)
 				memset(cPayload1,0,sizeof(cPayload1));
 				manaully_Temp_unit_change= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
+
+				// manaully_reset_ssid_pass_enable
+				if(manaully_reset_ssid_pass_enable ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_reset_ssid_pass", "status","success",  "value", 1);
+				printf("\n \n TempUnitChangeDataToAWS app_data->settings.temperature_unit : %d \n \n ", app_data->settings.temperature_unit);
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, topic_Manual_temp_unit_change, topic_Manual_temp_unit_change_Len, &HeaterMeassage);
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_reset_ssid_pass_enable= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
 
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 #endif

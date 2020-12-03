@@ -159,6 +159,7 @@ extern unsigned char manaully_Set_Temp_change;
 extern unsigned char manaully_night_Light_State_change;
 extern unsigned char manaully_child_Lock_State_change;
 extern unsigned char manaully_Temp_unit_change;
+extern unsigned char manaully_reset_ssid_pass_enable;
 
 unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
 // Threshold_Offset 30Minute calculation ..
@@ -3601,8 +3602,9 @@ static app_mode_t menu_communications(app_data_t *data) {
 			case MENU_COMMUNICATIONS_RESET_CONFIRMED:
 				 printf("MENU_COMMUNICATIONS_RESET_CONFIRMED\r\n");
 				 display_menu("Reset", DISPLAY_COLOR, "confirmed!", DISPLAY_COLOR);
-
+				 manaully_reset_ssid_pass_enable = 1;
 				//esp_wifi_start();
+				 vTaskDelay(3000);
 
 				 erase_storage_all(); // erase flash..
 

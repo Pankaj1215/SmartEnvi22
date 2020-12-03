@@ -91,6 +91,8 @@ void simple_ota_example_task(void *pvParameter)
 
     esp_http_client_config_t config = {
         .url = "http://54.151.114.229:8080/api/fwdownload?fileName=SmartEnvi22.bin",
+       // .url = "http://54.151.114.229:8081/api/fwdownload?fileName=SmartEnvi22.bin",
+
 		//.url = "http://192.168.43.81/SmartEnvi22.bin",
         .cert_pem = (char *)certificate_pem_crt_start,
         .event_handler = _http_event_handle,
@@ -130,6 +132,8 @@ void send_FW_request()
 	int status;
 	esp_http_client_config_t config = {
 		   .url = "http://54.151.114.229:8080/api/fwversion?fileName=fw_version.txt",
+		  // .url = "http://54.151.114.229:8081/api/fwversion?fileName=fw_version.txt",
+
 		   //.url = "http://192.168.43.81/fw_version.txt",
 		   .event_handler = _http_event_handle,
 		};
