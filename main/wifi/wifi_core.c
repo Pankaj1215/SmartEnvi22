@@ -2363,10 +2363,10 @@ static void http_get_task(void *pvParameters)
 				if(manaully_reset_ssid_pass_enable ==1){
 
 				memset(cPayload1,0,sizeof(cPayload1));
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_reset_ssid_pass", "status","success",  "value", 1);
-				printf("\n \n TempUnitChangeDataToAWS app_data->settings.temperature_unit : %d \n \n ", app_data->settings.temperature_unit);
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_reset_ssid_pass", "status","success",  "value", 1);//manually_reset_ssid_pass
+				printf("\n manaully_reset_ssid_pass_enable \n ");
 				HeaterMeassage.payloadLen = strlen(cPayload1);
-				rc = aws_iot_mqtt_publish(&client, topic_Manual_temp_unit_change, topic_Manual_temp_unit_change_Len, &HeaterMeassage);
+				rc = aws_iot_mqtt_publish(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, &HeaterMeassage);
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
 				{
@@ -2378,7 +2378,6 @@ static void http_get_task(void *pvParameters)
 				memset(cPayload1,0,sizeof(cPayload1));
 				manaully_reset_ssid_pass_enable= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
-
 
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 #endif
@@ -2607,7 +2606,7 @@ void Temp_MalfunctionTask(void *param)
       }// end of if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
    else {// Temperature in Fahranniete
 
- 	  printf("\n MalfunctionTaskExcludedFromTempTask In Farehneite  \n\n ");
+ 	//  printf("\n MalfunctionTaskExcludedFromTempTask In Farehneite  \n\n ");
 
 	   if(ltempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
 	      	// heater_off();
@@ -2624,12 +2623,12 @@ void Temp_MalfunctionTask(void *param)
 
 //	  // printf("en_anti_freeze : %d\n ",en_anti_freeze);
 	   if(en_anti_freeze == 1){
-	       printf("en_anti_freeze logic Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
-	       printf("en_anti_freeze logic tempInFehrenniete %d\n ",ltempInFehrenniete);
+	       //printf("en_anti_freeze logic Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
+	      // printf("en_anti_freeze logic tempInFehrenniete %d\n ",ltempInFehrenniete);
 		   if(ltempInFehrenniete  < ANTI_FREEZE_LIMIT_FEHRANEITE)  {
 	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
 	         // heater_on();
-		      printf("\n In en_anti_freeze matches \n ");
+		       printf("\n In en_anti_freeze matches \n ");
 			   app_set_heater_state(1);
 			  // app_data->mode = APP_MODE_MANUAL_TEMPERATURE;
 	         // heater_On_Off_state_by_command = 1 ; // As there is waring which will indicate that heater is in ON state.
@@ -3520,5 +3519,34 @@ void get_NTP_Time(void)
 
 
 
+
+// #define WIFI_strength
+#ifdef WIFI_strength
+
+// Return RSSI or 0 if target SSID not found
+int32_t getRSSI(const char* target_ssid) {
+  byte available_networks = WiFi.scanNetworks();
+
+  for (int network = 0; network < available_networks; network++) {
+    if (strcmp(WiFi.SSID(network), target_ssid) == 0) {
+      return WiFi.RSSI(network);
+    }
+  }
+  return 0;
+}
+void loop() {
+  unsigned long before = millis();
+  int32_t rssi = getRSSI(SSID);
+  unsigned long after = millis();
+//  Serial.print("Signal strength: ");
+//  Serial.print(rssi);
+//  Serial.println("dBm");
+//
+//  Serial.print("Took ");
+//  Serial.print(after - before);
+//  Serial.println("ms");
+//  delay(1000);
+}
+#endif
 
 

@@ -533,7 +533,7 @@ static void standby_mode_task(app_data_t *data) {
            - long press DOWN button to enter Menu mode
            - long press UP and TIMER buttons to enter Temperature sensor offset set mode
         */
-     printf(" before out of stand by mode by Heater ON commmand \n");
+     // printf(" before out of stand by mode by Heater ON commmand \n");
      if(heater_On_Off_state_by_command_ExistFromStandByMode ==1  || heater_On_Off_state_by_command == 1 ){ // New Added for Coming out of stand by mode  //
     	 *mode = APP_MODE_MANUAL_TEMPERATURE; printf(" Out of stand by mode by Heater ON commmand \n"); heater_On_Off_state_by_command =0; heater_On_Off_state_by_command_ExistFromStandByMode =0;}
      //    printf(" After Out of stand by mode by Heater ON commmand \n");
@@ -3604,7 +3604,7 @@ static app_mode_t menu_communications(app_data_t *data) {
 				 display_menu("Reset", DISPLAY_COLOR, "confirmed!", DISPLAY_COLOR);
 				 manaully_reset_ssid_pass_enable = 1;
 				//esp_wifi_start();
-				 vTaskDelay(3000);
+				 vTaskDelay(5000);
 
 				 erase_storage_all(); // erase flash..
 
@@ -4772,8 +4772,11 @@ int app_get_mode(void) {
     if (app_data) {
    // printf("app_get_mode app_data->mode %d",app_data->mode);
     if (app_data->mode == APP_MODE_STANDBY) return (0);
-    else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO) // || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
-    // else
+      // working.. condition..
+//     else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO) // || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
+     else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
+
+    	// else
     return (1);}
     return -1;}
 

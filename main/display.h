@@ -41,7 +41,14 @@
 esp_err_t display_init(void);
 esp_err_t display_clear_screen(void);
 esp_err_t display_welcome_screen(int color);
+
 esp_err_t display_standby_message(int color);
+
+esp_err_t display_thermostateEnable_message(int color);// Added only for testing
+esp_err_t display_internet_available_message(int color); // Added only for testing
+
+
+
 esp_err_t display_menu(char *str1, int str1_color, char *str2, int str2_color);
 esp_err_t display_temperature(int val, int color);
 esp_err_t display_manual_temperature_normal(int ambient_temp, int target_temp, int color);
