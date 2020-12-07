@@ -37,6 +37,18 @@
 #define OLED_WIDTH SH1106_PIXEL_X
 #define OLED_HEIGHT SH1106_PIXEL_Y
 
+// #ifdef wifi_Strength_ICON
+esp_err_t display_wifi_level_1_icon(int color);
+esp_err_t display_wifi_level_2_icon(int color);
+esp_err_t display_wifi_level_3_icon(int color);
+esp_err_t display_wifi_level_4_icon(int color);
+esp_err_t display_wifi_level_5_icon(int color);
+
+// #endif
+
+
+
+
 
 esp_err_t display_init(void);
 esp_err_t display_clear_screen(void);

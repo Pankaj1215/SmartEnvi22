@@ -60,10 +60,12 @@
 #include "ota_update.h"
 #include "version.h"
 
-// unsigned char daylightSaving;
+unsigned char daylightSaving;
 
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
+
+#define WIFI_strength
 
 #ifdef P_TESTING
 // int  getSubString(char *source, char *target,int from, int to);
@@ -2444,6 +2446,10 @@ while(1){
 				// printf("heater task app_data->lastHeaterState %d app_get_mode %d\n",app_data->lastHeaterState , app_get_mode());
 		  }
 
+#ifdef  WIFI_strength
+		  get_wifi_signal_Strength();
+#endif
+
 	 vTaskDelay(1 / portTICK_RATE_MS);
   }// end of while(1)
 }
@@ -2607,7 +2613,6 @@ void Temp_MalfunctionTask(void *param)
    else {// Temperature in Fahranniete
 
  	//  printf("\n MalfunctionTaskExcludedFromTempTask In Farehneite  \n\n ");
-
 	   if(ltempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
 	      	// heater_off();
 		      app_set_heater_state(0);
@@ -3520,33 +3525,83 @@ void get_NTP_Time(void)
 
 
 
-// #define WIFI_strength
+
 #ifdef WIFI_strength
 
-// Return RSSI or 0 if target SSID not found
-int32_t getRSSI(const char* target_ssid) {
-  byte available_networks = WiFi.scanNetworks();
-
-  for (int network = 0; network < available_networks; network++) {
-    if (strcmp(WiFi.SSID(network), target_ssid) == 0) {
-      return WiFi.RSSI(network);
-    }
-  }
-  return 0;
-}
-void loop() {
-  unsigned long before = millis();
-  int32_t rssi = getRSSI(SSID);
-  unsigned long after = millis();
-//  Serial.print("Signal strength: ");
-//  Serial.print(rssi);
-//  Serial.println("dBm");
+//// Return RSSI or 0 if target SSID not found
+//int32_t getRSSI(const char* target_ssid) {
+//  byte available_networks = WiFi.scanNetworks();
 //
-//  Serial.print("Took ");
-//  Serial.print(after - before);
-//  Serial.println("ms");
-//  delay(1000);
+//  for (int network = 0; network < available_networks; network++) {
+//    if (strcmp(WiFi.SSID(network), target_ssid) == 0) {
+//      return WiFi.RSSI(network);
+//    }
+//  }
+//  return 0;
+//}
+//
+//void loop() {
+//  unsigned long before = millis();
+//  int32_t rssi = getRSSI(SSID);
+//  unsigned long after = millis();
+////  Serial.print("Signal strength: ");
+////  Serial.print(rssi);
+////  Serial.println("dBm");
+////
+////  Serial.print("Took ");
+////  Serial.print(after - before);
+////  Serial.println("ms");
+////  delay(1000);
+//}
+
+#include "display_icon.h"
+#include "display.h"
+int scr_update_count =0;
+int scr_update_prev_count =0;
+
+void get_wifi_signal_Strength(void)
+{// int lrssi = 0;
+// int scr_update_count =0;
+// int scr_update_prev_count =0;
+
+ wifi_ap_record_t wifidata;
+if (esp_wifi_sta_get_ap_info(&wifidata)==0)
+{
+printf("rssi:%d\r\n", wifidata.rssi);
 }
+
+// lrssi =  (-1)*(wifidata.rssi);
+//
+//if (lrssi > -20)
+//{  printf("signal strength high \n");
+// 	// display_clear_screen();
+//   scr_update_count = 4;
+//	display_wifi_level_4_icon(DISPLAY_COLOR);
+//}
+//else if((lrssi > -20) && (lrssi < -40))
+//{ printf("signal strength medium \n "); scr_update_count = 3;
+//  // display_clear_screen();
+//  display_wifi_level_3_icon(DISPLAY_COLOR);
+//}
+//else if((lrssi > -40) && (lrssi < -60))
+//{printf("signal strength low \n ");  scr_update_count = 2;
+//  // display_clear_screen();
+//  display_wifi_level_2_icon(DISPLAY_COLOR);}
+//else if((lrssi > -60) && (lrssi < -90))
+//{printf("signal strength very low \n "); scr_update_count = 1;
+//  // display_clear_screen();
+//   display_wifi_level_1_icon(DISPLAY_COLOR);}
+//else
+//	printf("no wifi there..\n ");
+//
+////printf("scr_update_count %d",scr_update_count);
+////printf("scr_update_prev_count %d",scr_update_prev_count);
+//   if (scr_update_prev_count != scr_update_count)
+//   {  scr_update_prev_count = scr_update_count;
+//       display_clear_screen();printf(" clear screen ..\n ");
+//   }
+}
+
 #endif
 
 

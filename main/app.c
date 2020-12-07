@@ -264,8 +264,34 @@ static void print_fw_version(void)
     vTaskDelay(3000); //    // wait for at least Firmware version..
 }
 
+void test_Display_wifi_strenth(void)
+{display_clear_screen();
+ while(1){
+
+	 get_wifi_signal_Strength();
+
+//	 display_clear_screen();
+//	 display_wifi_level_1_icon(DISPLAY_COLOR);
+//	vTaskDelay(2000);
+//	display_clear_screen();
+//	display_wifi_level_2_icon(DISPLAY_COLOR);
+//	vTaskDelay(2000);
+//	display_clear_screen();
+//	display_wifi_level_3_icon(DISPLAY_COLOR);
+//	vTaskDelay(2000);
+//	display_clear_screen();
+//	 display_wifi_level_4_icon(DISPLAY_COLOR);
+//	// vTaskDelay(2000);
+//	// display_clear_screen();
+//	//display_wifi_level_5_icon(DISPLAY_COLOR);
+//	 vTaskDelay(2000);
+    }
+}
+
+
 esp_err_t app_init(void) {
     print_fw_version();
+   // test_Display_wifi_strenth();
 
 #ifdef Test_Storage
  printf("Before erase \n");

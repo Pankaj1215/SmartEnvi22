@@ -26,6 +26,8 @@
 #ifndef __WIFI_CORE_H__
 #define __WIFI_CORE_H__
 
+void get_wifi_signal_Strength(void);
+
 // These macro used for identify which command Ack
 #define SET_TEMP_ACK    1
 #define GET_TEMP_ACK    2

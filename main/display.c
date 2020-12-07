@@ -38,14 +38,11 @@
 #include "display_icon.h"
 #include "display.h"
 
-
 #define DISPLAY_MUTEX_LOCK(lock)    do {} while (xSemaphoreTake(lock, portMAX_DELAY) != pdPASS)
 #define DISPLAY_MUTEX_UNLOCK(lock)  xSemaphoreGive(lock)
 
-
 static void i2c_init(void);
 void i2c_write(uint8_t reg, uint8_t *buf, size_t size);
-
 
 static sh1106_t* sh1106 = NULL;
 xSemaphoreHandle mutex_lock = NULL;
@@ -53,6 +50,71 @@ xSemaphoreHandle mutex_lock = NULL;
 const char *month_str[12] = {
     "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
 };
+
+#ifdef wifi_Strength_ICON
+esp_err_t display_wifi_level_1_icon(int color) {
+    sh1106_ret_t ret = SH1106_OK;
+    DISPLAY_MUTEX_LOCK(mutex_lock);
+ //   ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level1->width, 0, display_icon_wifi_level1->width, display_icon_wifi_level1->height, display_icon_wifi_level1->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level1->width, 0, display_icon_wifi_level1->width, display_icon_wifi_level1->height, display_icon_wifi_level1->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+    ret |= sh1106_update_display(sh1106);
+    DISPLAY_MUTEX_UNLOCK(mutex_lock);
+    if (ret != SH1106_OK)
+        return ESP_FAIL;
+    return ESP_OK;
+}
+esp_err_t display_wifi_level_2_icon(int color) {
+    sh1106_ret_t ret = SH1106_OK;
+    DISPLAY_MUTEX_LOCK(mutex_lock);
+  //  ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level2->width, 0, display_icon_wifi_level2->width, display_icon_wifi_level2->height, display_icon_wifi_level2->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+   // ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level2->width, 0, 20, 20, display_icon_wifi_level2->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level2->width, 0, display_icon_wifi_level2->width, display_icon_wifi_level2->height, display_icon_wifi_level2->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+    ret |= sh1106_update_display(sh1106);
+    DISPLAY_MUTEX_UNLOCK(mutex_lock);
+    if (ret != SH1106_OK)
+        return ESP_FAIL;
+    return ESP_OK;
+}
+esp_err_t display_wifi_level_3_icon(int color) {
+    sh1106_ret_t ret = SH1106_OK;
+    DISPLAY_MUTEX_LOCK(mutex_lock);
+ //   ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level3->width, 0, display_icon_wifi_level3->width, display_icon_wifi_level3->height, display_icon_wifi_level3->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level3->width, 0, display_icon_wifi_level3->width, display_icon_wifi_level3->height, display_icon_wifi_level3->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+    ret |= sh1106_update_display(sh1106);
+    DISPLAY_MUTEX_UNLOCK(mutex_lock);
+    if (ret != SH1106_OK)
+        return ESP_FAIL;
+    return ESP_OK;
+}
+esp_err_t display_wifi_level_4_icon(int color) {
+    sh1106_ret_t ret = SH1106_OK;
+    DISPLAY_MUTEX_LOCK(mutex_lock);
+   ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level4->width, 0, display_icon_wifi_level4->width, display_icon_wifi_level4->height, display_icon_wifi_level4->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+  //  ret |= sh1106_draw_image(sh1106, 105, 0, display_icon_wifi_level4->width, display_icon_wifi_level4->height, display_icon_wifi_level4->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+    ret |= sh1106_update_display(sh1106);
+    DISPLAY_MUTEX_UNLOCK(mutex_lock);
+    if (ret != SH1106_OK)
+        return ESP_FAIL;
+    return ESP_OK;
+}
+esp_err_t display_wifi_level_5_icon(int color) {
+    sh1106_ret_t ret = SH1106_OK;
+    DISPLAY_MUTEX_LOCK(mutex_lock);
+ //   ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level5->width, 0, display_icon_wifi_level5->width, display_icon_wifi_level5->height, display_icon_wifi_level5->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level5->width, 0, display_icon_wifi_level5->width, display_icon_wifi_level5->height, display_icon_wifi_level5->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+    ret |= sh1106_update_display(sh1106);
+    DISPLAY_MUTEX_UNLOCK(mutex_lock);
+    if (ret != SH1106_OK)
+        return ESP_FAIL;
+    return ESP_OK;
+}
+#endif
+
 
 esp_err_t display_init(void) {
     if (sh1106)
@@ -131,6 +193,8 @@ esp_err_t display_welcome_screen(int color) {
 
     return ESP_OK;
 }
+
+
 
 esp_err_t display_internet_available_message(int color) {
 
@@ -971,7 +1035,61 @@ esp_err_t display_wifi_icon(int color) {
 
     DISPLAY_MUTEX_LOCK(mutex_lock);
 
+#define test_wifi_different_Icon
+#ifdef test_wifi_different_Icon
+    int lrssi = 0;
+    wifi_ap_record_t wifidata;
+    if (esp_wifi_sta_get_ap_info(&wifidata)==0)
+    {
+    printf("rssi:%d\r\n", wifidata.rssi);
+    }
+    // end ..
+    lrssi = (-1)*(wifidata.rssi);
+
+//     lrssi =  (-1)*(wifidata.rssi);
+//    if (lrssi < 20)
+//    {  printf("signal strength high \n");
+//       ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level4->width, 0, display_icon_wifi_level4->width, display_icon_wifi_level4->height, display_icon_wifi_level4->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+//    }
+//    else if((lrssi > 20) && (lrssi < 40))
+//    { printf("signal strength medium \n ");
+//      ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level3->width, 0, display_icon_wifi_level3->width, display_icon_wifi_level3->height, display_icon_wifi_level3->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+//    }
+//    else if((lrssi > 40) && (lrssi < 70))
+//    {printf("signal strength low \n ");
+//    ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level2->width, 0, display_icon_wifi_level2->width, display_icon_wifi_level2->height, display_icon_wifi_level2->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+//    }
+//    else if((lrssi > 70) && (lrssi < 90))
+//    {printf("signal strength very low \n ");
+//    ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level1->width, 0, display_icon_wifi_level1->width, display_icon_wifi_level1->height, display_icon_wifi_level1->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+//      }
+//    else
+//    	printf("no wifi there..\n ");
+
+         if (lrssi < 30)
+         {  printf("signal strength high \n");
+            ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level4->width, 0, display_icon_wifi_level4->width, display_icon_wifi_level4->height, display_icon_wifi_level4->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+         }
+         else if((lrssi > 30) && (lrssi < 70))
+         { printf("signal strength medium \n ");
+           ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level3->width, 0, display_icon_wifi_level3->width, display_icon_wifi_level3->height, display_icon_wifi_level3->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+         }
+         else if((lrssi > 70) && (lrssi < 99))
+         {printf("signal strength low \n ");
+         ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level2->width, 0, display_icon_wifi_level2->width, display_icon_wifi_level2->height, display_icon_wifi_level2->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+         }
+//         else if((lrssi > 70) && (lrssi < 90))
+//         {printf("signal strength very low \n ");
+//         ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level1->width, 0, display_icon_wifi_level1->width, display_icon_wifi_level1->height, display_icon_wifi_level1->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+//           }
+         else
+         	printf("no wifi there..\n ");
+
+
+#else
     ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi->width, 0, display_icon_wifi->width, display_icon_wifi->height, display_icon_wifi->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+#endif
+
     ret |= sh1106_update_display(sh1106);
 
     DISPLAY_MUTEX_UNLOCK(mutex_lock);

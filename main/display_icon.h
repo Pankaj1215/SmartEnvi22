@@ -42,5 +42,15 @@ const display_icon_t *display_icon_power;
 const display_icon_t *display_icon_welcome_screen;
 const display_icon_t *display_icon_menu_inst;
 
+#define wifi_Strength_ICON
+#ifdef wifi_Strength_ICON
+const display_icon_t *display_icon_wifi_level1;
+const display_icon_t *display_icon_wifi_level2;
+const display_icon_t *display_icon_wifi_level3;
+const display_icon_t *display_icon_wifi_level4;
+const display_icon_t *display_icon_wifi_level5;
+
+#endif
+
 #endif /* MAIN_DISPLAY_ICON_H */
 
