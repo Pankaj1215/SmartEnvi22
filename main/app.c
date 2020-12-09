@@ -357,6 +357,9 @@ esp_err_t app_init(void) {
     app_data->display_settings.is_auto_display_brightness_en = false;
     app_data->display_settings.is_auto_screen_off_en = true;
     app_data->display_settings.auto_screen_off_delay_sec = AUTO_SCREEN_OFF_DELAY_SEC_DEFAULT;
+
+    app_data->daylightSaving = 0; // Default variable
+
     memset(app_data->ap_ssid, 0, sizeof(app_data->ap_ssid));
     memset(app_data->ap_pw, 0, sizeof(app_data->ap_pw));
     memset(app_data->sta_ssid, 0, sizeof(app_data->sta_ssid));
@@ -369,8 +372,14 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_LAST_TIMER_SETTING, &(app_data->last_timer_setting_min));
     get_integer_from_storage(STORAGE_KEY_IS_AUTO_TIME_DATE_EN, (int *) &(app_data->is_auto_time_date_en));
 
-   //    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, &(app_data->daylightSaving));  // working..
-    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int *) &(app_data->daylightSaving));
+    get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, &(app_data->daylightSaving));  // working..
+   // get_integer_from_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int *) &(app_data->daylightSaving));
+    // Ony for testing..
+   if(app_data->daylightSaving  > 1 )
+   // if(!((app_data->daylightSaving == 1 ) |(app_data->daylightSaving == 0)))
+   {	app_data->daylightSaving = 0; printf("daylightSaving is greater that one \n");}
+
+    printf("Initially app_data->daylightSaving %d \n",app_data->daylightSaving);
 
 	//TimerIntervalThresholdOffset = 30;
 	// set_integer_to_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int)app_data-> TimerIntervalThresholdOffset);
@@ -3711,7 +3720,10 @@ static app_mode_t menu_settings(app_data_t *data) {
                     if ((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) { // unpressed
                         switch (m_settings) {
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
-                        case MENU_SETTINGS_CHILD_LOCK:
+#ifdef Menu_dayLight_option
+                         case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE:
+#endif
+                      //  case MENU_SETTINGS_CHILD_LOCK:
                         case MENU_SETTINGS_PILOT_LIGHT:
                         case MENU_SETTINGS_NIGHT_LIGHT:
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS:
@@ -3720,9 +3732,16 @@ static app_mode_t menu_settings(app_data_t *data) {
                         case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
                             m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
                             break;
-                        case MENU_SETTINGS_CHILD_LOCK_EN:
-                            m_settings = MENU_SETTINGS_CHILD_LOCK;
-                            break;
+
+#ifdef Menu_dayLight_option
+						case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN:
+								m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE;
+								break;
+#endif
+//                        case MENU_SETTINGS_CHILD_LOCK_EN:
+//                            m_settings = MENU_SETTINGS_CHILD_LOCK;
+//                            break;
+
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT;
                             break;
@@ -3743,12 +3762,21 @@ static app_mode_t menu_settings(app_data_t *data) {
                     if ((*btn >> BUTTON_UP_STAT) & 0x01) { // unpressed
                         switch (m_settings) {
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
-                           // m_settings = MENU_SETTINGS_CHILD_LOCK;
-                            m_settings = MENU_SETTINGS_PILOT_LIGHT;
+                          //  m_settings = MENU_SETTINGS_CHILD_LOCK;  // working
+#ifdef Menu_dayLight_option
+                         m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE;
+#else
+                        m_settings = MENU_SETTINGS_PILOT_LIGHT; / / 1st change before day light added
+#endif
                             break;
 //                        case MENU_SETTINGS_CHILD_LOCK:
 //                            m_settings = MENU_SETTINGS_PILOT_LIGHT;
 //                            break;
+#ifdef Menu_dayLight_option
+						case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE:
+							m_settings = MENU_SETTINGS_PILOT_LIGHT;
+							break;
+#endif
                         case MENU_SETTINGS_PILOT_LIGHT:
                             m_settings = MENU_SETTINGS_NIGHT_LIGHT;
                             break;
@@ -3775,6 +3803,15 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
 //
 //                            break;
+
+#ifdef Menu_dayLight_option
+                    	case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN:
+								// m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
+								data->daylightSaving = !data->daylightSaving;
+								printf("data->daylightSaving  %d \n", data->daylightSaving);
+								// Save pending //
+								break;
+#endif
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
                             // Enable <--> Disable
@@ -3815,10 +3852,20 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                        case MENU_SETTINGS_CHILD_LOCK:
 //                            m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
 //                            break;
+#ifdef Menu_dayLight_option
+						case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE:
+							m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+							break;
+#endif
                         case MENU_SETTINGS_PILOT_LIGHT:
                            // m_settings = MENU_SETTINGS_CHILD_LOCK;
-                            m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+#ifdef Menu_dayLight_option
+                        	m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE;
+#else
+                        	m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+#endif
                             break;
+
                         case MENU_SETTINGS_NIGHT_LIGHT:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT;
                             break;
@@ -3842,6 +3889,14 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
 //
 //                            break;
+#ifdef Menu_dayLight_option
+					case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN:
+						// m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
+						  data->daylightSaving = !data->daylightSaving;
+						// Save pending //
+						break;
+#endif
+
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
                             // Enable <--> Disable
@@ -3883,6 +3938,12 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                        case MENU_SETTINGS_CHILD_LOCK:
 //                            m_settings = MENU_SETTINGS_CHILD_LOCK_EN;
 //                            break;
+
+#ifdef Menu_dayLight_option
+					case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE:
+						m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
+						break;
+#endif
                         case MENU_SETTINGS_PILOT_LIGHT:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT_EN;
                             break;
@@ -3921,6 +3982,12 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                printf("MENU_SETTINGS_CHILD_LOCK\r\n");
 //                display_menu("Child Lock", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
 //                break;
+#ifdef Menu_dayLight_option
+				case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE:
+					printf("MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE\r\n");
+					display_menu("Day Light", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+					break;
+#endif
             case MENU_SETTINGS_PILOT_LIGHT:
                 printf("MENU_SETTINGS_PILOT_LIGHT\r\n");
                 display_menu("Auto Dim", DISPLAY_COLOR, "Pilot Light", DISPLAY_COLOR);
@@ -3941,6 +4008,13 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                printf("MENU_SETTINGS_CHILD_LOCK_EN\r\n");
 //                display_menu(data->settings.is_child_lock_en ? "Enabled" : "Disabled", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
 //                break;
+#ifdef Menu_dayLight_option
+             case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN:
+					printf("MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN\r\n");
+					display_menu(data->daylightSaving ? "ON" : "OFF", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+					printf("data->daylightSaving  %d \n", data->daylightSaving);
+					break;
+#endif
             case MENU_SETTINGS_PILOT_LIGHT_EN:
                 printf("MENU_SETTINGS_PILOT_LIGHT_EN\r\n");
                 display_menu(data->settings.is_dim_pilot_light_en ? "Enabled" : "Disabled", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);

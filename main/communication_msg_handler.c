@@ -381,8 +381,8 @@ int mainflux_msg_handler(char* msg, char* response)
 
                 strncpy(label, labelstart, labelend - labelstart); 
                 strncpy(value, valuestart, valueend - valuestart); 
-               // printf("label [%s]\n", label);
-               // printf("value [%s]\n", value);
+                //printf("label [%s]\n", label);
+                // printf("value [%s]\n", value);
 
                 if(strcmp(label, "version_major") == 0)
                 				{
@@ -850,6 +850,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 				   printf(" REMOTE_CMD_DAY_LIGHT_TIME_STATE OFF \n  ");
 	 				}
 	 				 set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
+
 	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "day_light_time_on", "status","success",  "value",value);
 	 				}
 	 else if (strcmp(label, REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME) == 0) {

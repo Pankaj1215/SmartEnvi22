@@ -2445,9 +2445,8 @@ while(1){
 				// set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 				// printf("heater task app_data->lastHeaterState %d app_get_mode %d\n",app_data->lastHeaterState , app_get_mode());
 		  }
-
 #ifdef  WIFI_strength
-		  get_wifi_signal_Strength();
+		//  get_wifi_signal_Strength();
 #endif
 
 	 vTaskDelay(1 / portTICK_RATE_MS);
@@ -2459,7 +2458,6 @@ while(1){
 #define fahr_to_celsius(f) ((f - 32) * 5 / 9)
 #define celsius_to_fahr(c) (c * 9 / 5 + 32)
 unsigned char heater_On_Off_state_by_command;
-
 
 time_t TempChange_ms = 0;
 int time_OneMinuteOver = 0;
@@ -2502,6 +2500,8 @@ void Temp_MalfunctionTask(void *param)
 
     int FiveMinuteCountNumber = 0; int FirstFiveMinAmbientTemp = 0;int SecondFiveMinAmbientTemp = 0; int ThirdFiveMinAmbientTemp = 0;
     int TenMinuteCountNumber = 0; int FirstTenMinAmbientTemp = 0;int SecondTenMinAmbientTemp = 0; int ThirdTenMinAmbientTemp = 0;
+
+    int ThirdTimefiveMinOver = 0, ThirdTimeTenMinOver = 0;
 
     lprevAmbientTempForEventTrigger = *amb_temp_c;
     while(1){
@@ -2610,7 +2610,7 @@ void Temp_MalfunctionTask(void *param)
 			 }
 #endif
       }// end of if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-   else {// Temperature in Fahranniete
+   else { // Temperature in Fahranniete
 
  	//  printf("\n MalfunctionTaskExcludedFromTempTask In Farehneite  \n\n ");
 	   if(ltempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
@@ -2652,33 +2652,14 @@ void Temp_MalfunctionTask(void *param)
 //	  // *target_temp_f = 40 ;
 //	  // *temp_hysteresis_f = 5;
 //	   // THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS =5;
-	     if(ltempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)  // ambient temperature in fahraneit
-	     {	hysterisFlag = 1;	printf("\n hysterisFlag %d\n ", hysterisFlag);  }
-	     if(hysterisFlag == 1) {
-	    	 hysterisFlag = 0;
-	        // tempInFehrenniete =30;
-	    	// if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))  // 36 < 40 -5 // Include heater ON state
-		   	 if( ltempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))  // 36 < 40 -5 // Include heater ON state
-	    	 {
-	    		 printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
-	    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
-			 }
-	    	// tempInFehrenniete =60;
-//	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
-	    	 if( ltempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))
-	    	 {
-	    		 Hysteris_Thresh_Off_Set_OverWarning =1;
-	    		 printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
-			 }
-	       } // end of  if(hysterisFlag == 1)
 
 		  if( Prev_SetTemp != *target_temp_f )
 	        {      	Prev_SetTemp = *target_temp_f;
-	        	 //TempChange_ms = 0;
-	        	 // time_OneMinuteOver = 0;
-	        	 // time_count = 0;
+	        	 // TempChange_ms = 0;
+	        	  time_OneMinuteOver = 0;
+	        	  time_count = 0;
 
-	        	// TempChange_ms_FiveMin = 0;
+	        	 // TempChange_ms_FiveMin = 0;
 	        	 time_OneMinuteOver_ForFiveMinLogic =0;
 	        	 //TempChange_ms_TenMin =0 ;
 	        	 time_OneMinuteOver_ForTenMinLogic = 0;
@@ -2690,22 +2671,29 @@ void Temp_MalfunctionTask(void *param)
 	        	 printf("\n set Temp changed.. \n");
 	        	// prevAmbientTemp_Fahraneite = tempInFehrenniete;
 	         }
+        // This is for 30 minutes logics
+		int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+				if ((cur_ms - TempChange_ms) >= KEEP_ALIVE_DATA__PACKET_DUR_MS) {
+					TempChange_ms = cur_ms;
+					time_OneMinuteOver = 1;
+				  }
 
+	   	if(time_OneMinuteOver ==1 )
+				{	time_count++; time_OneMinuteOver = 0;  printf("one min over for time_count_30_min\n"); }  // // This is for 30 minutes logics End timing
+
+//	   	 if(ltempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)  // ambient temperature in fahraneit
+	   	 if((ltempInFehrenniete >= *target_temp_f - 5) || (ltempInFehrenniete <= *target_temp_f + 5)) // ambient temperature in fahraneit
+	     	{	hysterisFlag = 1;	printf("\n hysterisFlag %d\n ", hysterisFlag); }
+
+	   	 //
+	   	 if(hysterisFlag == 1){
 		  int cur_ms_fiveMin = xTaskGetTickCount() * portTICK_PERIOD_MS;
 				if ((cur_ms_fiveMin - TempChange_ms_FiveMin) >= 60000) {  // one minutes over
 					TempChange_ms_FiveMin = cur_ms_fiveMin;
-					time_OneMinuteOver_ForFiveMinLogic = 1;	printf("\n  One Minute time_FiveMinuteOver \n"); }
-
-		  int cur_ms_TenMin = xTaskGetTickCount() * portTICK_PERIOD_MS;
-				if ((cur_ms_TenMin - TempChange_ms_TenMin) >= 60000) {  // one minutes over
-					TempChange_ms_TenMin = cur_ms_TenMin;
-					time_OneMinuteOver_ForTenMinLogic = 1;	printf("\n One Minute time_TenMinuteOver \n");}
+					time_OneMinuteOver_ForFiveMinLogic = 1;	printf("\n  One Minute time_FiveMinuteOver \n"); }}
 
          if(time_OneMinuteOver_ForFiveMinLogic == 1)
          { time_OneMinuteOver_ForFiveMinLogic =0;  time_count_five_min++;   printf("time_count_five_min %d \n", time_count_five_min );}
-
-         if(time_OneMinuteOver_ForTenMinLogic == 1 )
-         { time_OneMinuteOver_ForTenMinLogic =0;  time_count_ten_min++;    printf("time_count_ten_min %d \n", time_count_ten_min); }
 
 #define FIVE_MIN_INTERVAL  5
 #define TEN_MIN_INTERVAL   10
@@ -2718,26 +2706,65 @@ void Temp_MalfunctionTask(void *param)
 		 if(FiveMinuteCountNumber == 2)
 			 SecondFiveMinAmbientTemp = ltempInFehrenniete;
 		 if(FiveMinuteCountNumber == 3)
-			 ThirdFiveMinAmbientTemp = ltempInFehrenniete;
+		 { ThirdFiveMinAmbientTemp = ltempInFehrenniete; ThirdTimefiveMinOver =1;}
 		 }
 
+		if(ThirdTimefiveMinOver ==1){
+		if(!(SecondFiveMinAmbientTemp - FirstFiveMinAmbientTemp >= 1) ||(ThirdFiveMinAmbientTemp - SecondFiveMinAmbientTemp >=1)){
+            printf("ALert for 5 min cases \n "); // malfunction_case2_increasing_decreasing_randomly_once_hystersis
+		  }
+		}
+
+		  int cur_ms_TenMin = xTaskGetTickCount() * portTICK_PERIOD_MS;
+				if ((cur_ms_TenMin - TempChange_ms_TenMin) >= 60000) {  // one minutes over
+					TempChange_ms_TenMin = cur_ms_TenMin;
+					time_OneMinuteOver_ForTenMinLogic = 1;	printf("\n One Minute time_TenMinuteOver \n");}
+
+		  if(time_OneMinuteOver_ForTenMinLogic == 1 )
+				 { time_OneMinuteOver_ForTenMinLogic =0;  time_count_ten_min++;    printf("time_count_ten_min %d \n", time_count_ten_min); }
 
 		if(time_count_ten_min == TEN_MIN_INTERVAL)
-		{  printf("\n time_TenMinuteOver \n"); time_count_ten_min = 0; TenMinuteCountNumber++;
-		   if(TenMinuteCountNumber == 1)
-		   	 FirstTenMinAmbientTemp = ltempInFehrenniete;
-			 if(TenMinuteCountNumber == 2)
-	    		 SecondTenMinAmbientTemp = ltempInFehrenniete;
-			 if(TenMinuteCountNumber == 3)
-				 ThirdTenMinAmbientTemp = ltempInFehrenniete;
+		 {  printf("\n time_TenMinuteOver \n"); time_count_ten_min = 0; TenMinuteCountNumber++;
+			   if(TenMinuteCountNumber == 1)
+			   { FirstTenMinAmbientTemp = ltempInFehrenniete;}
+				 if(TenMinuteCountNumber == 2)
+				 { SecondTenMinAmbientTemp = ltempInFehrenniete;}
+				 if(TenMinuteCountNumber == 3)
+				 { ThirdTenMinAmbientTemp = ltempInFehrenniete; ThirdTimeTenMinOver = 1;}
+		  }
+
+		if(ThirdTimeTenMinOver == 1){
+			if(!(SecondFiveMinAmbientTemp - FirstFiveMinAmbientTemp >= 1) ||(ThirdFiveMinAmbientTemp - SecondFiveMinAmbientTemp >=1)){
+		            printf("ALert for 10 min cases \n ");
+				  }
 		}
+
+//		 if(ltempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)  // ambient temperature in fahraneit
+//			     {	hysterisFlag = 1;	printf("\n hysterisFlag %d\n ", hysterisFlag); }
+
+		 if(hysterisFlag == 1) {
+			    	hysterisFlag = 0;
+			        // tempInFehrenniete =30;
+			    	// if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))  // 36 < 40 -5 // Include heater ON state
+				   	 if( ltempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))  // 36 < 40 -5 // Include heater ON state
+			    	 {
+			    		 printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
+			    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
+					 }
+			    	// tempInFehrenniete =60;
+		//	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
+			    	 if( ltempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))
+			    	 {
+			    		 Hysteris_Thresh_Off_Set_OverWarning =1;
+			    		 printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
+					 }
+			       } // end of  if(hysterisFlag == 1)
 
 //		//printf("time_count %d \n", time_count);
 //#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation  // app_data-> TimerIntervalThresholdOffset
 //		//printf("(data-> TimerIntervalThresholdOffset %d app_data-> TimerIntervalThresholdOffset  %d *TimerIntervalThresholdOffset %d \n", data-> TimerIntervalThresholdOffset,app_data-> TimerIntervalThresholdOffset , *TimerIntervalThresholdOffset);
-//
 //	    // printf("app_data-> TimerIntervalThresholdOffset  %d TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset , TimerIntervalThresholdOffset);
-//
+
        if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
 //	   // if(time_count >= *TimerIntervalThresholdOffset){
 	//	if(time_count >= TimerIntervalThresholdOffset){
@@ -2745,20 +2772,40 @@ void Temp_MalfunctionTask(void *param)
 //		//  printf("2 minutes over \n ");
 		   time_OneMinuteOver =0;
 		   time_count = 0;
-//
+
 //		  // *target_temp_f = 40;  // Only for Testing..
 //		  //  tempInFehrenniete = 30;
+
+	       // Malfunction case 3 : Ambient temperature not coming within the range of 10 deg Fahrenheit difference of the set temperature even after 30 mins
 //		 	          // 40                // 30                            // 10
 			if(((*target_temp_f - ltempInFehrenniete) >= THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR)	&& (*currentHeaterState == 1))// target_temp_f- > replace with previouvs ambient temp.
 			{
 				 printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
 				 TimeInterval_Thresh_OffSet_UnderWarning = 1;
 			 }
-////			 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
-////			 {
-////				 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
-////				 TimeInterval_Thresh_OffSet_OverWarning = 1;
            }// end of if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET)
+
+
+       // Malfunction case 4 – Heater not starting even if the ambient temperature reaches freezing point of 50 deg Fahrenheit
+      // or heater not turning off if the ambient temperature reaches 100 deg Fahrenheit
+//        if(((ltempInFehrenniete < 40) && (*currentHeaterState == 0)) || ((ltempInFehrenniete < 100) && (*currentHeaterState == 1)))
+        if((ltempInFehrenniete < 40) && (*currentHeaterState == 0))
+        {
+             //
+        	app_set_heater_state(1); printf("in malfunction case 4 \n ");// malfunction_ambientTemp_underRange_Heater_still_off_triggered  // Need to confirm form that ..
+        }// end of if
+
+        // case 4 part2
+        if((ltempInFehrenniete > 100) && (*currentHeaterState == 1))
+        {
+        	app_set_heater_state(0); printf("in malfunction case 4 _ambientTmepoutofRange-HeaterON \n ");// malfunction_ambientTemp_overRange_Heater_still_On_triggered
+        }
+
+       // Malfunction Case 5: Ambient temperature is showing 0 deg Fahrenheit and not changing whereas room temperature is 60 deg Fahrenheit.
+       if(ltempInFehrenniete <= 0)
+       {
+    	   app_set_heater_state(0);  printf("Malfunction Case 5 occured.. \n ");// malfunction_ambientTemp_zero_triggered
+       }
 
 #endif  // MAL_FUNCTIONS_NOT_TESTED_FAHRENEITE
 

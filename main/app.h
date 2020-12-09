@@ -285,6 +285,8 @@ enum menu_communications {
 #endif
 };
 
+#define Menu_dayLight_option
+
 enum menu_settings {
     MENU_SETTINGS_TEMPERATURE_UNIT = 1,
     MENU_SETTINGS_CHILD_LOCK,
@@ -297,6 +299,11 @@ enum menu_settings {
     MENU_SETTINGS_NIGHT_LIGHT_CFG,
     MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE_WARNING,
     MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE,
+#ifdef Menu_dayLight_option
+	MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE,
+    MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN
+#endif
+
 };
 
 enum menu_display_settings {
@@ -394,7 +401,10 @@ typedef struct {
     char ap_pw[65];
     char sta_ssid[33];
     char sta_pw[65];
-    bool daylightSaving;
+
+   // bool daylightSaving;
+    int daylightSaving;
+
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     bool lastHeaterState; // New Added for storing the last heater status in the Flash.
     unsigned char TimerIntervalThresholdOffset;
