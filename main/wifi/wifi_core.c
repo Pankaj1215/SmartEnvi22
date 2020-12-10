@@ -90,7 +90,6 @@ char uniqueDeviceID[12];
 // struct comm_wifi *comm_wifi_dev; // New Added for mac adress testing
 //struct comm_wifi *comm_wifi_dev; // New Added for mac adress testing
 
-
 time_t keepAlive_ms = 0;
 
 unsigned char keepAliveSendDataToAWS = 0;
@@ -125,6 +124,7 @@ unsigned char manaully_night_Light_State_change;
 unsigned char manaully_child_Lock_State_change;
 unsigned char manaully_Temp_unit_change;
 unsigned char manaully_reset_ssid_pass_enable;
+unsigned char manually_day_light_on_off_change_enable;
 
 #define TimeZoneAdded
 
@@ -409,7 +409,6 @@ void http_web_server()
 int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void* event_data)
 {
 
-
     switch(event_id) {
         //deprecated
         case SYSTEM_EVENT_WIFI_READY:
@@ -453,7 +452,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
         case SYSTEM_EVENT_STA_GOT_IP:
         	//added by dilpreet for tcp
         	//event = (ip_event_got_ip_t*) event_data;
-			//ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&event->ip_info.ip));
+			// ESP_LOGI(TAG, "got ip:%s",ip4addr_ntoa(&event->ip_info.ip));
 			s_retry_num = 0;
 			xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
 
@@ -2084,12 +2083,14 @@ static void http_get_task(void *pvParameters)
 					maxTemperatureThresholdReachedWarning= 0;
 				 } // end of 	if(maxTemperatureThresholdReachedWarning==1)
 
-				if(minTemperatureThresholdReachedWarning==1){
+				if(minTemperatureThresholdReachedWarning==1){  // Anti Freeze Alert
 					memset(cPayload1,0,sizeof(cPayload1));
 					// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", "heater_name","ssid", "wifi_ssidf", "accounId", "user_account_id", "locationId ","location_id"); // ONly for Testing
 					//sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\"\n}", "deviceID", "Heater2","type", "alert","warning", "Anti Freezing ON - Heater ON");
 
-					 sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","minThresholedReached");
+	         	 sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","minThresholedReached");
+	    //				 sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","Freeze Alert");
+
 					HeaterMeassage.payloadLen = strlen(cPayload1);
 				 rc = aws_iot_mqtt_publish(&client, topicMinThresholdReached, topicMinThresholdReached_Len, &HeaterMeassage);
 #ifdef TEST_WIFI_STUCK_PROB
@@ -2381,6 +2382,26 @@ static void http_get_task(void *pvParameters)
 				manaully_reset_ssid_pass_enable= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
 
+				// manually_day_light_on_off_change_enable
+				if(manually_day_light_on_off_change_enable ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_day_light_on_off_change_enable", "status","success",  "value", app_data->daylightSaving);//manually_reset_ssid_pass
+				printf("\n manaully_reset_ssid_pass_enable \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, &HeaterMeassage);
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_day_light_on_off_change_enable = 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 #endif
 		//  printf("After publish HeaterParameterSendingToAWS\n ");
@@ -2462,7 +2483,6 @@ unsigned char heater_On_Off_state_by_command;
 time_t TempChange_ms = 0;
 int time_OneMinuteOver = 0;
 
-
 time_t TempChange_ms_FiveMin = 0;
 int time_OneMinuteOver_ForFiveMinLogic = 0;
 
@@ -2480,6 +2500,295 @@ unsigned char en_anti_freeze;
 #endif
 
 #ifdef MalfunctionTaskExcludedFromTempTask
+
+#define NEW_Malfunction_four_Cases  // 4 new cases add by manav sir and sent to client for approval
+#ifdef NEW_Malfunction_four_Cases
+void Temp_MalfunctionTask(void *param)
+{
+    app_data_t *data = (app_data_t *) param;
+    bool *currentHeaterState = &(data->lastHeaterState);
+    int *amb_temp_c = &(data->ambient_temperature_celsius);
+    int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
+    int ltempInFehrenniete = 0, ltempInFehrenniete_prev = 0;
+    int Prev_SetTemp = 0;
+    int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
+    int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
+    int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
+    unsigned char hysterisFlag = 0;
+    int prevAmbientTemp_Fahraneite = 0;
+    int prevAmbientTemp_Calcius = 0;  int lprevAmbientTempForEventTrigger = 0;
+   // unsigned char *TimerIntervalThresholdOffset = &(data-> TimerIntervalThresholdOffset);
+	#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
+   // printf();
+
+    int FiveMinuteCountNumber = 0; int FirstFiveMinAmbientTemp = 0;int SecondFiveMinAmbientTemp = 0; int ThirdFiveMinAmbientTemp = 0;
+    int TenMinuteCountNumber = 0; int FirstTenMinAmbientTemp = 0;int SecondTenMinAmbientTemp = 0; int ThirdTenMinAmbientTemp = 0;
+
+    int ThirdTimefiveMinOver = 0, ThirdTimeTenMinOver = 0;
+
+    lprevAmbientTempForEventTrigger = *amb_temp_c;
+
+    while(1){
+    	  	*amb_temp_c = app_get_ambient_temp();
+
+    	  	// printf("ambient temp calcius Temp_malFunctionTask %d \n ", *amb_temp_c);
+
+            ltempInFehrenniete = celsius_to_fahr(*amb_temp_c);// Calcius converted to Fehranite..
+         	// printf("ambient temp InFehrenniete Temp_malFunctionTask %d \n ", ltempInFehrenniete);
+
+            if(lprevAmbientTempForEventTrigger != *amb_temp_c)
+        	{lprevAmbientTempForEventTrigger = *amb_temp_c; ambientTempChangeDataToAWS = 1; }
+
+        if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
+
+    	  printf("\n MalfunctionTaskExcludedFromTempTask In calsius \n\n ");
+
+		 if(*amb_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
+			// Mode needed here in Stand by mode -> electronic off
+			 app_set_heater_state(0);
+			// app_data->mode = APP_MODE_STANDBY;
+			 //  heater_off();
+//		      heater_On_Off_state_by_command = 0 ;
+			 //  app_data->lastHeaterState = false;
+			 //  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState); printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+			  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
+//			  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
+			  printf("\n MalfunctionTaskExcludedFromTempTask In calsius maxTemperatureThresholdReachedWarning \n\n "); }
+
+		  if(en_anti_freeze == 1){
+			  printf("MalfunctionTaskExcludedFromTempTask en_anti_freeze in calsius minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
+			  if(*amb_temp_c  < ANTI_FREEZE_LIMIT_CELSIUS) {
+			//// Mode needed here in Manual Temperature Mode  -> electronic ON
+				  app_set_heater_state(1);
+
+			//	  app_data->mode = APP_MODE_MANUAL_TEMPERATURE;
+				  //    heater_on();
+			//  heater_On_Off_state_by_command =1 ;
+			 // app_data->lastHeaterState = true;
+			// set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+			 printf("MalfunctionTaskExcludedFromTempTask app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+			  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
+			  printf("MalfunctionTaskExcludedFromTempTask minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
+			  printf("\n MalfunctionTaskExcludedFromTempTask minTemperatureThresholdReachedWarning \n ");
+		  }	}// endof  if(en_anti_freeze == 1){
+
+// #define MAL_FUNCTIONS_NOT_TESTED_CALCIUS
+#ifdef MAL_FUNCTIONS_NOT_TESTED_CALCIUS
+
+		   if(*amb_temp_c >= *target_temp_c - *temp_hysteresis_c)  // ambient temperature in fahraneit
+		     {		        hysterisFlag = 1;	 printf("\n MalfunctionTaskExcludedFromTempTask hysterisFlag %d\n ", hysterisFlag);	     }
+		     if(hysterisFlag == 1)
+		       { hysterisFlag = 0;
+		    	 if( *amb_temp_c < (*target_temp_c - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS))
+				 {
+		    		// printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
+		    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
+				 }
+		    	 if( *amb_temp_c > (*target_temp_c + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS))
+				 {
+		    		 Hysteris_Thresh_Off_Set_OverWarning =1;
+		    		// printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
+				 }
+		       } // end of  if(hysterisFlag == 1)
+
+	       if( Prev_SetTemp != *target_temp_c )
+	        {
+	        	Prev_SetTemp = *target_temp_c;
+	        	 TempChange_ms = 0;
+	        	 time_OneMinuteOver = 0;
+	        	 time_count = 0; prevAmbientTemp_Calcius = *amb_temp_c;
+	        }
+		  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+				if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
+					TempChange_ms = cur_ms;
+					time_OneMinuteOver = 1;
+				}
+////			//printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
+			if(time_OneMinuteOver == 1)
+			{
+			  time_count++;
+			  time_OneMinuteOver = 0;
+			}
+
+//			 time_FiveMinuteOver = 0;
+//			 time_TenMinuteOver = 0;
+
+//		//printf("time_count %d \n", time_count);
+//		//	unsigned char TimerIntervalThresholdOffset;
+//			printf("app_data-> TimerIntervalThresholdOffset %d \n", app_data-> TimerIntervalThresholdOffset);
+//		  	if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
+		    if(time_count >= app_data-> TimerIntervalThresholdOffset){
+			   printf("2 minutes over \n ");
+			   time_OneMinuteOver = 0;
+			   time_count = 0;
+			 if( *amb_temp_c < (prevAmbientTemp_Calcius - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR))
+				 {
+					printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
+					TimeInterval_Thresh_OffSet_UnderWarning = 1;
+				 }
+//				 if( *ambient_temp_c > (*target_temp_c + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR))
+//				 {
+//					 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
+//					 TimeInterval_Thresh_OffSet_OverWarning = 1;
+//				 }
+			 }
+#endif
+      }// end of if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+   else { // Temperature in Fahranniete
+
+ 	//  printf("\n MalfunctionTaskExcludedFromTempTask In Farehneite  \n\n ");
+	   if(ltempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
+	      	// heater_off();
+		      app_set_heater_state(0);
+	      	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
+	      	  printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
+	        }
+
+	   if(en_anti_freeze == 1){
+	       //printf("en_anti_freeze logic Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
+	      // printf("en_anti_freeze logic tempInFehrenniete %d\n ",ltempInFehrenniete);
+		   if(ltempInFehrenniete  < ANTI_FREEZE_LIMIT_FEHRANEITE)  {
+	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
+	         // heater_on();
+		       printf("\n In en_anti_freeze matches \n ");
+			   app_set_heater_state(1);
+	      	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
+	      	 printf("\n In Fahrenite minTemperatureThresholdReachedWarning \n ");
+	        }
+	     } // end of  if(en_anti_freeze ==1){
+
+// #define MAL_FUNCTIONS_NOT_TESTED_FAHRENEITE
+#ifdef MAL_FUNCTIONS_NOT_TESTED_FAHRENEITE
+
+	  if( ltempInFehrenniete_prev != ltempInFehrenniete)
+	    { ltempInFehrenniete_prev = ltempInFehrenniete; }
+
+		  if( Prev_SetTemp != *target_temp_f )
+	        {      	Prev_SetTemp = *target_temp_f;
+	        	 // TempChange_ms = 0;
+	        	  time_OneMinuteOver = 0;
+	        	  time_count = 0;
+
+	        	 // TempChange_ms_FiveMin = 0;
+	        	 time_OneMinuteOver_ForFiveMinLogic =0;
+	        	 //TempChange_ms_TenMin =0 ;
+	        	 time_OneMinuteOver_ForTenMinLogic = 0;
+	        	  time_count_five_min = 0;  time_count_ten_min = 0;
+	        	// time_count_five_min = -1;  time_count_ten_min = -1;
+	     	      FiveMinuteCountNumber = 0;
+	     	      TenMinuteCountNumber = 0;
+	        	 printf("\n set Temp changed.. \n");
+	        	// prevAmbientTemp_Fahraneite = tempInFehrenniete;
+	         }
+
+        // This is for 30 minutes logics
+		int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+			if ((cur_ms - TempChange_ms) >= KEEP_ALIVE_DATA__PACKET_DUR_MS) {
+					TempChange_ms = cur_ms;
+					time_OneMinuteOver = 1;
+				  }
+
+	   	if(time_OneMinuteOver ==1 )
+			{	time_count++; time_OneMinuteOver = 0;  printf("one min over for time_count_30_min\n"); }  // // This is for 30 minutes logics End timing
+
+	    int cur_ms_fiveMin = xTaskGetTickCount() * portTICK_PERIOD_MS;
+			if ((cur_ms_fiveMin - TempChange_ms_FiveMin) >= 60000) {  // one minutes over
+					TempChange_ms_FiveMin = cur_ms_fiveMin;
+					time_OneMinuteOver_ForFiveMinLogic = 1;	printf("\n  One Minute time_FiveMinuteOver \n"); }
+
+         if(time_OneMinuteOver_ForFiveMinLogic == 1)
+         { time_OneMinuteOver_ForFiveMinLogic =0;  time_count_five_min++;   printf("time_count_five_min %d \n", time_count_five_min );}
+
+#define FIVE_MIN_INTERVAL  5
+#define TEN_MIN_INTERVAL   10
+
+		if(time_count_five_min == FIVE_MIN_INTERVAL)
+		 { printf("\n time_FiveMinuteOver \n"); }
+
+		int cur_ms_TenMin = xTaskGetTickCount() * portTICK_PERIOD_MS;
+		    if ((cur_ms_TenMin - TempChange_ms_TenMin) >= 60000) {  // one minutes over
+				TempChange_ms_TenMin = cur_ms_TenMin;
+				time_OneMinuteOver_ForTenMinLogic = 1;	printf("\n One Minute time_TenMinuteOver \n");}
+
+		  if(time_OneMinuteOver_ForTenMinLogic == 1 )
+				 { time_OneMinuteOver_ForTenMinLogic =0;  time_count_ten_min++;    printf("time_count_ten_min %d \n", time_count_ten_min); }
+
+//		 if(hysterisFlag == 1) {
+//			    	hysterisFlag = 0;
+//			        // tempInFehrenniete =30;
+//			    	// if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))  // 36 < 40 -5 // Include heater ON state
+//				   	 if( ltempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))  // 36 < 40 -5 // Include heater ON state
+//			    	 {
+//			    		 printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
+//			    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
+//					 }
+//			    	// tempInFehrenniete =60;
+//		//	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
+//			    	 if( ltempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))
+//			    	 {
+//			    		 Hysteris_Thresh_Off_Set_OverWarning =1;
+//			    		 printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
+//					 }
+//			       } // end of  if(hysterisFlag == 1)
+
+//		//printf("time_count %d \n", time_count);
+//#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation  // app_data-> TimerIntervalThresholdOffset
+//		//printf("(data-> TimerIntervalThresholdOffset %d app_data-> TimerIntervalThresholdOffset  %d *TimerIntervalThresholdOffset %d \n", data-> TimerIntervalThresholdOffset,app_data-> TimerIntervalThresholdOffset , *TimerIntervalThresholdOffset);
+//	    // printf("app_data-> TimerIntervalThresholdOffset  %d TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset , TimerIntervalThresholdOffset);
+
+       if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET)
+       {
+		   time_OneMinuteOver =0;
+		   time_count = 0;
+
+//		  // *target_temp_f = 40;  // Only for Testing..
+//		  //  tempInFehrenniete = 30;
+
+	       // Malfunction case 3 : Ambient temperature not coming within the range of 10 deg Fahrenheit difference of the set temperature even after 30 mins
+//		 	          // 40                // 30                            // 10
+//			if(((*target_temp_f - ltempInFehrenniete) >= THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR)	&& (*currentHeaterState == 1))// target_temp_f- > replace with previouvs ambient temp.
+		   if(ltempInFehrenniete - ltempInFehrenniete_prev >= 5) //
+		     {   printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
+				 TimeInterval_Thresh_OffSet_UnderWarning = 1;
+			 }
+           }// end of if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET)
+
+
+     // Malfunction case 4 – Heater not starting even if the ambient temperature reaches freezing point of 50 deg Fahrenheit
+     // or heater not turning off if the ambient temperature reaches 100 deg Fahrenheit
+//        if(((ltempInFehrenniete < 40) && (*currentHeaterState == 0)) || ((ltempInFehrenniete < 100) && (*currentHeaterState == 1)))
+//        if((ltempInFehrenniete < 40) && (*currentHeaterState == 0))
+       if((ltempInFehrenniete < 40))
+       {
+    	   if(*currentHeaterState == 0)
+        	{ app_set_heater_state(1); printf("in malfunction case 4 \n ");}// malfunction_ambientTemp_underRange_Heater_still_off_triggered  // Need to confirm form that ..
+       }// end of if
+
+//    case 3 part2
+//    if((ltempInFehrenniete > 100) && (*currentHeaterState == 1))
+      if((ltempInFehrenniete > 100))
+       {
+    	  if((*currentHeaterState == 1))
+        	{  app_set_heater_state(0); printf("in malfunction case 3 ltempInFehrenniete-HeaterON \n ");}// malfunction_ambientTemp_overRange_Heater_still_On_triggered
+        }
+
+       // Malfunction Case 4: Ambient temperature is showing 0 deg Fahrenheit and not changing whereas room temperature is 60 deg Fahrenheit.
+       if(ltempInFehrenniete <= 0)
+       {
+    	   app_set_heater_state(0);  printf("Malfunction Case 4 occured.. \n ");// malfunction_ambientTemp_zero_triggered  //
+       }
+
+#endif  // MAL_FUNCTIONS_NOT_TESTED_FAHRENEITE
+
+	 }// end of else
+
+      // vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
+       vTaskDelay(1000 / portTICK_RATE_MS);
+
+	}// end of while
+}//void Temp_MalfunctionTask(void)
+#else
+
 void Temp_MalfunctionTask(void *param)
 {
     app_data_t *data = (app_data_t *) param;
@@ -2816,6 +3125,7 @@ void Temp_MalfunctionTask(void *param)
 
 	}// end of while
 }//void Temp_MalfunctionTask(void)
+#endif // end of newMalfunction_four_Cases
 
 #endif
 
@@ -2858,14 +3168,12 @@ nvs_handle_t my_handle;
 
 //#define PORT CONFIG_EXAMPLE_PORT  // original Lines
 
-
 // Below lins added for testing only Start
 #define CONFIG_EXAMPLE_IPV4 1
 #define CONFIG_EXAMPLE_PORT 3333
 
 #define PORT CONFIG_EXAMPLE_PORT
 // Below lins added for testing only end
-
 
 #define EXAMPLE_ESP_WIFI_SSID "WESP321"
 
@@ -2874,7 +3182,6 @@ nvs_handle_t my_handle;
 
 // static const char *TAG = "example";  // Original Lines
 static const char *TCP_SERVER_TAG = "example";
-
 
 #define TCP_SOCKET_RECCONECT  // Added on 29Oct20
 
@@ -3137,7 +3444,6 @@ void tcpServer_main()
     printf("comm_wifi_dev.wifi_ap_ssid %s \n ",comm_wifi_dev -> wifi_ap_ssid);
     strcpy(uniqueDeviceID, comm_wifi_dev -> wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid*/
 
-
     sprintf(uniqueDeviceID, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
     printf("uniqueDeviceID in TCP_server_main   %s\n", uniqueDeviceID);
 
@@ -3146,7 +3452,6 @@ void tcpServer_main()
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
 	initialise_wifi();
 }
-
 
 
 void initSoftAP()

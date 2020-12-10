@@ -160,6 +160,7 @@ extern unsigned char manaully_night_Light_State_change;
 extern unsigned char manaully_child_Lock_State_change;
 extern unsigned char manaully_Temp_unit_change;
 extern unsigned char manaully_reset_ssid_pass_enable;
+extern unsigned char manually_day_light_on_off_change_enable;
 
 unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
 // Threshold_Offset 30Minute calculation ..
@@ -3810,6 +3811,8 @@ static app_mode_t menu_settings(app_data_t *data) {
 								data->daylightSaving = !data->daylightSaving;
 								printf("data->daylightSaving  %d \n", data->daylightSaving);
 								// Save pending //
+								set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
+								manually_day_light_on_off_change_enable = 1;
 								break;
 #endif
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
@@ -3894,6 +3897,8 @@ static app_mode_t menu_settings(app_data_t *data) {
 						// m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
 						  data->daylightSaving = !data->daylightSaving;
 						// Save pending //
+						set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
+						manually_day_light_on_off_change_enable = 1;
 						break;
 #endif
 
