@@ -4458,6 +4458,10 @@ static void temp_sensor_task(void *param) {
     lprevAmbientTempForEventTrigger = *ambient_temp_c;
     while(1) {
         *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
+
+        if( *ambient_temp_c <=0) // New added for if Temperature is less that Zero, display should display Zero.added on 11Dec 2020.
+        	*ambient_temp_c = 0;
+
        // *ambient_temp_c = 7;
 #ifdef MalfunctionTaskIncludedInTempTask
         tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);// Calcius converted to Fehranite..
@@ -4880,10 +4884,10 @@ int app_get_mode(void) {
       // working.. condition..
 //     else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO) // || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
      else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
-
-    	// else
+   	// else
     return (1);}
-    return -1;}
+    return -1;
+}
 
 int app_get_ambient_temp(void) {
    int temperatureInFehrannite;

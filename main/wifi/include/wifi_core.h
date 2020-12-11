@@ -28,6 +28,19 @@
 
 void get_wifi_signal_Strength(void);
 
+// Device Health macro
+#define DEVICE_HEALTH_OK                                                             0
+#define DEVICE_FREEZE_ALERT                                                          1
+#define DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY                              2
+#define DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD       3
+#define DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD        4
+
+#define DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR                  5
+#define DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR         6
+
+#define DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED                        7
+
+
 // These macro used for identify which command Ack
 #define SET_TEMP_ACK    1
 #define GET_TEMP_ACK    2
