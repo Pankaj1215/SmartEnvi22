@@ -286,6 +286,7 @@ enum menu_communications {
 };
 
 #define Menu_dayLight_option
+#define HeaterUnderReapir
 
 enum menu_settings {
     MENU_SETTINGS_TEMPERATURE_UNIT = 1,
@@ -301,7 +302,11 @@ enum menu_settings {
     MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE,
 #ifdef Menu_dayLight_option
 	MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE,
-    MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN
+    MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN,
+#endif
+#ifdef HeaterUnderReapir
+	MENU_SETTINGS_HEATER_UNDER_REPAIR,
+	MENU_SETTINGS_HEATER_UNDER_REPAIR_EN
 #endif
 
 };
@@ -713,6 +718,7 @@ bool app_get_heater_state(void);
 
 bool app_get_anti_freeze_status(void);
 bool app_get_rgb_state(void);
+bool get_heater_under_repair_status(void);
 #endif /* MAIN_APP_H */
 
 

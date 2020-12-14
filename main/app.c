@@ -138,7 +138,7 @@ auto_mode_sched_t sched_weekday[AUTO_MODE_SCHED_NUM];
 auto_mode_sched_t sched_weekend[AUTO_MODE_SCHED_NUM];
 
 #ifdef P_TESTING
-void aws_iot_task(void *pvParameters);   // ADDED FOR TESTING ..PS28aUG
+// void aws_iot_task(void *pvParameters);  // Commented on 14Dec2020 // ADDED FOR TESTING ..PS28aUG
 void initialise_wifi(void);  // Added for testing Wifi Testing _ P_16Sept2020
 void tcpServer_main();
 extern unsigned char maxTemperatureThresholdReachedWarning;
@@ -161,6 +161,13 @@ extern unsigned char manaully_child_Lock_State_change;
 extern unsigned char manaully_Temp_unit_change;
 extern unsigned char manaully_reset_ssid_pass_enable;
 extern unsigned char manually_day_light_on_off_change_enable;
+
+extern unsigned char device_health_status;
+
+#ifdef HeaterUnderReapir
+ unsigned char heater_underControl_status = 0;
+ unsigned char manually_put_heater_under_repair_enable;
+#endif
 
 unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
 // Threshold_Offset 30Minute calculation ..
@@ -256,12 +263,16 @@ printf("init variables heater_On_Off_state_by_command %d app_data->lastHeaterSta
 //#define Test_Storage
 static void print_fw_version(void)
 {
-    char fw_version[100]; 
-    get_version(fw_version); 
-    ESP_LOGI("firmware_version", "%s", fw_version);
+    //  char fw_version[100];
+    char fwVersion[8];
+    sprintf(fwVersion,"%d.%d.%d",FW_VERSION_MAJOR,FW_VERSION_MINOR,FW_VERSION_REVISION);
+   // get_version(fw_version);
+   //   ESP_LOGI("firmware_version", "%s", fw_version);
+    ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
     display_clear_screen();
-    display_menu("Firm_ver", DISPLAY_COLOR, fw_version, DISPLAY_COLOR);
+   //   display_menu("Firm_ver", DISPLAY_COLOR, fw_version, DISPLAY_COLOR);
+    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(3000); //    // wait for at least Firmware version..
 }
 
@@ -461,12 +472,11 @@ esp_err_t app_init(void) {
     if (button_timer_forward_get_level())
         *stat |= 1 << BUTTON_TIMER_FORWARD_STAT;
 
-    // set Wi-Fi status change callback
+// set Wi-Fi status change callback
 //   set_wifi_conn_status_change_cb(wifi_conn_stat);
 ////    // initialize and start communication service
 //   initialize_communication_service();
 //    comm_wifi_dev = get_wifi_dev();
-
 
 //#ifdef P_TESTING   // Added for Testing  commented on 30Nov shifting it after other tasks get operational
 //     tcpServer_main();
@@ -500,7 +510,7 @@ static void app_task(void *param) {
 
    //  xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
 #ifdef P_TESTING   // New Added here after other task  get operational..30Nov2020
-     tcpServer_main();
+    tcpServer_main();
 #endif
      xTaskCreate(heater_state_change_task, "hscan_task", 4096, (void *)app_data, 12, NULL);
      xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
@@ -3728,12 +3738,14 @@ static app_mode_t menu_settings(app_data_t *data) {
                         case MENU_SETTINGS_PILOT_LIGHT:
                         case MENU_SETTINGS_NIGHT_LIGHT:
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS:
+#ifdef HeaterUnderReapir
+                        case  MENU_SETTINGS_HEATER_UNDER_REPAIR:
+#endif
                             exit = true;
                             break;
                         case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
                             m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
                             break;
-
 #ifdef Menu_dayLight_option
 						case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN:
 								m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE;
@@ -3742,7 +3754,6 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                        case MENU_SETTINGS_CHILD_LOCK_EN:
 //                            m_settings = MENU_SETTINGS_CHILD_LOCK;
 //                            break;
-
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT;
                             break;
@@ -3753,6 +3764,12 @@ static app_mode_t menu_settings(app_data_t *data) {
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
                             break;
+#ifdef HeaterUnderReapir
+                        case  MENU_SETTINGS_HEATER_UNDER_REPAIR_EN:
+                        	   m_settings = MENU_SETTINGS_HEATER_UNDER_REPAIR ;
+                        	    break;
+#endif
+
                         }
 
                         update_display = true;
@@ -3785,8 +3802,17 @@ static app_mode_t menu_settings(app_data_t *data) {
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
                             break;
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS:
+#ifdef HeaterUnderReapir
+                            m_settings = MENU_SETTINGS_HEATER_UNDER_REPAIR;
+#else
                             m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+#endif
                             break;
+#ifdef HeaterUnderReapir
+                        case MENU_SETTINGS_HEATER_UNDER_REPAIR:
+                        	  m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+                        	  break;
+#endif
                         case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
                             is_settings_changed = true;
                             manaully_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
@@ -3804,7 +3830,6 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
 //
 //                            break;
-
 #ifdef Menu_dayLight_option
                     	case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN:
 								// m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
@@ -3815,6 +3840,18 @@ static app_mode_t menu_settings(app_data_t *data) {
 								manually_day_light_on_off_change_enable = 1;
 								break;
 #endif
+#ifdef HeaterUnderReapir
+                        case  MENU_SETTINGS_HEATER_UNDER_REPAIR_EN:
+                        	  heater_underControl_status = !heater_underControl_status;
+                        	  manually_put_heater_under_repair_enable = 1;
+                        	  if(heater_underControl_status == 1)
+                        		  device_health_status = DEVICE_HEATER_UNDER_REPAIR;
+                        	  else
+                        	      device_health_status = DEVICE_HEALTH_OK;
+                        	  printf("MENU_SETTINGS_HEATER_UNDER_REPAIR_EN status : %d device_health_status %d \n", heater_underControl_status ,device_health_status );
+                        	  break;
+#endif
+
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
                             // Enable <--> Disable
@@ -3850,8 +3887,18 @@ static app_mode_t menu_settings(app_data_t *data) {
                     if ((*btn >> BUTTON_DOWN_STAT) & 0x01) { // unpressed
                         switch (m_settings) {
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
+#ifdef HeaterUnderReapir
+                       	     m_settings = MENU_SETTINGS_HEATER_UNDER_REPAIR;
+#else
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
+#endif
                             break;
+#ifdef HeaterUnderReapir
+                    case  MENU_SETTINGS_HEATER_UNDER_REPAIR:
+                          m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
+            	          break;
+#endif
+
 //                        case MENU_SETTINGS_CHILD_LOCK:
 //                            m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
 //                            break;
@@ -3902,6 +3949,17 @@ static app_mode_t menu_settings(app_data_t *data) {
 						break;
 #endif
 
+#ifdef HeaterUnderReapir
+                        case  MENU_SETTINGS_HEATER_UNDER_REPAIR_EN:
+                        	  heater_underControl_status = !heater_underControl_status;
+                        	  manually_put_heater_under_repair_enable = 1;
+							  if(heater_underControl_status == 1)
+						   	     device_health_status = DEVICE_HEATER_UNDER_REPAIR;
+							  else
+							     device_health_status = DEVICE_HEALTH_OK;
+                              printf("MENU_SETTINGS_HEATER_UNDER_REPAIR_EN status : %d device_health_status %d \n", heater_underControl_status ,device_health_status );
+                        	  break;
+#endif
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
                             // Enable <--> Disable
@@ -3946,8 +4004,13 @@ static app_mode_t menu_settings(app_data_t *data) {
 
 #ifdef Menu_dayLight_option
 					case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE:
-						m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
+						 m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
 						break;
+#endif
+#ifdef HeaterUnderReapir
+                      case  MENU_SETTINGS_HEATER_UNDER_REPAIR:
+                              m_settings = MENU_SETTINGS_HEATER_UNDER_REPAIR_EN;
+                        	 break;
 #endif
                         case MENU_SETTINGS_PILOT_LIGHT:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT_EN;
@@ -4020,6 +4083,16 @@ static app_mode_t menu_settings(app_data_t *data) {
 					printf("data->daylightSaving  %d \n", data->daylightSaving);
 					break;
 #endif
+#ifdef HeaterUnderReapir
+             case  MENU_SETTINGS_HEATER_UNDER_REPAIR:
+					printf("MENU_SETTINGS_HEATER_UNDER_REPAIR \r\n");
+					display_menu("Under", DISPLAY_COLOR, "Repair", DISPLAY_COLOR);
+                   	 break;
+             case  MENU_SETTINGS_HEATER_UNDER_REPAIR_EN:
+					printf("MENU_SETTINGS_HEATER_UNDER_REPAIR_EN \r\n");
+      		    	display_menu(heater_underControl_status ? "ON" : "OFF", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+                   	 break;
+#endif
             case MENU_SETTINGS_PILOT_LIGHT_EN:
                 printf("MENU_SETTINGS_PILOT_LIGHT_EN\r\n");
                 display_menu(data->settings.is_dim_pilot_light_en ? "Enabled" : "Disabled", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
@@ -4053,6 +4126,8 @@ static app_mode_t menu_settings(app_data_t *data) {
     // return new mode
     return next_mode;
 }
+bool get_heater_under_repair_status(void)
+{	return heater_underControl_status;}
 
 static app_mode_t menu_display_settings(app_data_t *data) {
     int *btn = &(data->button_status);

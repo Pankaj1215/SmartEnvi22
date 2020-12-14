@@ -62,20 +62,11 @@ int message_label_value_handler(char* label, char* value, char* reply_buff);
 #ifdef  P_TESTING
 
 extern int version_major,version_minor,version_revision;
-
- // extern char replybuff[500];  // old
 extern char replybuff[150];  // Testing
-
-// extern int commandReceived_SendAck; // Tested for getSetAPPTestFirmware modified to unsigned char..
 extern unsigned char commandReceived_SendAck;
-
-// extern int oneTimeRegistrationPacketToAWS;  // Tested for getSetAPPTestFirmware modified to unsigned char..
 extern unsigned char oneTimeRegistrationPacketToAWS;
-
 extern unsigned char keepAliveFlag;
-
 extern unsigned char CommandAck;
-// extern volatile unsigned char CommandAck;
 extern char uniqueDeviceID[12];
 #include "heater.h"  // new Added fot Heater OnOff functions..
 
@@ -83,15 +74,10 @@ unsigned char en_anti_freeze;
 int hexadecimalToDecimal(char hexVal[]);
 void decToHexa(int n);
 unsigned char rgb_led_state;
-
-// unsigned char daylightSaving;
-// bool daylightSaving;
 unsigned char heater_On_Off_state_by_command;
 unsigned char TimerIntervalThresholdOffset;
-
 #endif
 
-//unsigned int hex2int(unsigned char hex[]);
 unsigned int hex2int(char hex[]);
 long power(long no,long p);
 
@@ -149,140 +135,10 @@ unsigned int hex2int(char hex[])
 }
 
 
-
-// function to convert decimal to hexadecimal
-void decToHexa(int n)
-{
-    // char array to store hexadecimal number
-    char hexaDeciNum[100];
-
-    // counter for hexadecimal number array
-    int i = 0;
-    while(n!=0)
-    {
-        // temporary variable to store remainder
-        int temp  = 0;
-
-        // storing remainder in temp variable.
-        temp = n % 16;
-
-        // check if temp < 10
-        if(temp < 10)
-        {
-            hexaDeciNum[i] = temp + 48;
-            i++;
-        }
-        else
-        {
-            hexaDeciNum[i] = temp + 55;
-            i++;
-        }
-
-        n = n/16;
-    }
-
-    // printing hexadecimal number array in reverse order
-    for(int j=i-1; j>=0; j--)
-       //  cout << hexaDeciNum[j];
-       printf("hexaDeciNum %c \n", hexaDeciNum[j]);
-}
-
-long power(long no,long p)
-{
-    long a=1;
-    for(int j=0;j<p;j++)
-    {
-        a=a*no;
-    }
-    return a;
-}
-
-// Function to convert hexadecimal to decimal
-int hexadecimalToDecimal(char hexVal[])
-// int hexadecimalToDecimal(char hex[])
-{
-	printf("In hexadecimalToDecimal hexVal %s",hexVal);
-    int len = strlen(hexVal);
-    printf("In len hexVal %d",len);
-    // Initializing base value to 1, i.e 16^0
-    int base = 1;
-
-    int dec_val = 0;
-
-    // Extracting characters as digits from last character
-    for (int i=len-1; i>=0; i--)
-    {
-        // if character lies in '0'-'9', converting
-        // it to integral 0-9 by subtracting 48 from
-        // ASCII value.
-        if (hexVal[i]>='0' && hexVal[i]<='9')
-        {
-            dec_val += (hexVal[i] - 48)*base;
-
-            // incrementing base by power
-            base = base * 16;
-            printf(" 0 -9 dec_val %d",dec_val);
-           // printf(" 0 -9 hexVal %d",hexVal);
-        }
-
-        // if character lies in 'A'-'F' , converting
-        // it to integral 10 - 15 by subtracting 55
-        // from ASCII value
-       // else if (hexVal[i]>='A' && hexVal[i]<='F')
-       	else if (hexVal[i]>='a' && hexVal[i]<='f')
-        {
-            dec_val += (hexVal[i] - 55)*base;
-
-            // incrementing base by power
-            base = base*16;
-        }
-    }
-
-    return dec_val;
-
-//   // char hex[17];
-//     long long decimal, place;
-//     int i = 0, val, len;
-//
-//     val =0;
-//     decimal = 0;
-//     place = 1;
-//
-// /* Find the length of total number of hex digit */
-//	len = strlen(hex);
-//	len--;
-//
-//    for(i=0; hex[i]!='\0'; i++)
-//      {
-//
-//          /* Find the decimal representation of hex[i] */
-//          if(hex[i]>='0' && hex[i]<='9')
-//          {
-//              val = hex[i] - 48;
-//          }
-//          else if(hex[i]>='a' && hex[i]<='f')
-//          {
-//              val = hex[i] - 97 + 10;
-//          }
-//          else if(hex[i]>='A' && hex[i]<='F')
-//          {
-//              val = hex[i] - 65 + 10;
-//          }
-//
-//          //decimal += val * pow(16, len);
-//		  decimal += val * power(16, len);
-//
-//          len--;
-//      }
-//    return decimal;
-}
-
-
-
-
 int mainflux_msg_handler(char* msg, char* response)
 {
-	char major[2]={0},minor[2]={0},revision[2]={0};
+//	char major[2]={0},minor[2]={0},revision[2]={0}; // Working one ..
+	char major[4]={0},minor[4]={0},revision[4]={0}; // Changing for 1.6.10 version
 
     int i = 0;
     char label[100];
@@ -654,13 +510,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
         // This for get set temperature command..
 
-        // Working string ..
-       // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp());
-
-        // ONly for Testing ...
-        //   sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(), "set_temp", app_get_target_temp(),"temp_unit",app_get_temp_unit(), "Heater_state", app_get_heater_state());
-
-        // Working one
+         // Working one
         //  sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(), "s_t", app_get_target_temp(),"t_u",app_get_temp_unit(), "h_s", app_get_heater_state());
 
         // testing one.with get Temp and Temp unit ..

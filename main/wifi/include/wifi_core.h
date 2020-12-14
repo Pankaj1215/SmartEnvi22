@@ -27,6 +27,7 @@
 #define __WIFI_CORE_H__
 
 void get_wifi_signal_Strength(void);
+void getIP_address(void);
 
 // Device Health macro
 #define DEVICE_HEALTH_OK                                                             0
@@ -40,6 +41,7 @@ void get_wifi_signal_Strength(void);
 
 #define DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED                        7
 
+#define DEVICE_HEATER_UNDER_REPAIR                                                   8
 
 // These macro used for identify which command Ack
 #define SET_TEMP_ACK    1
@@ -198,7 +200,11 @@ int esp32_reg_wifi_conn_callback(int (*wifi_conn_cb)(int conn_stat));
 
 
 void get_NTP_Time(void); // new added for NTP testing_08Nov2020
-static void tcp_server_task(void *pvParameters);
+
+// static void tcp_server_task(void *pvParameters); // Original
+void tcp_server_task(void *pvParameters); // Testing on 13Dec2020
+
+
 void Temp_MalfunctionTask(void *param);
 
 #endif //__WIFI_CORE_H__
