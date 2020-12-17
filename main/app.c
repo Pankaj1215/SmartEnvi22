@@ -5148,17 +5148,17 @@ void app_set_heater_state(int heater_state)
 	{ heater_On_Off_state_by_command_ExistFromStandByMode = 0;}// heater_off(); }
 
     if(heater_On_Off_state_by_command_ExistFromStandByMode == 0){ // New Added for Coming out of stand by mode
-    	app_data->mode  = APP_MODE_STANDBY; printf(" Come to stand by mode by Heater OFF commmand \n");}
+    	app_data->mode  = APP_MODE_STANDBY;   } // printf(" Come to stand by mode by Heater OFF commmand \n");
     if(heater_On_Off_state_by_command_ExistFromStandByMode == 1){ // New Added for Coming out of stand by mode
-    	app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; printf(" Come to stand by mode by Heater OFF commmand \n");}
+    	app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; }  // printf(" Come to stand by mode by Heater OFF commmand \n");
 
 	  app_data->lastHeaterState = heater_state;
-	  	if(app_data->lastHeaterState == 1)
-	       printf("Heater ON from app  \n ");
-	  	else
-          printf("Heater OFF from app \n ");
+//	  	if(app_data->lastHeaterState == 1)
+//	       printf("Heater ON from app  \n ");
+//	  	else
+//          printf("Heater OFF from app \n ");
 	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-	  printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+	 // printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 }
 void RGB_LED_ON_OFF(int value)
 {	if(value == 1)	{	rgb_led_state = 1;  printf("RGB LED ON \n");}

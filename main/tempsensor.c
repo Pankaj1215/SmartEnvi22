@@ -160,12 +160,15 @@ float tempsensor_get_temperature(void) {
 static float adc_to_degc(int adc_sample) {
     float r_therm, temp1, temp2, temp3, tempf;
 
+    // printf("adc_sample : %d\n ", adc_sample );
+
     r_therm = (float)NTC_R_BALANCE * ((float)1 / (float)(((float)NTC_ADC_MAX_VAL / (float)adc_sample) - (float)1));
     temp1 = (-1 * ((float)NTC_BETA / 298.15));
     temp2 = exp(temp1);
     temp3 = r_therm / ((float) NTC_R_BALANCE * temp2);
     tempf = (float)NTC_BETA / log(temp3);
 
+   // printf("Temp after adc_sample : %f \n ", (tempf - 273.15) );
     return tempf - 273.15;
 }
 
