@@ -166,7 +166,9 @@ extern unsigned char device_health_status;
 
 #ifdef HeaterUnderReapir
  unsigned char heater_underControl_status = 0;
- unsigned char manually_put_heater_under_repair_enable;
+extern unsigned char manually_put_heater_under_repair_enable;
+extern unsigned char manually_put_heater_under_repair_status_for_malfunctionMonitor;
+
 #endif
 
 unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
@@ -235,6 +237,8 @@ void init_Variables(void);
 void init_Variables(void){
 en_anti_freeze = 1;  // It is used to enable anti freeze logic defualt ON.
 rgb_led_state = 1;
+
+manually_put_heater_under_repair_status_for_malfunctionMonitor = 1;
 
 // app_data->mode
  heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
@@ -416,13 +420,14 @@ esp_err_t app_init(void) {
     printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
 
     get_data_from_storage(STORAGE_KEY_DISPLAY_SETTINGS, &(app_data->display_settings));
+    printf("\n\n  app_data->settings.is_night_light_auto_brightness_en  %d \n",   app_data->settings.is_night_light_auto_brightness_en );
 
-     if(app_data->daylightSaving == 1)
-        printf("daylightSaving  is One %d \n",app_data->daylightSaving);
-     else if(app_data->daylightSaving ==0)
-     	printf("daylightSaving zero %d \n",app_data->daylightSaving);
-     else
-     	printf("unvalid state\n ");
+//     if(app_data->daylightSaving == 1)
+//        printf("daylightSaving  is One %d \n",app_data->daylightSaving);
+//     else if(app_data->daylightSaving ==0)
+//     	printf("daylightSaving zero %d \n",app_data->daylightSaving);
+//     else
+//     	printf("unvalid state\n ");
 
     clock_set_timezone_offset(timezone_offset_list_min[app_data->timezone_offset_idx]);
 
@@ -3845,9 +3850,11 @@ static app_mode_t menu_settings(app_data_t *data) {
                         	  heater_underControl_status = !heater_underControl_status;
                         	  manually_put_heater_under_repair_enable = 1;
                         	  if(heater_underControl_status == 1)
-                        		  device_health_status = DEVICE_HEATER_UNDER_REPAIR;
+                        	  {  device_health_status = DEVICE_HEATER_UNDER_REPAIR;
+                        	     manually_put_heater_under_repair_status_for_malfunctionMonitor = 0;
+                        	  }
                         	  else
-                        	      device_health_status = DEVICE_HEALTH_OK;
+                        	  {   device_health_status = DEVICE_HEALTH_OK; manually_put_heater_under_repair_status_for_malfunctionMonitor = 1; }
                         	  printf("MENU_SETTINGS_HEATER_UNDER_REPAIR_EN status : %d device_health_status %d \n", heater_underControl_status ,device_health_status );
                         	  break;
 #endif
@@ -3954,9 +3961,9 @@ static app_mode_t menu_settings(app_data_t *data) {
                         	  heater_underControl_status = !heater_underControl_status;
                         	  manually_put_heater_under_repair_enable = 1;
 							  if(heater_underControl_status == 1)
-						   	     device_health_status = DEVICE_HEATER_UNDER_REPAIR;
+							   { device_health_status = DEVICE_HEATER_UNDER_REPAIR; manually_put_heater_under_repair_status_for_malfunctionMonitor = 0;}
 							  else
-							     device_health_status = DEVICE_HEALTH_OK;
+							   {  device_health_status = DEVICE_HEALTH_OK; manually_put_heater_under_repair_status_for_malfunctionMonitor = 1; }
                               printf("MENU_SETTINGS_HEATER_UNDER_REPAIR_EN status : %d device_health_status %d \n", heater_underControl_status ,device_health_status );
                         	  break;
 #endif

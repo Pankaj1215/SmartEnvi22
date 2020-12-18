@@ -63,6 +63,8 @@
 unsigned char device_health_status;
 unsigned char manually_put_heater_under_repair_enable;
 
+unsigned char manually_put_heater_under_repair_status_for_malfunctionMonitor;
+
 unsigned char daylightSaving;
 
 static EventGroupHandle_t wifi_event_group;
@@ -1872,7 +1874,6 @@ static void http_get_task(void *pvParameters)
 				manually_day_light_on_off_change_enable = 0;
 				} // end of if(manually_day_light_on_off_change_enable==1){
 
-
 				// manually_put_heater_under_repair_enable
 				if(manually_put_heater_under_repair_enable ==1){
 
@@ -2028,8 +2029,8 @@ void Temp_MalfunctionTask(void *param)
     int f_amb_Temp_three_Degree_logic_Prev = 0;
     int set_Temp_three_Degree_logic;
 
-
     while(1){
+
     	  	*amb_temp_c = app_get_ambient_temp();
 
     	  	// printf("ambient temp calcius Temp_malFunctionTask %d \n ", *amb_temp_c);
@@ -2082,6 +2083,11 @@ void Temp_MalfunctionTask(void *param)
 
         }// end of if(ThirtySec_overForAmb_temp_monitor ==1){
 #endif
+
+      if (manually_put_heater_under_repair_status_for_malfunctionMonitor == 1) {
+
+    	  printf("Heater malfunction monitor ON\n ");
+
           //  printf("app_data->settings.temperature_unit %d\n ",app_data->settings.temperature_unit);
         if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
 
@@ -2119,7 +2125,7 @@ void Temp_MalfunctionTask(void *param)
 
 		   //Ambient temperature not increasing by 5 deg
 		   // when set temperature is atleast 7 deg higher than ambient temperature within 60 minutes of operation
-		   if( Prev_SetTemp_C - lPrevAmbientTempInCalcius > 7){   // Ambient temperature not increasing by 5 deg  when set temperature is atleast 7 deg higher than ambient temperature within 30 minutes of operation
+		   if(( Prev_SetTemp_C - lPrevAmbientTempInCalcius > 7)&& (*currentHeaterState == 1)) {   // Ambient temperature not increasing by 5 deg  when set temperature is atleast 7 deg higher than ambient temperature within 30 minutes of operation
 //		     if(*amb_temp_c - lPrevAmbientTempInCalcius >= 5) //
     	     if((L_AmbientTempInCalcius - lPrevAmbientTempInCalcius >= 5)&& (*currentHeaterState == 1)) //
 		       {
@@ -2130,7 +2136,7 @@ void Temp_MalfunctionTask(void *param)
 
 		   //  Ambient temperature going down or not changing or not increasing
 		   // if the set temperature is atleast 5 deg higher than the ambient temperature within 30 minutes of operation.
-		   if( Prev_SetTemp_C - lPrevAmbientTempInCalcius > 5){
+		   if(( Prev_SetTemp_C - lPrevAmbientTempInCalcius > 5)&& (*currentHeaterState == 1))  {
  //              if(((*amb_temp_c - lPrevAmbientTempInCalcius) == 0 ) || ((lPrevAmbientTempInCalcius - *amb_temp_c) <= 2))
                if((((L_AmbientTempInCalcius - lPrevAmbientTempInCalcius) == 0 ) || ((lPrevAmbientTempInCalcius - L_AmbientTempInCalcius) <= 2))&& (*currentHeaterState == 1))
                {
@@ -2141,20 +2147,15 @@ void Temp_MalfunctionTask(void *param)
 
       if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR ) // L_AmbientTempInCalcius
 //      {  if(((*currentHeaterState == 0) ) || (*amb_temp_c - lPrevAmbientTempInCalcius >= 5))
-      {  if(((*currentHeaterState == 0) ) || (L_AmbientTempInCalcius - lPrevAmbientTempInCalcius >= 5))
-        { 	device_health_status = DEVICE_HEALTH_OK;}
-//         else
-//          { device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR ;}
-        }
+//      {  if(((*currentHeaterState == 0) ) || (L_AmbientTempInCalcius - lPrevAmbientTempInCalcius >= 5))
+        {  if((L_AmbientTempInCalcius - lPrevAmbientTempInCalcius >= 5))
+           { device_health_status = DEVICE_HEALTH_OK;} }
 
       if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR)
 //      {  if(((*currentHeaterState == 0) ) || (*amb_temp_c - lPrevAmbientTempInCalcius == 1))
-        {  if(((*currentHeaterState == 0) ) || ( L_AmbientTempInCalcius - lPrevAmbientTempInCalcius == 1))
-
-        { 	device_health_status = DEVICE_HEALTH_OK;}
-//         else
-//          { device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR ;}
-        }
+//        {  if(((*currentHeaterState == 0) ) || ( L_AmbientTempInCalcius - lPrevAmbientTempInCalcius == 1))
+       {  if(( L_AmbientTempInCalcius - lPrevAmbientTempInCalcius == 1))
+        { 	device_health_status = DEVICE_HEALTH_OK;} }
 #endif
 
 //      if(*amb_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
@@ -2166,22 +2167,25 @@ void Temp_MalfunctionTask(void *param)
 
 	   if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED)
 //	   {  if(*amb_temp_c < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX)
-	   {  if(L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX)
- 	     { device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); }}
+//	   {  if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) || (*currentHeaterState == 0))
+	   {  if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX))
+	       { device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); }}
 
 	  if(en_anti_freeze == 1){
 		//  printf("MalfunctionTaskExcludedFromTempTask en_anti_freeze in calsius minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
 //		  if(*amb_temp_c  < ANTI_FREEZE_LIMIT_CELSIUS) {
+		  device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");
 		  if(L_AmbientTempInCalcius  < ANTI_FREEZE_LIMIT_CELSIUS) {
 			  //// Mode needed here in Manual Temperature Mode  -> electronic ON
 			  app_set_heater_state(1);
 			  device_health_status = DEVICE_FREEZE_ALERT;
-		  printf("\n DEVICE_FREEZE_ALERT \n ");
+		      printf("\n DEVICE_FREEZE_ALERT \n ");
 	       }
 			if( device_health_status == DEVICE_FREEZE_ALERT) {
 //			 if(*amb_temp_c  > ANTI_FREEZE_LIMIT_CELSIUS){
-				 if(L_AmbientTempInCalcius  > ANTI_FREEZE_LIMIT_CELSIUS){
-				  device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); } }
+//				 if((L_AmbientTempInCalcius  > ANTI_FREEZE_LIMIT_CELSIUS) || (*currentHeaterState == 0)){
+			   if((L_AmbientTempInCalcius  > ANTI_FREEZE_LIMIT_CELSIUS)){
+				device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); } }
 	  }// endof  if(en_anti_freeze == 1){
 	  else
 	  {  device_health_status = DEVICE_HEATER_UNDER_REPAIR; printf("In DEVICE_HEATER_UNDER_REPAIR \n ");}
@@ -2196,8 +2200,9 @@ void Temp_MalfunctionTask(void *param)
 
 	   if( device_health_status == DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD)
 //	     { if( (*amb_temp_c > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) ){
-	     { if( (L_AmbientTempInCalcius > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) ){
-		   device_health_status = DEVICE_HEALTH_OK;  } }
+//	     { if((L_AmbientTempInCalcius > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) || (*currentHeaterState == 0)){
+	     { if((L_AmbientTempInCalcius > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN)){
+		      device_health_status = DEVICE_HEALTH_OK;  } }
 
 		//    case 3 part2
 		//    if((ltempInFehrenniete > 100) && (*currentHeaterState == 1))
@@ -2212,8 +2217,9 @@ void Temp_MalfunctionTask(void *param)
 
 		 if(device_health_status == DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD){
 //		        if( *amb_temp_c < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX ) {
-		   if( L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX ) {
-			   device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");} }
+//		   if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX ) || (*currentHeaterState == 0)) {
+		   if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX )) {
+			 device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");} }
 
 		// Malfunction Case 4: Ambient temperature is showing 0 deg Fahrenheit and not changing whereas room temperature is 60 deg Fahrenheit.
 //		if(*amb_temp_c <= 0)
@@ -2227,11 +2233,12 @@ void Temp_MalfunctionTask(void *param)
 		}
 		if(device_health_status == DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY){
 //	       if( *amb_temp_c >  0)
-		    if( L_AmbientTempInCalcius >  0)
-	        {	device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); }}
+//		    if(( L_AmbientTempInCalcius >  0) || (*currentHeaterState == 0))
+		   if(( L_AmbientTempInCalcius >  0))
+			{	device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); }}
 
     }// end of if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-   else { // Temperature in Fahranniete
+else { // Temperature in Fahranniete
 
 #define MAL_FUNCTIONS_NOT_TESTED_FAHRENEITE
 #ifdef MAL_FUNCTIONS_NOT_TESTED_FAHRENEITE
@@ -2275,7 +2282,7 @@ void Temp_MalfunctionTask(void *param)
 
 		   //Ambient temperature not increasing by 5 deg
 		   // when set temperature is atleast 7 deg higher than ambient temperature within 60 minutes of operation
-		   if( Prev_SetTemp_F - ltempInFehrenniete_prev > 7){   // Ambient temperature not increasing by 5 deg  when set temperature is atleast 7 deg higher than ambient temperature within 30 minutes of operation
+		   if( (Prev_SetTemp_F - ltempInFehrenniete_prev > 7)&& (*currentHeaterState == 1)){   // Ambient temperature not increasing by 5 deg  when set temperature is atleast 7 deg higher than ambient temperature within 30 minutes of operation
 //		     if(ltempInFehrenniete - ltempInFehrenniete_prev >= 5) //
 	          if((ltempInFehrenniete - ltempInFehrenniete_prev >= 5) && (*currentHeaterState == 1)) //
 			   {
@@ -2286,24 +2293,28 @@ void Temp_MalfunctionTask(void *param)
 
 		   //  Ambient temperature going down or not changing or not increasing
 		   // if the set temperature is atleast 5 deg higher than the ambient temperature within 30 minutes of operation.
-		   if( Prev_SetTemp_F - ltempInFehrenniete_prev > 5){
+		   if(( Prev_SetTemp_F - ltempInFehrenniete_prev > 5)&& (*currentHeaterState == 1)){
               if((((ltempInFehrenniete - ltempInFehrenniete_prev) == 0 ) || ((ltempInFehrenniete_prev - ltempInFehrenniete) <= 2)) && (*currentHeaterState == 1))
                {
-            	  device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR;  printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR \n ");
+            	  device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR;
+            	  printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR \n ");
                }
 		     } // end of if( Prev_SetTemp - ltempInFehrenniete_prev > 5){
         }// end of if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET)
 
      if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR )
-     {  if(((*currentHeaterState == 0) ) || (ltempInFehrenniete - ltempInFehrenniete_prev >= 5))
-       { 	device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");}
+      {
+ //   	 if(((*currentHeaterState == 0) ) || (ltempInFehrenniete - ltempInFehrenniete_prev >= 5))
+       	 if(ltempInFehrenniete - ltempInFehrenniete_prev >= 5)
+          { 	device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");}
 //        else
 //         { device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR ;}
       }
 
      if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR)
-     {  if(((*currentHeaterState == 0) ) || (ltempInFehrenniete - ltempInFehrenniete_prev == 1))
-         { 	device_health_status = DEVICE_HEALTH_OK;printf("\n In DEVICE_HEALTH_OK \n ");}
+//     {  if(((*currentHeaterState == 0) ) || (ltempInFehrenniete - ltempInFehrenniete_prev == 1))
+      {  if((ltempInFehrenniete - ltempInFehrenniete_prev == 1))
+      { 	device_health_status = DEVICE_HEALTH_OK;printf("\n In DEVICE_HEALTH_OK \n ");}
 //        else
 //         { device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR ;}
       }
@@ -2319,11 +2330,13 @@ void Temp_MalfunctionTask(void *param)
  	     }
 
  	   if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED)
- 	   {  if(ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)
- 	       { device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");}}
+// 	   {  if((ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX) || (*currentHeaterState == 0))
+ 	   {  if((ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX))
+          { device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");}}
 
  	  // ltempInFehrenniete = 30;
  	   if(en_anti_freeze == 1){
+ 		   device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");
  		   if(ltempInFehrenniete  < ANTI_FREEZE_LIMIT_FEHRANEITE)  {
  	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
  	         // heater_on();
@@ -2333,8 +2346,9 @@ void Temp_MalfunctionTask(void *param)
  	        }
 
  	 	   if( device_health_status == DEVICE_FREEZE_ALERT) {
- 	 	      if(ltempInFehrenniete  > ANTI_FREEZE_LIMIT_FEHRANEITE){
- 	 	       	 device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");} }
+// 	 	      if((ltempInFehrenniete  > ANTI_FREEZE_LIMIT_FEHRANEITE)||(*currentHeaterState == 0)){
+  	 	      if((ltempInFehrenniete  > ANTI_FREEZE_LIMIT_FEHRANEITE)){
+ 	 		   device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");} }
  	     } // end of  if(en_anti_freeze ==1){
  	   else
  	   {  device_health_status = DEVICE_HEATER_UNDER_REPAIR;printf("\n In DEVICE_HEATER_UNDER_REPAIR \n ");}
@@ -2349,9 +2363,10 @@ void Temp_MalfunctionTask(void *param)
        }// end of if
 
        if( device_health_status == DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD)
-       { if( (ltempInFehrenniete > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN) ){
-    	     device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");
-          }
+       {
+//    	   if( (ltempInFehrenniete > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN) || (*currentHeaterState == 0)){
+    	   if( (ltempInFehrenniete > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN)){
+    	        device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n "); }
        }
 
 //    case 3 part2
@@ -2363,8 +2378,9 @@ void Temp_MalfunctionTask(void *param)
         }
 
       if(device_health_status == DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD){
-        if( ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX ) {
-        	device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");} }
+//        if((ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX ) || (*currentHeaterState == 0)) {
+          if((ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX )) {
+    	      device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");} }
 
       // ltempInFehrenniete = -10;
        // Malfunction Case 4: Ambient temperature is showing 0 deg Fahrenheit and not changing whereas room temperature is 60 deg Fahrenheit.
@@ -2376,10 +2392,17 @@ void Temp_MalfunctionTask(void *param)
        }  }// end of else  // temp_in_faherniete
 
         if(device_health_status == DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY){
-        if( ltempInFehrenniete > 0)
-        {	device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");}}
+//        if((ltempInFehrenniete > 0) || (*currentHeaterState == 0))
+          if((ltempInFehrenniete > 0))
+        	{	device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");}}
 
-      // vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
+        } // manually_put_heater_under_repair_status_for_malfunctionMonitor  // Disable malfunctions when manually disabled heater control.
+      else
+      {
+    	  printf("Heater malfunction disable from manual mode \n ");
+      }
+
+       // vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
        vTaskDelay(1000 / portTICK_RATE_MS);
 
 	}// end of while
