@@ -1612,7 +1612,7 @@ static void http_get_task(void *pvParameters)
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","msg","EveryThingIsFine"); // WorkingOne..
 
 // Testing begin ..
-// #define Test_MALFUCTION_NOTIFICATION
+#define Test_MALFUCTION_NOTIFICATION
 #ifdef Test_MALFUCTION_NOTIFICATION
         switch(count){
         case 0: device_health_status = DEVICE_HEALTH_OK;
@@ -1657,7 +1657,7 @@ static void http_get_task(void *pvParameters)
              case 8: device_health_status = DEVICE_HEATER_UNDER_REPAIR; count++; break;
              default: count = 0; break;}
 
-        printf("device_health_status %d \n",device_health_status);
+           printf("device_health_status %d \n",device_health_status);
 
 #endif
 // Testing only..
@@ -1685,8 +1685,10 @@ static void http_get_task(void *pvParameters)
 
 			if(manaully_Set_Temp_change==1){
 				memset(cPayload1,0,sizeof(cPayload1));
-
-    			sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_celsius,"temp_unit",app_get_temp_unit());
+                // Working One
+    		//	sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_celsius,"temp_unit",app_get_temp_unit());
+                // testing for synch f and c interchange
+    			sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit,"temp_unit",app_get_temp_unit());
 
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 				rc = aws_iot_mqtt_publish(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, &HeaterMeassage);
@@ -1791,7 +1793,6 @@ static void http_get_task(void *pvParameters)
 				memset(cPayload1,0,sizeof(cPayload1));
 				ThermostatStateChangeDataToAWS= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
-
 
 // ambient_temp_change_event
 				if(ambientTempChangeDataToAWS ==1){
@@ -2031,13 +2032,20 @@ void Temp_MalfunctionTask(void *param)
 
     while(1){
 
-    	  	*amb_temp_c = app_get_ambient_temp();
+//   	  	*amb_temp_c = app_get_ambient_temp();
+//    	  	// printf("ambient temp calcius Temp_malFunctionTask %d \n ", *amb_temp_c);
+//            ltempInFehrenniete = celsius_to_fahr(*amb_temp_c);// Calcius converted to Fehranite..
+//         	// printf("ambient temp InFehrenniete Temp_malFunctionTask %d \n ", ltempInFehrenniete);
+//            L_AmbientTempInCalcius =  *amb_temp_c; // Local variable for calcius
 
-    	  	// printf("ambient temp calcius Temp_malFunctionTask %d \n ", *amb_temp_c);
-            ltempInFehrenniete = celsius_to_fahr(*amb_temp_c);// Calcius converted to Fehranite..
-         	// printf("ambient temp InFehrenniete Temp_malFunctionTask %d \n ", ltempInFehrenniete);
+	  	 // ltempInFehrenniete = app_get_ambient_temp();
+	     //	L_AmbientTempInCalcius = fahr_to_celsius(ltempInFehrenniete);
+	     L_AmbientTempInCalcius =  *amb_temp_c;
+	  	// printf("ambient temp calcius Temp_malFunctionTask %d \n ", *amb_temp_c);
+         ltempInFehrenniete = celsius_to_fahr(*amb_temp_c);// Calcius converted to Fehranite..
+     	 printf("ambient_Temp_malFunctionTask L_AmbientTempInCalcius %d ltempInFehrenniete %d \n ", L_AmbientTempInCalcius, ltempInFehrenniete);
+        //  L_AmbientTempInCalcius =  *amb_temp_c; // Local variable for calcius
 
-            L_AmbientTempInCalcius =  *amb_temp_c; // Local variable for calcius
 // Commented for testing only ...
 //            if(lprevAmbientTempForEventTrigger != *amb_temp_c)
 //        	{lprevAmbientTempForEventTrigger = *amb_temp_c; ambientTempChangeDataToAWS = 1; }
@@ -2086,7 +2094,7 @@ void Temp_MalfunctionTask(void *param)
 
       if (manually_put_heater_under_repair_status_for_malfunctionMonitor == 1) {
 
-    	  printf("Heater malfunction monitor ON\n ");
+    	 //  printf("Heater malfunction monitor ON\n ");
 
           //  printf("app_data->settings.temperature_unit %d\n ",app_data->settings.temperature_unit);
         if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){

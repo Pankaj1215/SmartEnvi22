@@ -156,9 +156,15 @@ extern char uniqueDeviceID[12];
 #define AUTO_DIM_PILOT_LIGHT_MIN_BRIGHTNESS 50
 
 // night light
+
 #define NIGHT_LIGHT_VAL_DEF 0x00646464
+
+ // #define NIGHT_LIGHT_VAL_DEF 0x00646464   // Original Value
 #define NIGHT_LIGHT_VAL_MIN 0x00000000
 #define NIGHT_LIGHT_VAL_MAX 0x00646464
+
+
+
 #define NIGHT_LIGHT_BRIGHTNESS_MAX 100
 #define NIGHT_LIGHT_BRIGHTNESS_MIN 0
 #define NIGHT_LIGHT_UPDATE_INTERVAL_MS 1000
@@ -719,6 +725,9 @@ bool app_get_heater_state(void);
 bool app_get_anti_freeze_status(void);
 bool app_get_rgb_state(void);
 bool get_heater_under_repair_status(void);
+
+int app_get_light_LDR_parm(void);
+
 #endif /* MAIN_APP_H */
 
 

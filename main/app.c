@@ -169,6 +169,8 @@ extern unsigned char device_health_status;
 extern unsigned char manually_put_heater_under_repair_enable;
 extern unsigned char manually_put_heater_under_repair_status_for_malfunctionMonitor;
 
+extern int nlight_br_TestingInSynchPacket;
+
 #endif
 
 unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
@@ -416,6 +418,9 @@ esp_err_t app_init(void) {
     init_Variables();
     get_integer_from_storage(STORAGE_KEY_TIMEZONE_OFFSET_INDEX, &(app_data->timezone_offset_idx));
     get_integer_from_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, &(app_data->night_light_cfg));
+
+    app_data->night_light_cfg = 16711888; // Only For testing ..
+
     get_data_from_storage(STORAGE_KEY_SETTINGS, &(app_data->settings));
     printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
 
@@ -4544,6 +4549,8 @@ static void temp_sensor_task(void *param) {
         if( *ambient_temp_c <=0) // New added for if Temperature is less that Zero, display should display Zero.added on 11Dec 2020.
         	*ambient_temp_c = 0;
 
+        printf("*ambient_temp_c %d ",*ambient_temp_c);
+
        // *ambient_temp_c = 7;
 #ifdef MalfunctionTaskIncludedInTempTask
         tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);// Calcius converted to Fehranite..
@@ -4816,6 +4823,8 @@ static void night_light_task(void *param) {
                         nlight_br = NIGHT_LIGHT_BRIGHTNESS_MAX - (*ambient_light * (NIGHT_LIGHT_BRIGHTNESS_MAX - NIGHT_LIGHT_BRIGHTNESS_MIN) / NIGHT_LIGHT_BRIGHTNESS_MAX + NIGHT_LIGHT_BRIGHTNESS_MIN);
                     }
 
+                     nlight_br_TestingInSynchPacket = nlight_br; // Added only for Testing..
+
                    // *nlight_cfg = 0xFFFFFF;
                 //     nlight_br = 76 ;  // Added for Testing // 77 bright will be less // 99 brightness will be high
 //                    int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;  // Exsiting logic
@@ -4839,7 +4848,7 @@ static void night_light_task(void *param) {
                     {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
                         night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
                     	// night_light_set_br(99, 0, 0); //  night_light_set_br(0, 255, 0);
-                      //  printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
+                        printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
                        // printf("Led ON in night light task function \n ");
                     }
                     if(rgb_led_state == 0)
@@ -4972,20 +4981,72 @@ int app_get_mode(void) {
 }
 
 int app_get_ambient_temp(void) {
-   int temperatureInFehrannite;
-	if (app_data) {
-    	// printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
-//    	 if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-          	 return app_data->ambient_temperature_celsius;
-//    	 else  //     			app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT
-//    	 {
-//    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
-//    	     return temperatureInFehrannite;
-//    	 }
-    }
+//   int temperatureInFehrannite;
+//	if (app_data) {
+//    	// printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
+////    	 if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+//          	 return app_data->ambient_temperature_celsius;
+////    	 else  //     			app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT
+////    	 {
+////    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
+////    	     return temperatureInFehrannite;
+////    	 }
+//    }
+	   int temperatureInFehrannite = 0;
+		if (app_data) {
+    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
+	    	 printf("From app_get_ambient_temp: %d temperatureInFehrannite %d\n", app_data->ambient_temperature_celsius, temperatureInFehrannite);
+	         return temperatureInFehrannite;	    }
     return 0x80000000;
 }
 
+#define FahreneiteLogicSynch_APP_DEV
+#ifdef FahreneiteLogicSynch_APP_DEV
+int app_set_target_temp(int temp) {
+   int temp_c = 0;
+   int temp_f = 0 ; float ftemp_f =0;
+//   temp_c = temp; printf("temp_c %d\n",temp_c);
+//   temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
+   temp_f = temp; printf("temp_f %d\n",temp_f);
+   temp_c = fahr_to_celsius(temp_f); printf("temp_c %d\n",temp_c);
+  // temp_c = temp; printf("temp_c %d\n",temp_c);
+  // temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
+
+   if (app_data)
+    {
+// _celsius
+    if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+        if (temp_c >= TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_MAX)
+#else
+        if (temp_c >= TEMPERATURE_CELSIUS_VAL_MIN   && temp_c <= TEMPERATURE_CELSIUS_VAL_MAX)  	  // Original Last Firmware Line
+#endif
+        {
+            app_data->manual_temperature_celsius = temp_c; printf("app_data->manual_temperature_celsius %d\n",app_data->manual_temperature_celsius );
+            app_data->manual_temperature_fahrenheit = temp_f;  printf("app_data->manual_temperature_fahrenheit %d\n",app_data->manual_temperature_fahrenheit );
+            // update target temperature in flash
+            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, app_data->manual_temperature_celsius);
+            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit); printf("Temp set by command: %d \n ",temp_c );  return 0;
+        }
+     }
+    else{ // Temperature Value in Fehreanite
+#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
+        if (temp_f >= TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MIN   && temp_f <= TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_MAX)
+#else
+        if (temp_f >= TEMPERATURE_CELSIUS_VAL_MIN   && temp_f <= TEMPERATURE_CELSIUS_VAL_MAX)  	  // Original Last Firmware Line
+#endif
+        {
+            app_data->manual_temperature_fahrenheit = temp_f; printf("app_data->manual_temperature_fahrenheit: %d\n",app_data->manual_temperature_fahrenheit );
+            app_data->manual_temperature_celsius = temp_c; printf("app_data->manual_temperature_celsius %d\n",app_data->manual_temperature_celsius );
+            // update target temperature in flash
+            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, app_data->manual_temperature_celsius);
+            set_integer_to_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, app_data->manual_temperature_fahrenheit);  printf("Temp set by command in fahrenheit: %d \n ",app_data->manual_temperature_fahrenheit );   return 0;
+        } // if
+       } // else
+    }//  if (app_data)
+    return -1;
+}
+#else
 int app_set_target_temp(int temp) {
    int temp_c = 0;
    int temp_f = 0 ; float ftemp_f =0;
@@ -5025,11 +5086,13 @@ int app_set_target_temp(int temp) {
     }//  if (app_data)
     return -1;
 }
+#endif
 int app_get_target_temp(void) {
     if (app_data) { // Original Lines
     //	if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
        // printf("From app_get_target_temp in calcius: %d\n", app_data->manual_temperature_celsius);
-        return app_data->manual_temperature_celsius; }
+      //  return app_data->manual_temperature_celsius; }  // Last working one Change on 23Dec2020
+       return  app_data->manual_temperature_fahrenheit;} // Only for testing .. Added on 23Dec2020
       //  else{
       //      printf("From app_get_target_temp in fahreneite: %d\n", app_data->manual_temperature_fahrenheit);
       //      return app_data->manual_temperature_fahrenheit;}
@@ -5111,7 +5174,12 @@ int app_set_temp_unit(int unit) {
 int app_get_temp_unit(void) {
     if (app_data) {        return app_data->settings.temperature_unit;    }    return -1;}
 bool app_get_rgb_state(void) {
-      return rgb_led_state; }
+      return rgb_led_state;
+}
+
+int app_get_light_LDR_parm(void) {
+      return nlight_br_TestingInSynchPacket;
+}
 bool app_get_anti_freeze_status(void) {
           return en_anti_freeze;}
 bool app_get_anti_free_state(void) {
