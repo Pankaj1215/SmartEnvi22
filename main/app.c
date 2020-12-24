@@ -25,6 +25,9 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <math.h>
+
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -96,8 +99,11 @@
 #define night_light_set_br(r,g,b) {led_r_set_brightness(r);led_g_set_brightness(g);led_b_set_brightness(b);}
 #define night_light_off() {led_r_off();led_g_off();led_b_off();}
 
-#define fahr_to_celsius(f) ((f - 32) * 5 / 9)
-#define celsius_to_fahr(c) (c * 9 / 5 + 32)
+// #define fahr_to_celsius(f) ((f - 32) * 5 / 9)
+#define fahr_to_celsius(f) ((f - 32.0) * 5.0 / 9.0)
+
+// #define celsius_to_fahr(c) (c * 9 / 5 + 32)
+#define celsius_to_fahr(c) (c * 9.0 / 5.0 + 32.0)
 
 static void app_task(void *param);
 static void standby_mode_task(app_data_t *data);
@@ -266,9 +272,50 @@ printf("init variables heater_On_Off_state_by_command %d app_data->lastHeaterSta
 }
 
 
+void testFunctionFoFToC(void);
+void testFunctionFoFToC(void){
+
+	int temp_f,temp_c,count_f,count_c; float lf_temp =0; float lf_temp_roundOff =0; int new_intTemp =0;
+	count_f = 30;
+	while(count_f <= 100)
+	{
+		temp_f = count_f;
+		// temp_c = fahr_to_celsius(temp_f);
+		// temp_c = fahr_to_celsius(temp_f);
+    	lf_temp = fahr_to_celsius(temp_f);
+    	lf_temp_roundOff = round(lf_temp);
+    	new_intTemp = lf_temp_roundOff;
+    	temp_c = new_intTemp;
+		// printf("For F to C temp_f: %d , temp_c: %d \n", temp_f, temp_c );
+    	printf("F to C temp_c: %d ,temp_f: %d, lf_temp %f,lf_temp_roundOff %f,new_intTemp %d \n", temp_c, temp_f,lf_temp, lf_temp_roundOff, new_intTemp );
+    	count_f++;
+	}
+    printf("\n");
+
+     lf_temp =0;  lf_temp_roundOff =0;  new_intTemp =0;
+    count_c = 0; count_f = 0; temp_c = 0;	temp_f = 0;
+	while(count_c <= 38 )
+	{
+    	temp_c = count_c;
+	    temp_f = celsius_to_fahr(temp_c);
+		// printf("For C to F  temp_c: %d , temp_f: %d \n", temp_c, temp_f );
+    //	lf_temp = (float)celsius_to_fahr(count_c);
+    	lf_temp = celsius_to_fahr(count_c);
+    	lf_temp_roundOff = round(lf_temp);
+    	new_intTemp = lf_temp_roundOff;
+    	printf("CtoF temp_c: %d ,temp_f: %d, lf_temp %f,lf_temp_roundOff %f,new_intTemp %d \n", temp_c, temp_f,lf_temp, lf_temp_roundOff, new_intTemp );
+		count_c++;
+	}
+	 printf("\n");
+}
+
+
+
 //#define Test_Storage
 static void print_fw_version(void)
 {
+	// testFunctionFoFToC();
+
     //  char fw_version[100];
     char fwVersion[8];
     sprintf(fwVersion,"%d.%d.%d",FW_VERSION_MAJOR,FW_VERSION_MINOR,FW_VERSION_REVISION);
@@ -305,6 +352,8 @@ void test_Display_wifi_strenth(void)
 //	 vTaskDelay(2000);
     }
 }
+
+
 
 
 esp_err_t app_init(void) {
@@ -983,7 +1032,18 @@ static void manual_temperature_mode_task(app_data_t *data) {
             if (display_target_temp) {
                 display_temperature(*temp, DISPLAY_COLOR);
             } else {
-                display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), *temp, DISPLAY_COLOR);
+
+            	// Original
+               // display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), *temp, DISPLAY_COLOR);
+
+				float lf_temp =0;         // Testing Line Begin_TEST
+				float lf_temp_roundOff =0;
+				int ambient_temp_f = 0;
+				lf_temp = celsius_to_fahr(*ambient_temp_c);
+				lf_temp_roundOff = round(lf_temp);
+				ambient_temp_f = lf_temp_roundOff;
+
+                display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, *temp, DISPLAY_COLOR);
             }
 
             // display connected status icon if connected
@@ -1711,7 +1771,18 @@ static void timer_increment_mode_task(app_data_t *data) {
             } else if (display_target_temp) {
                 display_temperature(*temp, DISPLAY_COLOR);
             } else {
-                display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
+
+            	// Original Line
+                // display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
+
+    			float lf_temp =0;         // Testing Line Begin_TEST
+    			float lf_temp_roundOff =0;
+    			int ambient_temp_f = 0;
+    			lf_temp = celsius_to_fahr(*ambient_temp_c);
+    			lf_temp_roundOff = round(lf_temp);
+    			ambient_temp_f = lf_temp_roundOff;
+
+                display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
             }
 
             // display connection status indication if connected
@@ -2059,8 +2130,26 @@ static void auto_mode_task(app_data_t *data) {
         if (update_display) {
             update_display = false;
             display_clear_screen();
-            display_auto_mode(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c),
+
+
+            // Original Line ..
+//            display_auto_mode(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c),
+//                data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? auto_temp_c : auto_temp_f, DISPLAY_COLOR);
+
+            // Testing Line
+            // TEST_FTC
+			float lf_temp =0;         // Testing Line Begin
+			float lf_temp_roundOff =0;
+			int ambient_temp_f = 0;
+			lf_temp = celsius_to_fahr(*ambient_temp_c);
+			lf_temp_roundOff = round(lf_temp);
+			ambient_temp_f = lf_temp_roundOff;
+			// *temp_f = new_intTemp; // End
+
+            display_auto_mode(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f,
                 data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? auto_temp_c : auto_temp_f, DISPLAY_COLOR);
+
+
             // display AUTO icon
             display_auto_icon(DISPLAY_COLOR);
             // display child lock icon if locked
@@ -2447,9 +2536,26 @@ static app_mode_t menu_calendar(app_data_t *data) {
 
                                 // update value of the other unit
                                 if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-                                    *temp_f = celsius_to_fahr(*temp_c);
+                                {    // *temp_f = celsius_to_fahr(*temp_c);  // Original _TEST_FTC
+									float lf_temp =0;         // Testing Line Begin
+									float lf_temp_roundOff =0;
+									int ambient_temp_f = 0;
+									lf_temp = celsius_to_fahr(*temp_c);
+									lf_temp_roundOff = round(lf_temp);
+									ambient_temp_f = lf_temp_roundOff;
+									*temp_f = ambient_temp_f; // End
+                                }
                                 else
-                                    *temp_c = fahr_to_celsius(*temp_f);
+                                {  //  *temp_c = fahr_to_celsius(*temp_f);  // Original
+
+									float lf_temp =0;         // Testing Line Begin
+									float lf_temp_roundOff =0;
+									int ambient_temp_c = 0;
+									lf_temp = fahr_to_celsius(*temp_f);
+									lf_temp_roundOff = round(lf_temp);
+									ambient_temp_c = lf_temp_roundOff;
+									*temp_c = ambient_temp_c; // End
+                                }
                             }
                             break;
                         case MENU_CALENDAR_SCHED_TIME_HOUR_CHANGE:
@@ -2505,9 +2611,27 @@ static app_mode_t menu_calendar(app_data_t *data) {
 
                                 // update value of the other unit
                                 if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-                                    *temp_f = celsius_to_fahr(*temp_c);
+                                {
+                                	// *temp_f = celsius_to_fahr(*temp_c);   // Original _TEST_FTC
+                             	    float lf_temp =0;         // Testing Line Begin
+                            		float lf_temp_roundOff =0;
+                            		int ambient_temp_f = 0;
+                            		lf_temp = celsius_to_fahr(*temp_c);
+                            		lf_temp_roundOff = round(lf_temp);
+                            		ambient_temp_f = lf_temp_roundOff;
+                            		*temp_f = ambient_temp_f; // End
+                                }
                                 else
-                                    *temp_c = fahr_to_celsius(*temp_f);
+                                {  // *temp_c = fahr_to_celsius(*temp_f);  // Original
+
+									float lf_temp =0;         // Testing Line Begin
+									float lf_temp_roundOff =0;
+									int ambient_temp_c = 0;
+									lf_temp = fahr_to_celsius(*temp_f);
+									lf_temp_roundOff = round(lf_temp);
+									ambient_temp_c = lf_temp_roundOff;
+									*temp_c = ambient_temp_c; // End
+                                }
                             }
                             break;
                         case MENU_CALENDAR_SCHED_TIME_HOUR_CHANGE:
@@ -4526,6 +4650,8 @@ static app_mode_t menu_update(app_data_t *data) {
     return next_mode;
 }
 
+
+
 static void temp_sensor_task(void *param) {
     app_data_t *data = (app_data_t *) param;
     bool *currentHeaterState = &(data->lastHeaterState);
@@ -4543,206 +4669,35 @@ static void temp_sensor_task(void *param) {
    // unsigned char *TimerIntervalThresholdOffset = &(data-> TimerIntervalThresholdOffset);
 	#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
     lprevAmbientTempForEventTrigger = *ambient_temp_c;
+
+    int count = 0, lint_temp = 0; float lf_temp =0 ;
+
     while(1) {
-        *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;
+
+    	//  *ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;  // Original Line commented on 24Dec2020
+
+// #define TEST_AMBINET_TEMP
+#ifdef TEST_AMBINET_TEMP
+        count++;
+    	*ambient_temp_c  =  count;
+    	lf_temp = (float)celsius_to_fahr(count);
+    	lf_temp =round(lf_temp);
+    	lint_temp = lf_temp;
+    	if(count > 38)
+    	{	count = 0;  vTaskDelay(10000); }
+
+    	printf("\n *ambient_temp_c %d lf_temp: %f lint_temp %d \n ",*ambient_temp_c, lf_temp,lint_temp);
+
+#else
+    	*ambient_temp_c = tempsensor_get_temperature() + *temp_offset_c;  // Original Line commented on 24Dec2020
+#endif
 
         if( *ambient_temp_c <=0) // New added for if Temperature is less that Zero, display should display Zero.added on 11Dec 2020.
         	*ambient_temp_c = 0;
 
-        printf("*ambient_temp_c %d ",*ambient_temp_c);
+        vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS); // Original
+       // vTaskDelay(20000);  // Testing
 
-       // *ambient_temp_c = 7;
-#ifdef MalfunctionTaskIncludedInTempTask
-        tempInFehrenniete = celsius_to_fahr(*ambient_temp_c);// Calcius converted to Fehranite..
-        if(lprevAmbientTempForEventTrigger != *ambient_temp_c)
-        	{lprevAmbientTempForEventTrigger = *ambient_temp_c; ambientTempChangeDataToAWS = 1; }
-       // tempInFehrenniete = 45;
-#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-   if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
-		  if(*ambient_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
-			  heater_off();
-			  heater_On_Off_state_by_command = 0 ;
-			  app_data->lastHeaterState = false;
-			  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-			  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-			  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
-			  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX);
-			  printf("\n In calsius maxTemperatureThresholdReachedWarning \n\n "); }
-
-		  if(en_anti_freeze == 1){
-			  printf("en_anti_freeze in calsius minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
-			  if(*ambient_temp_c  < ANTI_FREEZE_LIMIT_CELSIUS) {
-			  heater_on();
-			  heater_On_Off_state_by_command =1 ;
-			 app_data->lastHeaterState = true;
-			 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-			 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-			  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
-			  printf("minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
-			  printf("\n minTemperatureThresholdReachedWarning \n ");
-		  }	}// endof  if(en_anti_freeze == 1){
-
-		     if(*ambient_temp_c >= *target_temp_c - *temp_hysteresis_c)  // ambient temperature in fahraneit
-		     {		        hysterisFlag = 1;	 printf("\n hysterisFlag %d\n ", hysterisFlag);	     }
-		     if(hysterisFlag == 1)
-		       { hysterisFlag = 0;
-		    	 if( *ambient_temp_c < (*target_temp_c - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS))
-				 {
-		    		// printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
-		    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
-				 }
-		    	 if( *ambient_temp_c > (*target_temp_c + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_HYSTERSIS))
-				 {
-		    		 Hysteris_Thresh_Off_Set_OverWarning =1;
-		    		// printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
-				 }
-		       } // end of  if(hysterisFlag == 1)
-//	        }// end of else
-	         if( Prev_SetTemp != *target_temp_c )
-	        {
-	        	Prev_SetTemp = *target_temp_c;
-	        	 TempChange_ms = 0;
-	        	 time_OneMinuteOver = 0;
-	        	 time_count = 0; prevAmbientTemp_Calcius = *ambient_temp_c;
-	        }
-		  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-				if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
-					TempChange_ms = cur_ms;
-					time_OneMinuteOver = 1;
-				}
-			//printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
-			if(time_OneMinuteOver == 1)
-			{
-			  time_count++;
-			  time_OneMinuteOver = 0;
-			}
-//		//printf("time_count %d \n", time_count);
-//		//	unsigned char TimerIntervalThresholdOffset;
-			printf("app_data-> TimerIntervalThresholdOffset %d \n", app_data-> TimerIntervalThresholdOffset);
-		  	if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
-		    //if(time_count >= app_data-> TimerIntervalThresholdOffset){
-			 //  printf("2 minutes over \n ");
-			   time_OneMinuteOver = 0;
-			   time_count = 0;
-			 if( *ambient_temp_c < (prevAmbientTemp_Calcius - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR))
-				 {
-					printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
-					TimeInterval_Thresh_OffSet_UnderWarning = 1;
-				 }
-//				 if( *ambient_temp_c > (*target_temp_c + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_CALSIUS_FOR_PARTUCULAR_DUR))
-//				 {
-//					 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
-//					 TimeInterval_Thresh_OffSet_OverWarning = 1;
-//				 }
-			}
-     }
-   else{
-	   if(tempInFehrenniete  > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX)  {
-	      	 heater_off();
-	      	 heater_On_Off_state_by_command = 0 ;
-	  		 app_data->lastHeaterState = false;
-	  		 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-	  		// printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-	      	  maxTemperatureThresholdReachedWarning = 1;//Activate the Flag for Max Temperature Threshold Reached
-	      	//  printf("In Fahrenite maxTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX);
-	      	  printf("\n In Fahrenite maxTemperatureThresholdReachedWarning \n\n ");
-	        }
-
-	  // printf("en_anti_freeze : %d\n ",en_anti_freeze);
-	   if(en_anti_freeze == 1){
-	      // printf("en_anti_freeze logic Fahrenite minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN);
-	     //  printf("en_anti_freeze logic tempInFehrenniete %d\n ",tempInFehrenniete);
-		   if(tempInFehrenniete  < ANTI_FREEZE_LIMIT_FEHRANEITE)  {
-	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
-	          heater_on();
-	          heater_On_Off_state_by_command = 1 ; // As there is waring which will indicate that heater is in ON state.
-	  		  app_data->lastHeaterState = true;
-	  		  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-	  		//  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
-	      	  minTemperatureThresholdReachedWarning = 1; //Activate the Flag for Min Temperature Threshold Reached
-	      	 // printf("\n In Fahrenite minTemperatureThresholdReachedWarning \n ");
-	        }
-	      } // end of  if(en_anti_freeze ==1){
-
-	  // tempInFehrenniete = 36 ;
-	  // *target_temp_f = 40 ;
-	  // *temp_hysteresis_f = 5;
-	   // THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS =5;
-	     if(tempInFehrenniete >= *target_temp_f - *temp_hysteresis_f)  // ambient temperature in fahraneit
-	     {	        hysterisFlag = 1;	printf("\n hysterisFlag %d\n ", hysterisFlag);  }
-	     if(hysterisFlag == 1)
-	       {  hysterisFlag = 0;
-	        // tempInFehrenniete =30;
-	    	// if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))  // 36 < 40 -5 // Include heater ON state
-		   	 if( tempInFehrenniete < (*target_temp_f - THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))  // 36 < 40 -5 // Include heater ON state
-	    	 {
-	    		 printf("Alert message HysterisThreshOffSetUnderWarning\n "); //HysterisThreshOffSetUnderWarning
-	    		 Hysteris_Thresh_Off_Set_UnderWarning = 1;
-			 }
-	    	// tempInFehrenniete =60;
-//	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS))
-	    	 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_HYSTERSIS) && (*currentHeaterState == 1))
-	    	 {
-	    		 Hysteris_Thresh_Off_Set_OverWarning =1;
-	    		 printf("Alert message HysterisThreshOffSetOverWarning \n ");  //HysterisThreshOffSetOverWarning
-			 }
-	       } // end of  if(hysterisFlag == 1)
-
-       // printf("temp_offset_c in calsius=%d\r\n", *temp_offset_c);
-       //printf("ambient_temp in calsius=%d\r\n", *ambient_temp_c);
-       printf("ambient_temp in fehraneite =%d\r\n", tempInFehrenniete);
-       printf("Set Temp in fehraneite =%d\r\n", *target_temp_f);
-         if( Prev_SetTemp != *target_temp_f )
-        {      	Prev_SetTemp = *target_temp_f;
-        	 TempChange_ms = 0;
-        	 time_OneMinuteOver = 0;
-        	 time_count = 0; printf("\n set Temp changed.. \n");
-        	// prevAmbientTemp_Fahraneite = tempInFehrenniete;
-        }
-	  int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-			if ((cur_ms - TempChange_ms) >= 60000) {  // one minutes over
-				TempChange_ms = cur_ms;
-				time_OneMinuteOver = 1;			}
-		//printf("time_OneMinuteOver %d \n", time_OneMinuteOver);
-		if(time_OneMinuteOver == 1)
-		{
-		  time_count++;
-		  time_OneMinuteOver = 0;
-		}
-		//printf("time_count %d \n", time_count);
-#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation  // app_data-> TimerIntervalThresholdOffset
-		//printf("(data-> TimerIntervalThresholdOffset %d app_data-> TimerIntervalThresholdOffset  %d *TimerIntervalThresholdOffset %d \n", data-> TimerIntervalThresholdOffset,app_data-> TimerIntervalThresholdOffset , *TimerIntervalThresholdOffset);
-
-	     printf("app_data-> TimerIntervalThresholdOffset  %d TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset , TimerIntervalThresholdOffset);
-
-		// if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET){
-	   // if(time_count >= *TimerIntervalThresholdOffset){
-		if(time_count >= TimerIntervalThresholdOffset){
-		//if(time_count >= app_data-> TimerIntervalThresholdOffset){
-		//  printf("2 minutes over \n ");
-		   time_OneMinuteOver =0;
-		   time_count = 0;
-
-		  // *target_temp_f = 40;  // Only for Testing..
-		  //  tempInFehrenniete = 30;
-		 	          // 40                // 30                            // 10
-			if(((*target_temp_f - tempInFehrenniete) >= THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR)	&& (*currentHeaterState == 1))// target_temp_f- > replace with previouvs ambient temp.
-			{
-				 printf("Alert message TimeIntervalThresh_OffSet_UnderWarning \n ");  // TimeIntervalThresh_OffSet_UnderWarning
-				 TimeInterval_Thresh_OffSet_UnderWarning = 1;
-			 }
-//			 if( tempInFehrenniete > (*target_temp_f + THRESHOLD_TEMP_AFTER_SET_TEMP_OFFSET_FAHRENNITE_FOR_PARTUCULAR_DUR))
-//			 {
-//				 printf("Alert message TimeIntervalThresh_OffSet_OverWarning \n "); // TimeIntervalThresh_OffSet_OverWarning
-//				 TimeInterval_Thresh_OffSet_OverWarning = 1;
-//			 }
-		}
-   }// end of else
-#endif
-
-#endif// MALFUNCTION_SEPERATED
-
-        vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
     }// end of while
 } // end of static void temp_sensor_task(void *param)
 
@@ -4848,7 +4803,7 @@ static void night_light_task(void *param) {
                     {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
                         night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
                     	// night_light_set_br(99, 0, 0); //  night_light_set_br(0, 255, 0);
-                        printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
+                       // printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
                        // printf("Led ON in night light task function \n ");
                     }
                     if(rgb_led_state == 0)
@@ -4994,9 +4949,19 @@ int app_get_ambient_temp(void) {
 //    }
 	   int temperatureInFehrannite = 0;
 		if (app_data) {
-    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
-	    	 printf("From app_get_ambient_temp: %d temperatureInFehrannite %d\n", app_data->ambient_temperature_celsius, temperatureInFehrannite);
-	         return temperatureInFehrannite;	    }
+//		    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
+//	    	 printf("From app_get_ambient_temp: %d temperatureInFehrannite %d\n", app_data->ambient_temperature_celsius, temperatureInFehrannite);
+//	         return temperatureInFehrannite;	    }
+
+	    float lf_temp =0;
+		float lf_temp_roundOff =0;
+		int new_intTemp =0;
+		lf_temp = celsius_to_fahr(app_data->ambient_temperature_celsius);
+		lf_temp_roundOff = round(lf_temp);
+		new_intTemp = lf_temp_roundOff;
+        printf("From app_get_ambient_temp: %d temperatureInFehrannite %d\n", app_data->ambient_temperature_celsius, new_intTemp);
+
+	    return new_intTemp;}
     return 0x80000000;
 }
 
@@ -5008,7 +4973,20 @@ int app_set_target_temp(int temp) {
 //   temp_c = temp; printf("temp_c %d\n",temp_c);
 //   temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
    temp_f = temp; printf("temp_f %d\n",temp_f);
-   temp_c = fahr_to_celsius(temp_f); printf("temp_c %d\n",temp_c);
+
+   // original
+   // temp_c = fahr_to_celsius(temp_f); printf("temp_c %d\n",temp_c);
+
+   // testing
+   float lf_temp =0;
+   float lf_temp_roundOff =0;
+   int n_new_SetTemp =0;
+
+   lf_temp = fahr_to_celsius(temp_f);
+   lf_temp_roundOff = round(lf_temp);
+   n_new_SetTemp = lf_temp_roundOff;
+   temp_c = n_new_SetTemp;
+
   // temp_c = temp; printf("temp_c %d\n",temp_c);
   // temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
 

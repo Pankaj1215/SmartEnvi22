@@ -32,6 +32,7 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 #include <string.h>
+#include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
@@ -1612,7 +1613,7 @@ static void http_get_task(void *pvParameters)
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","msg","EveryThingIsFine"); // WorkingOne..
 
 // Testing begin ..
-#define Test_MALFUCTION_NOTIFICATION
+//#define Test_MALFUCTION_NOTIFICATION
 #ifdef Test_MALFUCTION_NOTIFICATION
         switch(count){
         case 0: device_health_status = DEVICE_HEALTH_OK;
@@ -2042,14 +2043,29 @@ void Temp_MalfunctionTask(void *param)
 	     //	L_AmbientTempInCalcius = fahr_to_celsius(ltempInFehrenniete);
 	     L_AmbientTempInCalcius =  *amb_temp_c;
 	  	// printf("ambient temp calcius Temp_malFunctionTask %d \n ", *amb_temp_c);
-         ltempInFehrenniete = celsius_to_fahr(*amb_temp_c);// Calcius converted to Fehranite..
-     	 printf("ambient_Temp_malFunctionTask L_AmbientTempInCalcius %d ltempInFehrenniete %d \n ", L_AmbientTempInCalcius, ltempInFehrenniete);
+
+	     // Original Line ..
+	   //  ltempInFehrenniete = celsius_to_fahr(*amb_temp_c);// Calcius converted to Fehranite..
+
+	    //Testing for FOR SYNCH..
+		float lf_temp =0;         // Testing Line Begin_TEST
+		float lf_temp_roundOff =0;
+		int ambient_temp_f = 0;
+		lf_temp = celsius_to_fahr(*amb_temp_c);
+		lf_temp_roundOff = round(lf_temp);
+		ambient_temp_f = lf_temp_roundOff;
+
+		ltempInFehrenniete = ambient_temp_f;// Calcius converted to Fehranite..
+
+
+     	// printf("ambient_Temp_malFunctionTask L_AmbientTempInCalcius %d ltempInFehrenniete %d \n ", L_AmbientTempInCalcius, ltempInFehrenniete);
         //  L_AmbientTempInCalcius =  *amb_temp_c; // Local variable for calcius
 
-// Commented for testing only ...
+// unCommented for testing only ...
 //            if(lprevAmbientTempForEventTrigger != *amb_temp_c)
 //        	{lprevAmbientTempForEventTrigger = *amb_temp_c; ambientTempChangeDataToAWS = 1; }
-#define three_deg_Temp_diff
+
+#define three_deg_Temp_diff  // working one Commented only for Testing ...24Dec2020
 #define hysteresis_OffSet_For_AmbientTempEventTrigger  3
 #ifdef three_deg_Temp_diff
 
@@ -3298,4 +3314,11 @@ tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ipInfo);
 //     printf("My NETMASK: " IPSTR "\n", IP2STR(&ip_info.netmask));
 }
 
+
+
+//void TestFTOCconversion(void)
+//{
+//
+//
+//}
 
