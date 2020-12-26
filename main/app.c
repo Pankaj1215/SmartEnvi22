@@ -314,7 +314,7 @@ void testFunctionFoFToC(void){
 //#define Test_Storage
 static void print_fw_version(void)
 {
-	// testFunctionFoFToC();
+	 testFunctionFoFToC();
 
     //  char fw_version[100];
     char fwVersion[8];
@@ -757,6 +757,10 @@ static void manual_temperature_mode_task(app_data_t *data) {
     time_t btn_power_press_ms = 0, btn_timer_press_ms = 0, btn_up_press_ms = 0, btn_down_press_ms = 0;
     int *temp = NULL, temp_max = 0, temp_min = 0;
     int *target_temp_c = &(data->manual_temperature_celsius), prev_target_temp_c = -1;
+
+   // New Line Added for Testing..
+    int *target_temp_f = &(data->manual_temperature_fahrenheit), prev_target_temp_f = -1;
+
     int *ambient_temp_c = &(data->ambient_temperature_celsius), prev_ambient_temp_c = -1;
     bool is_heater_on = false;
     bool is_target_temp_changed = false;
@@ -991,13 +995,13 @@ static void manual_temperature_mode_task(app_data_t *data) {
         if (is_target_temp_changed) {
             is_target_temp_changed = false;
 
-            printf("target temp=%d\r\n", *temp);
+            printf("\n new target temp=%d\r\n", *temp);
 
             // update the temperature of the other unit
             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
-                data->manual_temperature_fahrenheit = celsius_to_fahr(*temp);
+                data->manual_temperature_fahrenheit = celsius_to_fahr(*temp);  printf("data->manual_temperature_fahrenheit  %d \n",data->manual_temperature_fahrenheit );
             } else {
-                data->manual_temperature_celsius = fahr_to_celsius(*temp);
+                data->manual_temperature_celsius = fahr_to_celsius(*temp); printf("data->manual_temperature_celsius  %d \n",data->manual_temperature_celsius );
             }
 
             // display target temperature
@@ -1019,11 +1023,23 @@ static void manual_temperature_mode_task(app_data_t *data) {
             }
         }
 
-        // if target temp is remotely changed, update the display
-        if (*target_temp_c != prev_target_temp_c) {
-            prev_target_temp_c = *target_temp_c;
-            update_display = true;
-        }
+        // Original Lines..
+//        // if target temp is remotely changed, update the display
+//        if (*target_temp_c != prev_target_temp_c) {
+//            prev_target_temp_c = *target_temp_c;
+//            update_display = true;
+//        }
+
+        // Modified forTesting New Added for fahreneite change 26Dec2020
+			if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+			{if (*target_temp_c != prev_target_temp_c) {
+				prev_target_temp_c = *target_temp_c;
+				update_display = true;
+			}}
+			else{if (*target_temp_f != prev_target_temp_f) {
+				prev_target_temp_f = *target_temp_f;
+				update_display = true;
+			 } }//end of else
 
         if (update_display) {
             update_display = false;
@@ -1035,7 +1051,6 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
             	// Original
                // display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), *temp, DISPLAY_COLOR);
-
 				float lf_temp =0;         // Testing Line Begin_TEST
 				float lf_temp_roundOff =0;
 				int ambient_temp_f = 0;
@@ -1409,7 +1424,10 @@ static void timer_increment_mode_task(app_data_t *data) {
     int *timer_min = &(data->current_timer_setting_min), prev_timer_min = -1;
     time_t t0_ms = 0, t1_ms = 0;
     int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
+
     int prev_target_temp_c = -1;
+    int prev_target_temp_f = -1;   // New Added For Fahreneite.._26Dec2020
+
     int *ambient_temp_c = &(data->ambient_temperature_celsius), prev_ambient_temp_c = -1;
     bool is_heater_on = false;
     int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
@@ -1684,6 +1702,7 @@ static void timer_increment_mode_task(app_data_t *data) {
         }
 
         // update display if ambient temperature changed
+        // Original
         if (*ambient_temp_c != prev_ambient_temp_c) {
             prev_ambient_temp_c = *ambient_temp_c;
             update_display = true;
@@ -1751,14 +1770,30 @@ static void timer_increment_mode_task(app_data_t *data) {
                 }
             }
         }
-
+// Original
         // if target temp is remotely changed, update the display
-        if (*target_temp_c != prev_target_temp_c) {
-            prev_target_temp_c = *target_temp_c;
+//        if (*target_temp_c != prev_target_temp_c) {
+//            prev_target_temp_c = *target_temp_c;
+//            if (display_timer == false) {
+//                update_display = true;
+//            }
+//        }
+
+	// New Added for fahrentneite _26Dec2020
+		if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+		{if (*target_temp_c != prev_target_temp_c) {
+			prev_target_temp_c = *target_temp_c;
+			if (display_timer == false) {
+				update_display = true;
+			}
+		}}
+		else{if (*target_temp_f != prev_target_temp_f) {
+			prev_target_temp_f = *target_temp_f;
             if (display_timer == false) {
                 update_display = true;
             }
-        }
+		 } }//end of else
+
 
         // update display
         if (update_display) {
@@ -4649,7 +4684,6 @@ static app_mode_t menu_update(app_data_t *data) {
     // return new mode
     return next_mode;
 }
-
 
 
 static void temp_sensor_task(void *param) {
