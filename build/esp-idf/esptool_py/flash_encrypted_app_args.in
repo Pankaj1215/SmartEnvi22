@@ -1,0 +1,1 @@
+--encrypt 0x10000 $<TARGET_PROPERTY:__idf_build_target,EXECUTABLE_NAME>.bin

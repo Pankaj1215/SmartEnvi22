@@ -728,6 +728,10 @@ bool get_heater_under_repair_status(void);
 
 int app_get_light_LDR_parm(void);
 
+int valueRoundOff(int pvalue, int ptemp_Conversion_unit);
+
+#define CONVERT_C_TO_F  0
+#define CONVERT_F_TO_C  1
 #endif /* MAIN_APP_H */
 
 

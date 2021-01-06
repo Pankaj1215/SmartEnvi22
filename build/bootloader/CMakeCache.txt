@@ -247,6 +247,9 @@ PYTHON_DEPS_CHECKED:UNINITIALIZED=1
 //No help, variable specified on the command line.
 SDKCONFIG:UNINITIALIZED=C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22/sdkconfig
 
+//No help, variable specified on the command line.
+SECURE_BOOT_VERIFICATION_KEY:UNINITIALIZED=C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22/public.pem
+
 //Dependencies for the target
 __idf_bootloader_support_LIB_DEPENDS:STATIC=general;__idf_log;general;__idf_xtensa;general;__idf_soc;
 

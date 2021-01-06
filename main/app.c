@@ -25,7 +25,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include <math.h>
 
 #include "esp_log.h"
@@ -273,6 +272,8 @@ printf("init variables heater_On_Off_state_by_command %d app_data->lastHeaterSta
 
 
 void testFunctionFoFToC(void);
+#include "esp_flash_encrypt.h"
+
 void testFunctionFoFToC(void){
 
 	int temp_f,temp_c,count_f,count_c; float lf_temp =0; float lf_temp_roundOff =0; int new_intTemp =0;
@@ -286,6 +287,9 @@ void testFunctionFoFToC(void){
     	lf_temp_roundOff = round(lf_temp);
     	new_intTemp = lf_temp_roundOff;
     	temp_c = new_intTemp;
+
+    	temp_c  = valueRoundOff(temp_f, CONVERT_F_TO_C);
+
 		// printf("For F to C temp_f: %d , temp_c: %d \n", temp_f, temp_c );
     	printf("F to C temp_c: %d ,temp_f: %d, lf_temp %f,lf_temp_roundOff %f,new_intTemp %d \n", temp_c, temp_f,lf_temp, lf_temp_roundOff, new_intTemp );
     	count_f++;
@@ -303,10 +307,21 @@ void testFunctionFoFToC(void){
     	lf_temp = celsius_to_fahr(count_c);
     	lf_temp_roundOff = round(lf_temp);
     	new_intTemp = lf_temp_roundOff;
+
+    	new_intTemp  = valueRoundOff(count_c, CONVERT_C_TO_F);
+
     	printf("CtoF temp_c: %d ,temp_f: %d, lf_temp %f,lf_temp_roundOff %f,new_intTemp %d \n", temp_c, temp_f,lf_temp, lf_temp_roundOff, new_intTemp );
 		count_c++;
 	}
 	 printf("\n");
+//
+//	   if(esp_flash_encryption_enabled()){
+//	      printf("Flash Encryption is Enabled ----->>>>>>>>\n");
+//	   }
+//	   else{
+//	      printf("Flash Encryption is NOT Enabled ------<<<<<<<<<\n");
+//	   }
+
 }
 
 
@@ -314,7 +329,7 @@ void testFunctionFoFToC(void){
 //#define Test_Storage
 static void print_fw_version(void)
 {
-	 testFunctionFoFToC();
+	// testFunctionFoFToC();
 
     //  char fw_version[100];
     char fwVersion[8];
@@ -849,7 +864,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
             if (*temp_unit == TEMP_UNIT_CELSIUS)
                 hysteresis_c = *temp_hysteresis_c;
             else
-                hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);
+            { // hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);  // original
+               hysteresis_c  = valueRoundOff(*temp_hysteresis_f, CONVERT_F_TO_C);
+            }
 
             if (*ambient_temp_c >= (data->manual_temperature_celsius + hysteresis_c)) {
                 if (is_heater_on) {
@@ -999,9 +1016,14 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
             // update the temperature of the other unit
             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
-                data->manual_temperature_fahrenheit = celsius_to_fahr(*temp);  printf("data->manual_temperature_fahrenheit  %d \n",data->manual_temperature_fahrenheit );
+               // data->manual_temperature_fahrenheit = celsius_to_fahr(*temp);  // Orig
+                data->manual_temperature_fahrenheit  = valueRoundOff(*temp, CONVERT_C_TO_F);
+                printf("data->manual_temperature_fahrenheit  %d \n",data->manual_temperature_fahrenheit );
+
             } else {
-                data->manual_temperature_celsius = fahr_to_celsius(*temp); printf("data->manual_temperature_celsius  %d \n",data->manual_temperature_celsius );
+               // data->manual_temperature_celsius = fahr_to_celsius(*temp);  // Orig
+                data->manual_temperature_celsius  = valueRoundOff(*temp, CONVERT_F_TO_C);
+                printf("data->manual_temperature_celsius  %d \n",data->manual_temperature_celsius );
             }
 
             // display target temperature
@@ -1051,12 +1073,14 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
             	// Original
                // display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), *temp, DISPLAY_COLOR);
-				float lf_temp =0;         // Testing Line Begin_TEST
-				float lf_temp_roundOff =0;
-				int ambient_temp_f = 0;
-				lf_temp = celsius_to_fahr(*ambient_temp_c);
-				lf_temp_roundOff = round(lf_temp);
-				ambient_temp_f = lf_temp_roundOff;
+//				float lf_temp =0;         // Testing Line Begin_TEST
+//				float lf_temp_roundOff =0;
+//				int ambient_temp_f = 0;
+//				lf_temp = celsius_to_fahr(*ambient_temp_c);
+//				lf_temp_roundOff = round(lf_temp);
+//				ambient_temp_f = lf_temp_roundOff;
+            	int ambient_temp_f = 0;
+				ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
 
                 display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, *temp, DISPLAY_COLOR);
             }
@@ -1541,7 +1565,18 @@ static void timer_increment_mode_task(app_data_t *data) {
 					if (*temp_unit == TEMP_UNIT_CELSIUS)
 						hysteresis_c = *temp_hysteresis_c;
 					else
-						hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);
+					{	// hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);  // Original Line
+
+//						float lf_temp =0;         // Testing Line Begin_TEST
+//						float lf_temp_roundOff =0;
+//						int l_hysteresis_c = 0;
+//						lf_temp = fahr_to_celsius(*temp_hysteresis_f);
+//						lf_temp_roundOff = round(lf_temp);
+//						l_hysteresis_c = lf_temp_roundOff;
+//						hysteresis_c = l_hysteresis_c;  // END
+
+						hysteresis_c  = valueRoundOff(*temp_hysteresis_f, CONVERT_F_TO_C);
+					}
 
 					if (*ambient_temp_c >= (*target_temp_c + hysteresis_c)) {
 						if (is_heater_on) {
@@ -1745,12 +1780,40 @@ static void timer_increment_mode_task(app_data_t *data) {
 
             printf("target temp=%d\r\n", *temp);
 
-            // update the temperature of the other unit
+            // update the temperature of the other unit  // Original Lines
+//            if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
+//                data->manual_temperature_fahrenheit = celsius_to_fahr(*temp);
+//            } else {
+//                data->manual_temperature_celsius = fahr_to_celsius(*temp);
+//            }
+
+            // New Added on 28Dec2020 for Sych purpose // Begin
             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
-                data->manual_temperature_fahrenheit = celsius_to_fahr(*temp);
+
+//    			float lf_temp =0;         // Testing Line Begin_TEST
+//    			float lf_temp_roundOff =0;
+//    			int l_n_temp_f = 0;
+//    			lf_temp = celsius_to_fahr(*temp);
+//    			lf_temp_roundOff = round(lf_temp);
+//    			l_n_temp_f = lf_temp_roundOff;
+//                data->manual_temperature_fahrenheit = l_n_temp_f;
+
+                data->manual_temperature_fahrenheit   = valueRoundOff(*temp, CONVERT_C_TO_F);
+
             } else {
-                data->manual_temperature_celsius = fahr_to_celsius(*temp);
-            }
+
+//    			float lf_temp =0;         // Testing Line Begin_TEST
+//    			float lf_temp_roundOff =0;
+//    			int l_n_temp_c = 0;
+//    			lf_temp = fahr_to_celsius(*temp);
+//    			lf_temp_roundOff = round(lf_temp);
+//    			l_n_temp_c = lf_temp_roundOff;
+//                data->manual_temperature_celsius = l_n_temp_c;
+
+                data->manual_temperature_celsius   = valueRoundOff(*temp, CONVERT_F_TO_C);
+
+            }// END
+
 
             // display target temperature
             t_target_temp_changed_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -1810,12 +1873,15 @@ static void timer_increment_mode_task(app_data_t *data) {
             	// Original Line
                 // display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
 
-    			float lf_temp =0;         // Testing Line Begin_TEST
-    			float lf_temp_roundOff =0;
+//    			float lf_temp =0;         // Testing Line Begin_TEST
+//    			float lf_temp_roundOff =0;
+//    			int ambient_temp_f = 0;
+//    			lf_temp = celsius_to_fahr(*ambient_temp_c);
+//    			lf_temp_roundOff = round(lf_temp);
+//    			ambient_temp_f = lf_temp_roundOff;
+
     			int ambient_temp_f = 0;
-    			lf_temp = celsius_to_fahr(*ambient_temp_c);
-    			lf_temp_roundOff = round(lf_temp);
-    			ambient_temp_f = lf_temp_roundOff;
+    			ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
 
                 display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
             }
@@ -2042,7 +2108,19 @@ static void auto_mode_task(app_data_t *data) {
             if (*temp_unit == TEMP_UNIT_CELSIUS)
                 hysteresis_c = *temp_hysteresis_c;
             else
-                hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);
+            {
+            	// hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);  // Original Line
+//    			float lf_temp =0;         // Testing Line Begin_TEST
+//    			float lf_temp_roundOff =0;
+//    			int l_n_hysteresis_c = 0;
+//    			lf_temp = fahr_to_celsius(*temp_hysteresis_f);
+//    			lf_temp_roundOff = round(lf_temp);
+//    			l_n_hysteresis_c = lf_temp_roundOff;
+//    			hysteresis_c = l_n_hysteresis_c ;  // END
+
+    			hysteresis_c  = valueRoundOff(*temp_hysteresis_f, CONVERT_F_TO_C);
+
+            }
 
             if (*ambient_temp_c >= (auto_temp_c + hysteresis_c)) {
                 if (is_heater_on) {
@@ -2173,13 +2251,16 @@ static void auto_mode_task(app_data_t *data) {
 
             // Testing Line
             // TEST_FTC
-			float lf_temp =0;         // Testing Line Begin
-			float lf_temp_roundOff =0;
+//			float lf_temp =0;         // Testing Line Begin
+//			float lf_temp_roundOff =0;
+//			int ambient_temp_f = 0;
+//			lf_temp = celsius_to_fahr(*ambient_temp_c);
+//			lf_temp_roundOff = round(lf_temp);
+//			ambient_temp_f = lf_temp_roundOff;
+//			// *temp_f = new_intTemp; // End
+
 			int ambient_temp_f = 0;
-			lf_temp = celsius_to_fahr(*ambient_temp_c);
-			lf_temp_roundOff = round(lf_temp);
-			ambient_temp_f = lf_temp_roundOff;
-			// *temp_f = new_intTemp; // End
+			ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
 
             display_auto_mode(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f,
                 data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? auto_temp_c : auto_temp_f, DISPLAY_COLOR);
@@ -2572,24 +2653,30 @@ static app_mode_t menu_calendar(app_data_t *data) {
                                 // update value of the other unit
                                 if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
                                 {    // *temp_f = celsius_to_fahr(*temp_c);  // Original _TEST_FTC
-									float lf_temp =0;         // Testing Line Begin
-									float lf_temp_roundOff =0;
-									int ambient_temp_f = 0;
-									lf_temp = celsius_to_fahr(*temp_c);
-									lf_temp_roundOff = round(lf_temp);
-									ambient_temp_f = lf_temp_roundOff;
-									*temp_f = ambient_temp_f; // End
+//									float lf_temp =0;         // Testing Line Begin
+//									float lf_temp_roundOff =0;
+//									int ambient_temp_f = 0;
+//									lf_temp = celsius_to_fahr(*temp_c);
+//									lf_temp_roundOff = round(lf_temp);
+//									ambient_temp_f = lf_temp_roundOff;
+//									*temp_f = ambient_temp_f; // End
+
+									*temp_f  = valueRoundOff(*temp_c, CONVERT_C_TO_F);
+
                                 }
                                 else
                                 {  //  *temp_c = fahr_to_celsius(*temp_f);  // Original
 
-									float lf_temp =0;         // Testing Line Begin
-									float lf_temp_roundOff =0;
-									int ambient_temp_c = 0;
-									lf_temp = fahr_to_celsius(*temp_f);
-									lf_temp_roundOff = round(lf_temp);
-									ambient_temp_c = lf_temp_roundOff;
-									*temp_c = ambient_temp_c; // End
+//									float lf_temp =0;         // Testing Line Begin
+//									float lf_temp_roundOff =0;
+//									int ambient_temp_c = 0;
+//									lf_temp = fahr_to_celsius(*temp_f);
+//									lf_temp_roundOff = round(lf_temp);
+//									ambient_temp_c = lf_temp_roundOff;
+//									*temp_c = ambient_temp_c; // End
+
+									*temp_c  = valueRoundOff(*temp_f, CONVERT_F_TO_C);
+
                                 }
                             }
                             break;
@@ -2648,24 +2735,30 @@ static app_mode_t menu_calendar(app_data_t *data) {
                                 if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
                                 {
                                 	// *temp_f = celsius_to_fahr(*temp_c);   // Original _TEST_FTC
-                             	    float lf_temp =0;         // Testing Line Begin
-                            		float lf_temp_roundOff =0;
-                            		int ambient_temp_f = 0;
-                            		lf_temp = celsius_to_fahr(*temp_c);
-                            		lf_temp_roundOff = round(lf_temp);
-                            		ambient_temp_f = lf_temp_roundOff;
-                            		*temp_f = ambient_temp_f; // End
+//                             	    float lf_temp =0;         // Testing Line Begin
+//                            		float lf_temp_roundOff =0;
+//                            		int ambient_temp_f = 0;
+//                            		lf_temp = celsius_to_fahr(*temp_c);
+//                            		lf_temp_roundOff = round(lf_temp);
+//                            		ambient_temp_f = lf_temp_roundOff;
+//                            		*temp_f = ambient_temp_f; // End
+
+                            		*temp_f  = valueRoundOff(*temp_c, CONVERT_C_TO_F);
+
                                 }
                                 else
                                 {  // *temp_c = fahr_to_celsius(*temp_f);  // Original
 
-									float lf_temp =0;         // Testing Line Begin
-									float lf_temp_roundOff =0;
-									int ambient_temp_c = 0;
-									lf_temp = fahr_to_celsius(*temp_f);
-									lf_temp_roundOff = round(lf_temp);
-									ambient_temp_c = lf_temp_roundOff;
-									*temp_c = ambient_temp_c; // End
+//									float lf_temp =0;         // Testing Line Begin
+//									float lf_temp_roundOff =0;
+//									int ambient_temp_c = 0;
+//									lf_temp = fahr_to_celsius(*temp_f);
+//									lf_temp_roundOff = round(lf_temp);
+//									ambient_temp_c = lf_temp_roundOff;
+//									*temp_c = ambient_temp_c; // End
+
+									*temp_c  = valueRoundOff(*temp_f, CONVERT_F_TO_C);
+
                                 }
                             }
                             break;
@@ -3254,6 +3347,24 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
     // return new mode
     return next_mode;
 }
+
+
+int valueRoundOff(int pvalue, int ptemp_Conversion_unit)
+{
+	float lf_temp =0;         // Testing Line Begin_TEST
+	float lf_temp_roundOff =0;
+	int lnTemp = 0;
+
+	if (ptemp_Conversion_unit == CONVERT_C_TO_F)
+	   lf_temp = celsius_to_fahr(pvalue);
+	else
+	   lf_temp = fahr_to_celsius(pvalue);
+
+	lf_temp_roundOff = round(lf_temp);
+	lnTemp = lf_temp_roundOff;
+	return lnTemp;
+}
+
 
 static app_mode_t menu_communications(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -4714,9 +4825,12 @@ static void temp_sensor_task(void *param) {
 #ifdef TEST_AMBINET_TEMP
         count++;
     	*ambient_temp_c  =  count;
-    	lf_temp = (float)celsius_to_fahr(count);
-    	lf_temp =round(lf_temp);
-    	lint_temp = lf_temp;
+//    	lf_temp = (float)celsius_to_fahr(count);
+//    	lf_temp =round(lf_temp);
+//    	lint_temp = lf_temp;
+
+    	lint_temp = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
+
     	if(count > 38)
     	{	count = 0;  vTaskDelay(10000); }
 
@@ -4730,7 +4844,7 @@ static void temp_sensor_task(void *param) {
         	*ambient_temp_c = 0;
 
         vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS); // Original
-       // vTaskDelay(20000);  // Testing
+      //  vTaskDelay(20000);  // Testing
 
     }// end of while
 } // end of static void temp_sensor_task(void *param)
@@ -4855,15 +4969,37 @@ static void night_light_task(void *param) {
                 }
             }
             prev_nlight_auto_en = true;
-        } else {
+        }// end of if (*nlight_auto_en) {
+        else {
+#define MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
+#ifdef MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
+
+            float r_br_NL_disable = (GET_LED_R_VAL(*nlight_cfg)/2.6) / 100;  // Exsiting logic
+            float g_br_NL_disable = (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
+            float b_br_NL_disable = (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
+
+            if(rgb_led_state == 1)
+			   {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
+				   night_light_set_br((int)r_br_NL_disable, (int)g_br_NL_disable, (int)b_br_NL_disable);  // Original Line..
+
+			   }
+			   if(rgb_led_state == 0)
+			   {     night_light_off();
+				   // printf("Led OFF in night light task function \n ");
+			   }
+
+              prev_nlight_auto_en = false;
+        	// printf("Night Light mode is disable \n");
+#else
             if (prev_nlight_auto_en) {
                 night_light_off();
                 printf("night light off \n");
             }
             prev_nlight_auto_en = false;
-        }
+#endif
+        }// end of else..
         vTaskDelay(1 / portTICK_RATE_MS);
-    }
+    }//end of while(1)
 }
 
 #if 1
@@ -4987,12 +5123,15 @@ int app_get_ambient_temp(void) {
 //	    	 printf("From app_get_ambient_temp: %d temperatureInFehrannite %d\n", app_data->ambient_temperature_celsius, temperatureInFehrannite);
 //	         return temperatureInFehrannite;	    }
 
-	    float lf_temp =0;
-		float lf_temp_roundOff =0;
+//	    float lf_temp =0;
+//		float lf_temp_roundOff =0;
+//		int new_intTemp =0;
+//		lf_temp = celsius_to_fahr(app_data->ambient_temperature_celsius);
+//		lf_temp_roundOff = round(lf_temp);
+//		new_intTemp = lf_temp_roundOff;
 		int new_intTemp =0;
-		lf_temp = celsius_to_fahr(app_data->ambient_temperature_celsius);
-		lf_temp_roundOff = round(lf_temp);
-		new_intTemp = lf_temp_roundOff;
+		new_intTemp = valueRoundOff(app_data->ambient_temperature_celsius, CONVERT_C_TO_F );
+
         printf("From app_get_ambient_temp: %d temperatureInFehrannite %d\n", app_data->ambient_temperature_celsius, new_intTemp);
 
 	    return new_intTemp;}
@@ -5007,19 +5146,20 @@ int app_set_target_temp(int temp) {
 //   temp_c = temp; printf("temp_c %d\n",temp_c);
 //   temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
    temp_f = temp; printf("temp_f %d\n",temp_f);
-
    // original
    // temp_c = fahr_to_celsius(temp_f); printf("temp_c %d\n",temp_c);
-
    // testing
-   float lf_temp =0;
-   float lf_temp_roundOff =0;
-   int n_new_SetTemp =0;
 
-   lf_temp = fahr_to_celsius(temp_f);
-   lf_temp_roundOff = round(lf_temp);
-   n_new_SetTemp = lf_temp_roundOff;
-   temp_c = n_new_SetTemp;
+//   float lf_temp =0;
+//   float lf_temp_roundOff =0;
+//   int n_new_SetTemp =0;
+//
+//   lf_temp = fahr_to_celsius(temp_f);
+//   lf_temp_roundOff = round(lf_temp);
+//   n_new_SetTemp = lf_temp_roundOff;
+//   temp_c = n_new_SetTemp;
+
+   temp_c = valueRoundOff(temp_f , CONVERT_F_TO_C );
 
   // temp_c = temp; printf("temp_c %d\n",temp_c);
   // temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
