@@ -326,17 +326,31 @@ esp_err_t display_standby_message(int color) {
 
     // Press
 //     ret |= sh1106_set_xy(sh1106, (total_width < OLED_WIDTH) ? (OLED_WIDTH - total_width) / 2 : 0, (OLED_HEIGHT - font[FONT_HEIGHT_POS]) / 2);   // Original Line ..
-    ret |= sh1106_set_xy(sh1106, 0, 0);   // Original Line ..
+   // ret |= sh1106_set_xy(sh1106, 0, 0);   // Original Line ..
+
+
+    ret |= sh1106_set_xy(sh1106, 20, 0);   // Original Line ..
+
 
      ret |= sh1106_draw_string(sh1106, "Press", color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK); // Original LIne ..
 
     // <power_icon>
    // ret |= sh1106_draw_image(sh1106, (OLED_WIDTH - total_width) / 2 + str_width1 + 4, (OLED_HEIGHT - display_icon_power->height) / 2, display_icon_power->width, display_icon_power->height, display_icon_power->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
-    ret |= sh1106_draw_image(sh1106, (OLED_WIDTH - 120) / 2 + str_width1 + 4, (OLED_HEIGHT - 60) / 2, display_icon_power->width, display_icon_power->height, display_icon_power->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+     // working one..in left side
+    // ret |= sh1106_draw_image(sh1106, (OLED_WIDTH - 120) / 2 + str_width1 + 4, (OLED_HEIGHT - 60) / 2, display_icon_power->width, display_icon_power->height, display_icon_power->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+// testing in center
+     ret |= sh1106_draw_image(sh1106, (OLED_WIDTH - 80) / 2 + str_width1 + 4, (OLED_HEIGHT - 60) / 2, display_icon_power->width, display_icon_power->height, display_icon_power->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+
     // Button
    // ret |= sh1106_set_xy(sh1106, (OLED_WIDTH - total_width) / 2 + str_width1 + display_icon_power->width + 8, (OLED_HEIGHT - font[FONT_HEIGHT_POS]) / 2);
 
-    ret |= sh1106_set_xy(sh1106, 0, 30);
+//    ret |= sh1106_set_xy(sh1106, 0, 30);
+
+     ret |= sh1106_set_xy(sh1106, 20, 30);
+
 
 #ifdef Change_in_standBy_mode
     ret |= sh1106_draw_string(sh1106, "to power on", color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);

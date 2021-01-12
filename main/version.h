@@ -28,7 +28,7 @@
 
 #define FW_VERSION_MAJOR               (1)
 #define FW_VERSION_MINOR        (7)//  (6)
-#define FW_VERSION_REVISION (6)// (5)//  (4)// (3)// (9)// (8)// (7)// (6) //  (5)// (4)//(3)// (2)// (0)  // old one was 0, 1 is only for testing ota
+#define FW_VERSION_REVISION (8)// (7)//(6)// (5)//  (4)// (3)// (9)// (8)// (7)// (6) //  (5)// (4)//(3)// (2)// (0)  // old one was 0, 1 is only for testing ota
 
 
 /*!
