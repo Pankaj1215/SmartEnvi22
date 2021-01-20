@@ -239,6 +239,11 @@ const int timezone_offset_list_min[] = {
 };
 #define TIMEZONE_OFFSET_LIST_SIZE (sizeof(timezone_offset_list_min)/sizeof(int))
 
+#define TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
+#ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
+    unsigned char menuModeKeypressedFlag =0;
+#endif
+
 void init_Variables(void);
 
 void init_Variables(void){
@@ -653,6 +658,11 @@ static void standby_mode_task(app_data_t *data) {
            - long press DOWN button to enter Menu mode
            - long press UP and TIMER buttons to enter Temperature sensor offset set mode
         */
+
+#ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
+     menuModeKeypressedFlag = 0;
+#endif
+
      // printf(" before out of stand by mode by Heater ON commmand \n");
      if(heater_On_Off_state_by_command_ExistFromStandByMode ==1  || heater_On_Off_state_by_command == 1 ){ // New Added for Coming out of stand by mode  //
     	 *mode = APP_MODE_MANUAL_TEMPERATURE; printf(" Out of stand by mode by Heater ON commmand \n"); heater_On_Off_state_by_command =0; heater_On_Off_state_by_command_ExistFromStandByMode =0;}
@@ -830,6 +840,10 @@ static void manual_temperature_mode_task(app_data_t *data) {
        // Added for testing ctof
     	// data->settings.temperature_unit =1;
     	// data->settings.temperature_unit =0;
+
+#ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
+     menuModeKeypressedFlag =0;
+#endif
 
     	if(prevTempUnit != data->settings.temperature_unit){
     	   prevTempUnit = data->settings.temperature_unit ;update_display = true;  }
@@ -2286,6 +2300,8 @@ static void auto_mode_task(app_data_t *data) {
 
 
 
+
+
 static void menu_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = -1;
@@ -2297,9 +2313,15 @@ static void menu_mode_task(app_data_t *data) {
     bool screen_off = false;
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
+#ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
+     menuModeKeypressedFlag = 1;
+#endif
+
     // display menu navigation screen
     display_clear_screen();
     display_menu_inst(DISPLAY_COLOR);
+
+
     // display for MENU_NAVIGATION_SCREEN_DISPLAY_DURATION_MS milliseconds
     vTaskDelay(MENU_NAVIGATION_SCREEN_DISPLAY_DURATION_MS / portTICK_RATE_MS);
 
@@ -2310,6 +2332,8 @@ static void menu_mode_task(app_data_t *data) {
     menu = MENU_CALENDAR;
 
     while(*mode == APP_MODE_MENU) {
+
+
         /* button
            - single press BACK button to go back to previous screen if not on the first level
            - single press BACK button to go back to previous mode if on the first level
@@ -4823,7 +4847,8 @@ static void temp_sensor_task(void *param) {
 
 // #define TEST_AMBINET_TEMP
 #ifdef TEST_AMBINET_TEMP
-        count++;
+         count++;
+         count = 2;
     	*ambient_temp_c  =  count;
 //    	lf_temp = (float)celsius_to_fahr(count);
 //    	lf_temp =round(lf_temp);
@@ -4951,12 +4976,12 @@ static void night_light_task(void *param) {
                     {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
                         night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
                     	// night_light_set_br(99, 0, 0); //  night_light_set_br(0, 255, 0);
-                       // printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
+                        printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
                        // printf("Led ON in night light task function \n ");
                     }
                     if(rgb_led_state == 0)
                     {     night_light_off();
-                        // printf("Led OFF in night light task function \n ");
+                         printf("Led OFF in night light enable \n ");
                     }
 
                    // int temp = 0;
@@ -4974,22 +4999,23 @@ static void night_light_task(void *param) {
 #define MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
 #ifdef MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
 
-            float r_br_NL_disable = (GET_LED_R_VAL(*nlight_cfg)/2.6) / 100;  // Exsiting logic
-            float g_br_NL_disable = (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
-            float b_br_NL_disable = (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
+            float r_br_NL_disable = 100 *(GET_LED_R_VAL(*nlight_cfg)/2.6) / 100;  // Exsiting logic
+            float g_br_NL_disable = 100 * (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
+            float b_br_NL_disable = 100 * (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
 
             if(rgb_led_state == 1)
 			   {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
 				   night_light_set_br((int)r_br_NL_disable, (int)g_br_NL_disable, (int)b_br_NL_disable);  // Original Line..
-
+		          //  printf("\n night light disable %d %d  %d %d %d %d\r", *ambient_light, *nlight_auto_en,*nlight_cfg, (int)r_br_NL_disable,(int) g_br_NL_disable, (int)b_br_NL_disable);
 			   }
-			   if(rgb_led_state == 0)
+//            else(rgb_led_state == 0)
+             else
 			   {     night_light_off();
-				   // printf("Led OFF in night light task function \n ");
+				   //  printf("Led OFF in night light disable \n ");
 			   }
 
               prev_nlight_auto_en = false;
-        	// printf("Night Light mode is disable \n");
+        	 // printf("Night Light mode is disable \n");
 #else
             if (prev_nlight_auto_en) {
                 night_light_off();
@@ -5376,8 +5402,22 @@ void app_set_heater_state(int heater_state)
 
     if(heater_On_Off_state_by_command_ExistFromStandByMode == 0){ // New Added for Coming out of stand by mode
     	app_data->mode  = APP_MODE_STANDBY;   } // printf(" Come to stand by mode by Heater OFF commmand \n");
+
+    // Original Lines
+//    if(heater_On_Off_state_by_command_ExistFromStandByMode == 1){ // New Added for Coming out of stand by mode
+//    	app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; }  // printf(" Come to stand by mode by Heater OFF commmand \n");
+
+// Testing Lines
     if(heater_On_Off_state_by_command_ExistFromStandByMode == 1){ // New Added for Coming out of stand by mode
-    	app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; }  // printf(" Come to stand by mode by Heater OFF commmand \n");
+
+#ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
+    if( menuModeKeypressedFlag ==0)
+    	{app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;}
+#else
+     app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;
+#endif
+
+    }  // printf(" Come to stand by mode by Heater OFF commmand \n");
 
 	  app_data->lastHeaterState = heater_state;
 //	  	if(app_data->lastHeaterState == 1)
