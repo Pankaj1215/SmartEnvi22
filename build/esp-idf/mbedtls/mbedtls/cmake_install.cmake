@@ -34,8 +34,8 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22/build/esp-idf/mbedtls/mbedtls/library/cmake_install.cmake")
-  include("C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22/build/esp-idf/mbedtls/mbedtls/include/cmake_install.cmake")
+  include("C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/esp-idf/mbedtls/mbedtls/library/cmake_install.cmake")
+  include("C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/esp-idf/mbedtls/mbedtls/include/cmake_install.cmake")
 
 endif()
 

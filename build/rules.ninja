@@ -1295,7 +1295,7 @@ rule CXX_STATIC_LIBRARY_LINKER____idf_protocol_examples_common
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = C:\ESP_IDF\.espressif\tools\cmake\3.13.4\bin\cmake.exe -SC:\Users\mahesh_tripathi\eclipse-workspace\SmartEnvi22 -BC:\Users\mahesh_tripathi\eclipse-workspace\SmartEnvi22\build
+  command = C:\ESP_IDF\.espressif\tools\cmake\3.13.4\bin\cmake.exe -SC:\Users\mahesh_tripathi\eclipse-workspace\SmartEnvi22New -BC:\Users\mahesh_tripathi\eclipse-workspace\SmartEnvi22New\build
   description = Re-running CMake...
   generator = 1
 

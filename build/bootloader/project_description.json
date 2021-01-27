@@ -1,8 +1,8 @@
 {
     "project_name":       "bootloader",
     "project_path":       "C:/esp-idf_v4.0.1/components/bootloader/subproject",
-    "build_dir":          "C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22/build/bootloader",
-    "config_file":        "C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22/sdkconfig",
+    "build_dir":          "C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/bootloader",
+    "config_file":        "C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/sdkconfig",
     "config_defaults":    "",
     "app_elf":            "bootloader.elf",
     "app_bin":            "bootloader.bin",

@@ -139,6 +139,8 @@ int esp32_wps_disable(void);
  */
 int esp32_wifi_client_enable(char* ssid, char* pw);
 
+int esp32_wifi_client_enable_Testing_menu(char* ssid, char* pw);  // Added for Testing only
+
 /*!
  * \fn int esp32_wifi_ap_enable(char* ssid_ap, char *pw)
  * \brief set wifi to ap mode

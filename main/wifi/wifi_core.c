@@ -71,7 +71,7 @@ unsigned char daylightSaving;
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
 
-#define OFF_LINE_CODE_ADDITION  // Added onn 12Dec2020
+ #define OFF_LINE_CODE_ADDITION  // Added onn 12Dec2020
 char dip[18];  // IP Address for device
 
 #define WIFI_strength
@@ -693,7 +693,6 @@ int esp32_wps_enable(void)
         esp_wifi_wps_enable(&config);
         esp_wifi_wps_start(0);
     }
-
     return 0;
 }
 int esp32_wps_disable(void)
@@ -712,10 +711,23 @@ int esp32_wifi_client_enable(char* ssid, char* pw)
 
     esp32_wifi_status = ESP32_WIFI_CLIENT;
     esp32_wifi_config(WIFI_MODE_STA, ssid, pw);
-    esp_wifi_start();
+    esp_wifi_start(); // commneted for tesing only 22Jan2021
 
     return 0;
 }
+
+int esp32_wifi_client_enable_Testing_menu(char* ssid, char* pw)
+{
+
+    esp32_wifi_status = ESP32_WIFI_CLIENT;
+    esp32_wifi_config(WIFI_MODE_STA, ssid, pw);
+   // esp_wifi_start(); // commneted for tesing only 22Jan2021
+    return 0;
+}
+
+
+
+
 int esp32_wifi_ap_enable(char* ssid_ap, char *pw)
 {
     //do not call this, this will erase existing config
@@ -737,7 +749,9 @@ int esp32_wifi_ap_enable(char* ssid_ap, char *pw)
 int esp32_wifi_ap_disable(void) {
     if(esp32_wifi_status == ESP32_WIFI_AP) {
         //esp32_wifi_config(WIFI_MODE_NULL, NULL, NULL); 
-        esp_wifi_stop();
+
+       // esp_wifi_stop();  // Commented on 21Jan after disable bact Trace found ..Originally there..
+
         esp32_wifi_status = ESP32_WIFI_UNKNOWN;
     }
     return 0;

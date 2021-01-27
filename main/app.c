@@ -351,9 +351,12 @@ static void print_fw_version(void)
 
 void test_Display_wifi_strenth(void)
 {display_clear_screen();
- while(1){
+// while(1){
 
-	 get_wifi_signal_Strength();
+	 //get_wifi_signal_Strength();
+
+	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+	 vTaskDelay(5000);
 
 //	 display_clear_screen();
 //	 display_wifi_level_1_icon(DISPLAY_COLOR);
@@ -370,11 +373,16 @@ void test_Display_wifi_strenth(void)
 //	// display_clear_screen();
 //	//display_wifi_level_5_icon(DISPLAY_COLOR);
 //	 vTaskDelay(2000);
-    }
+    //}
 }
 
-
-
+void Display_uniqueID_onbootup(void);
+void Display_uniqueID_onbootup(void)
+{
+	display_clear_screen();
+	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+	 vTaskDelay(10000);
+}
 
 esp_err_t app_init(void) {
     print_fw_version();
@@ -593,6 +601,8 @@ static void app_task(void *param) {
 #endif
      xTaskCreate(heater_state_change_task, "hscan_task", 4096, (void *)app_data, 12, NULL);
      xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
+
+     Display_uniqueID_onbootup(); // Testing only ////
 
     while (1) {
         switch (*mode) {
@@ -3775,10 +3785,14 @@ static app_mode_t menu_communications(app_data_t *data) {
 
                         	// comm_wifi_dev->wifi_ap_enable(uniqueDeviceID, ap_password);
                         	if(esp32_wifi_status != ESP32_WIFI_AP)
+                        	{	printf("esp32_wifi_ap_enable \n ");
                         		esp32_wifi_ap_enable(uniqueDeviceID, ap_password);
+                        	}
                         	else
-                        		esp32_wifi_client_enable(username,password);
-
+                        	{	printf("esp32_wifi_client_enable_Testing_menu \n ");
+                        		// esp32_wifi_client_enable(username,password);   // original ...commented on 22jan
+                        	     esp32_wifi_client_enable_Testing_menu(username,password);  // testing only ..
+                        	}
                             break;
                         case MENU_COMMUNICATIONS_AP_MODE_SSID:
                             m_comms = MENU_COMMUNICATIONS_AP_MODE_SSID_VAL;

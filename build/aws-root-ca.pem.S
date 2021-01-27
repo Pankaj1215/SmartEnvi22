@@ -1,4 +1,4 @@
-/* * Data converted from C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22/main/certs/aws-root-ca.pem
+/* * Data converted from C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/main/certs/aws-root-ca.pem
  * (null byte appended)
  */
 .data

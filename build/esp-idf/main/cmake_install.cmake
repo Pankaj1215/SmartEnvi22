@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22/main
+# Install script for directory: C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
