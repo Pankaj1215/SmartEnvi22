@@ -2,10 +2,12 @@ C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/confs
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/erase_flash.dir
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/app.dir
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/menuconfig.dir
+C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/monitor.dir
+C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/gen_secure_boot_keys.dir
+C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/gen_secure_boot_verification_key.dir
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/bootloader.dir
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/gen_project_binary.dir
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/flash.dir
-C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/monitor.dir
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/app-flash.dir
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/encrypted-flash.dir
 C:/Users/mahesh_tripathi/eclipse-workspace/SmartEnvi22New/build/CMakeFiles/encrypted-app-flash.dir

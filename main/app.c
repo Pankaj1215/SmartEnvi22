@@ -343,10 +343,14 @@ static void print_fw_version(void)
    //   ESP_LOGI("firmware_version", "%s", fw_version);
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
-    display_clear_screen();
+   //  display_clear_screen();
    //   display_menu("Firm_ver", DISPLAY_COLOR, fw_version, DISPLAY_COLOR);
-    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
-    vTaskDelay(3000); //    // wait for at least Firmware version..
+
+   // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+
+    // vTaskDelay(3000); //    // wait for at least Firmware version..
+
+    printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
 
 void test_Display_wifi_strenth(void)
@@ -384,9 +388,13 @@ void Display_uniqueID_onbootup(void)
 	 vTaskDelay(10000);
 }
 
+// void WatchDogSOftReset_app_main(void);
+
 esp_err_t app_init(void) {
-    print_fw_version();
+    print_fw_version();  // Comment FW_version...
    // test_Display_wifi_strenth();
+
+	// WatchDogSOftReset_app_main();  // Tesing soft_RESET
 
 #ifdef Test_Storage
  printf("Before erase \n");

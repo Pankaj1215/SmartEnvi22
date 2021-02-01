@@ -24,18 +24,21 @@
 #include "clock/clock.h"
 #include "app.h"
 
-
 #define BUFFSIZE            1024
 #define TEXT_BUFFSIZE       1024
-
 
 char* g_server_ip;
 char* g_filename;
 int g_server_port;
 int version_major=0,version_minor=0,version_revision=0;
 
-extern const uint8_t certificate_pem_crt_start[] asm("_binary_certificate_pem_crt_start");
-extern const uint8_t certificate_pem_crt_end[] asm("_binary_certificate_pem_crt_end");
+// Original
+//extern const uint8_t certificate_pem_crt_start[] asm("_binary_certificate_pem_crt_start");
+//extern const uint8_t certificate_pem_crt_end[] asm("_binary_certificate_pem_crt_end");
+
+// Testing.
+extern const uint8_t server_certificate_pem_crt_start[] asm("_binary_server_cert_pem_start");
+extern const uint8_t server_certificate_pem_crt_end[] asm("_binary_server_cert_pem_end");
 
 static const char *TAG = "ota";
 /*an ota data write buffer ready to write to the flash*/
@@ -90,11 +93,17 @@ void simple_ota_example_task(void *pvParameter)
     ESP_LOGI(TAG, "Starting OTA example");
 
     esp_http_client_config_t config = {
-        .url = "http://54.151.114.229:8080/api/fwdownload?fileName=SmartEnvi22.bin",
+       // .url = "http://54.151.114.229:8080/api/fwdownload?fileName=SmartEnvi22.bin",    // original working one ..
        // .url = "http://54.151.114.229:8081/api/fwdownload?fileName=SmartEnvi22.bin",
 
+		 .url = "https://eheatdev.com/api/fwdownload?fileName=SmartEnvi22.bin",  // Testing ..
+
 		//.url = "http://192.168.43.81/SmartEnvi22.bin",
-        .cert_pem = (char *)certificate_pem_crt_start,
+       // .cert_pem = (char *)certificate_pem_crt_start,  // Original Line..commented on 01Feb2021
+		.cert_pem = (char *)server_certificate_pem_crt_start,
+
+		//.skip_cert_common_name_check = true,   // Added for testing as Struct due to openssl cerificate needed..
+
         .event_handler = _http_event_handle,
     };
 
@@ -131,8 +140,9 @@ void send_FW_request()
 {
 	int status;
 	esp_http_client_config_t config = {
-		   .url = "http://54.151.114.229:8080/api/fwversion?fileName=fw_version.txt",
+		 //  .url = "http://54.151.114.229:8080/api/fwversion?fileName=fw_version.txt",   // Original working one for ota update ..
 		  // .url = "http://54.151.114.229:8081/api/fwversion?fileName=fw_version.txt",
+		   .url = "https://eheatdev.com/api/fwversion?fileName=fw_version.txt",  // Testing ....
 
 		   //.url = "http://192.168.43.81/fw_version.txt",
 		   .event_handler = _http_event_handle,

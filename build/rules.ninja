@@ -12,6 +12,14 @@
 # =============================================================================
 
 #############################################
+# Rule for running custom commands.
+
+rule CUSTOM_COMMAND
+  command = $COMMAND
+  description = $DESC
+
+
+#############################################
 # Rule for compiling C files.
 
 rule C_COMPILER__SmartEnvi22.2eelf
@@ -30,14 +38,6 @@ rule CXX_EXECUTABLE_LINKER__SmartEnvi22.2eelf
   rspfile = $RSP_FILE
   rspfile_content = $in $LINK_PATH $LINK_LIBRARIES
   restat = $RESTAT
-
-
-#############################################
-# Rule for running custom commands.
-
-rule CUSTOM_COMMAND
-  command = $COMMAND
-  description = $DESC
 
 
 #############################################
@@ -173,6 +173,16 @@ rule CXX_STATIC_LIBRARY_LINKER____idf_efuse
   command = cmd.exe /C "$PRE_LINK && C:\ESP_IDF\.espressif\tools\cmake\3.13.4\bin\cmake.exe -E remove $TARGET_FILE && C:\ESP_IDF\.espressif\tools\xtensa-esp32-elf\esp-2019r2-8.2.0\xtensa-esp32-elf\bin\xtensa-esp32-elf-ar.exe qc $TARGET_FILE $LINK_FLAGS $in && C:\ESP_IDF\.espressif\tools\xtensa-esp32-elf\esp-2019r2-8.2.0\xtensa-esp32-elf\bin\xtensa-esp32-elf-ranlib.exe $TARGET_FILE && $POST_BUILD"
   description = Linking CXX static library $TARGET_FILE
   restat = $RESTAT
+
+
+#############################################
+# Rule for compiling ASM files.
+
+rule ASM_COMPILER____idf_bootloader_support
+  depfile = $DEP_FILE
+  deps = gcc
+  command = ccache C:\ESP_IDF\.espressif\tools\xtensa-esp32-elf\esp-2019r2-8.2.0\xtensa-esp32-elf\bin\xtensa-esp32-elf-gcc.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building ASM object $out
 
 
 #############################################

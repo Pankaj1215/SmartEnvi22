@@ -26,6 +26,9 @@
 #ifndef __WIFI_CORE_H__
 #define __WIFI_CORE_H__
 
+
+void WatchDogSOftReset_app_main(void);
+
 void get_wifi_signal_Strength(void);
 void getIP_address(void);
 
