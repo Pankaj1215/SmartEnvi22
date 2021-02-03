@@ -31,11 +31,10 @@ set(COMPONENT_ADD_INCLUDEDIRS "." "C:/SmartEnvi22/longhorn_fw_v1.6.0/components/
 
 register_component()
 
-
 if(CONFIG_EXAMPLE_EMBEDDED_CERTS)
 target_add_binary_data(${COMPONENT_TARGET} "certs/aws-root-ca.pem" TEXT)
 target_add_binary_data(${COMPONENT_TARGET} "certs/certificate.pem.crt" TEXT)
 target_add_binary_data(${COMPONENT_TARGET} "certs/private.pem.key" TEXT)
-target_add_binary_data(${COMPONENT_TARGET} "certs/server_cert.pem" TEXT)
+target_add_binary_data(${COMPONENT_TARGET} "server_certs/ca_cert.pem" TEXT)
 endif()
 

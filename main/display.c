@@ -773,7 +773,10 @@ esp_err_t display_date(int yr, int mo, int day, int color) {
 }
 
 esp_err_t display_hour(int val, int color) {
-    char val_str[10];
+   // char val_str[10]; // original
+
+    char val_str[30]; // Testing...Error got on 03Jan2021 in replace sdk of Dilpreet
+
     int str_width;
     sh1106_ret_t ret = SH1106_OK;
     int hr;
@@ -835,7 +838,10 @@ esp_err_t display_minute(int val, int color) {
 }
 
 esp_err_t display_time(int hr, int min, int color) {
-    char val_str[10];
+    // char val_str[10]; // Original
+
+    char val_str[30];  // Added for testing Error got on SDK file replace of Dilpreet on 3 Feb2021
+
     int str_width;
     sh1106_ret_t ret = SH1106_OK;
     int hr_dsp;

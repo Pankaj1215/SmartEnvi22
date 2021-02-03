@@ -330,8 +330,7 @@ void testFunctionFoFToC(void){
 }
 
 
-
-//#define Test_Storage
+// #define Test_Storage
 static void print_fw_version(void)
 {
 	// testFunctionFoFToC();
@@ -389,7 +388,7 @@ void Display_uniqueID_onbootup(void)
 }
 
 // void WatchDogSOftReset_app_main(void);
-
+// #define Test_Storage
 esp_err_t app_init(void) {
     print_fw_version();  // Comment FW_version...
    // test_Display_wifi_strenth();
