@@ -515,8 +515,11 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
          // Working one
         //  sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(), "s_t", app_get_target_temp(),"t_u",app_get_temp_unit(), "h_s", app_get_heater_state());
 
-        // testing one.with get Temp and Temp unit ..
-        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(),"temp_unit", app_get_temp_unit());
+        // testing one.with get Temp and Temp unit .. // workimg till 11feb..
+        // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(),"temp_unit", app_get_temp_unit());
+
+        // Testing 11 Feb 2021.. commma was missing after value..
+        sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"", "type", "get","cmd", "get_temp", "status","success",  "value",app_get_ambient_temp(),"temp_unit", app_get_temp_unit());
 
         CommandAck = GET_TEMP_ACK;
 
