@@ -169,8 +169,11 @@ extern unsigned char manually_day_light_on_off_change_enable;
 
 extern unsigned char device_health_status;
 
+extern unsigned char FlashEraseEnableAPMode; // Added for direct AP mode enable After Flash erased.
+
+
 #ifdef HeaterUnderReapir
- unsigned char heater_underControl_status = 0;
+unsigned char heater_underControl_status = 0;
 extern unsigned char manually_put_heater_under_repair_enable;
 extern unsigned char manually_put_heater_under_repair_status_for_malfunctionMonitor;
 
@@ -347,7 +350,7 @@ static void print_fw_version(void)
 
    // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
 
-    // vTaskDelay(3000); //    // wait for at least Firmware version..
+  //   vTaskDelay(3000); //    // wait for at least Firmware version..
 
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
@@ -380,12 +383,33 @@ void test_Display_wifi_strenth(void)
 }
 
 void Display_uniqueID_onbootup(void);
+// Original One..
+//void Display_uniqueID_onbootup(void)
+//{
+//	display_clear_screen();
+//	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+//	 vTaskDelay(10000);
+//}
+
+// Testing one
 void Display_uniqueID_onbootup(void)
 {
-	display_clear_screen();
-	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
-	 vTaskDelay(10000);
+	if(FlashEraseEnableAPMode ==1)
+	{    FlashEraseEnableAPMode = 0;
+		esp32_wifi_ap_enable(uniqueDeviceID, ap_password); printf("In Display_uniqueID_onbootup  Enable AP Mode \n");
+	     display_clear_screen();
+	     display_menu_pair_Heater("pair on", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
+		 vTaskDelay(10000);
+	}
+	else
+	{
+		 display_clear_screen();
+		 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+		 vTaskDelay(10000);
+	}
 }
+
+
 
 // void WatchDogSOftReset_app_main(void);
 // #define Test_Storage
@@ -400,6 +424,8 @@ esp_err_t app_init(void) {
   erase_storage_all();
  printf("After erase \n");
 #endif
+
+   // while(1){}; // Testing only
 
     esp_err_t ret = ESP_OK;
     time_t t_start_ms = 0;
@@ -460,6 +486,8 @@ esp_err_t app_init(void) {
     app_data->display_settings.is_auto_screen_off_en = true;
     app_data->display_settings.auto_screen_off_delay_sec = AUTO_SCREEN_OFF_DELAY_SEC_DEFAULT;
 
+    printf(" in begining app_data->display_settings.auto_screen_off_delay_sec: %d",app_data->display_settings.auto_screen_off_delay_sec);
+
     app_data->daylightSaving = 0; // Default variable
 
     memset(app_data->ap_ssid, 0, sizeof(app_data->ap_ssid));
@@ -510,6 +538,8 @@ esp_err_t app_init(void) {
 
     get_data_from_storage(STORAGE_KEY_DISPLAY_SETTINGS, &(app_data->display_settings));
     printf("\n\n  app_data->settings.is_night_light_auto_brightness_en  %d \n",   app_data->settings.is_night_light_auto_brightness_en );
+
+    printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",app_data->display_settings.auto_screen_off_delay_sec );
 
 //     if(app_data->daylightSaving == 1)
 //        printf("daylightSaving  is One %d \n",app_data->daylightSaving);
@@ -602,7 +632,7 @@ static void app_task(void *param) {
     // start task that controls display brightness
     xTaskCreate(display_brightness_task, "dbright_task", 4096, (void *)app_data, 12, NULL);
 
-   //  xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
+
 #ifdef P_TESTING   // New Added here after other task  get operational..30Nov2020
     tcpServer_main();
 #endif
@@ -645,6 +675,8 @@ static void standby_mode_task(app_data_t *data) {
     app_mode_t *mode = &(data->mode);
     time_t btn_up_press_ms = 0, btn_down_press_ms = 0, btn_timer_press_ms = 0;
 
+    unsigned char uchPairHeaterFlag = 0;
+
     bool update_display = true;
     bool screen_off = false;
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -667,6 +699,9 @@ static void standby_mode_task(app_data_t *data) {
 #endif
    // } //end of if(heater_On_Off_state_by_command == 1){
 
+//		if(FlashEraseEnableAPMode ==1)
+//		{  esp32_wifi_ap_enable(uniqueDeviceID, ap_password); printf("In stand by mode  Enable AP Mode \n");}
+
     while(*mode == APP_MODE_STANDBY) {
         /* button
            - single press POWER button to enter Manual Temperature mode
@@ -674,7 +709,13 @@ static void standby_mode_task(app_data_t *data) {
            - long press DOWN and TIMER button to enter Debug mode
            - long press DOWN button to enter Menu mode
            - long press UP and TIMER buttons to enter Temperature sensor offset set mode
+        //   - - long press UP and TIMER buttons to enter Temperature sensor offset set mode
         */
+            // Testing begin Added on 28Feb2021
+//    		if(FlashEraseEnableAPMode ==1)
+//    		{  esp32_wifi_ap_enable(uniqueDeviceID, ap_password); printf("In stand by mode  Enable AP Mode \n");}
+    	   //  Testing End
+
 
 #ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
      menuModeKeypressedFlag = 0;
@@ -699,9 +740,33 @@ static void standby_mode_task(app_data_t *data) {
                     if (((cur_ms - btn_up_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
+
+
+                           //  Original Lines commented..Begin
                             data->is_child_lock_active = !data->is_child_lock_active;
                             manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
+                           //  Original Ends
+
+                            // This logic worked commented for check direct Ap mode afterFlash Erase.
+//                        	// Testing On
+//                            uchPairHeaterFlag = 1;
+//                        	if(uchPairHeaterFlag == 1)
+//                        	 {
+//							   display_clear_screen();
+//							   esp32_wifi_ap_enable(uniqueDeviceID, ap_password);   // Testing Line..
+//							   while(uchPairHeaterFlag){
+//								  // display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+//								  display_menu("Pair on", DISPLAY_COLOR, "heater", DISPLAY_COLOR);
+//
+////								  if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up or down is pressed
+////									       uchPairHeaterFlag = 0;
+////										  break;} // end of if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up or down is pressed
+//
+//							   } // end of while(1)
+//                        	 }// end of if(uchPairHeaterFlag = !uchPairHeaterFlag)
+//							// Testing End
+
 
                             update_display = true;
                             btn_up_press_ms = cur_ms;
@@ -729,7 +794,7 @@ static void standby_mode_task(app_data_t *data) {
                     if (((cur_ms - btn_up_press_ms) >= TEMP_OFFSET_LONG_PRESS_DUR_MS)
                         && ((cur_ms - btn_timer_press_ms) >= TEMP_OFFSET_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
-                            *mode = APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET;
+                              *mode = APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET;  // Original Line..
                         }
                         btn_up_press_ms = cur_ms;
                         btn_timer_press_ms = cur_ms;
@@ -852,6 +917,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
 #endif
 
+
        prevTempUnit = data->settings.temperature_unit ;
     while(*mode == APP_MODE_MANUAL_TEMPERATURE) {
        // Added for testing ctof
@@ -922,6 +988,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
             update_display = true;
         }
 
+      //  printf(" Testing data->display_settings.is_auto_screen_off_en %d",data->display_settings.is_auto_screen_off_en);
+
         /* button
            - single press BACK button to go back to standby mode
            - single press UP or DOWN button to increase or decrease temperature
@@ -930,6 +998,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
            - long press DOWN button to go to MENU mode
            - long press TIMER button to enter AUTO mode
         */
+
+       // printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
+
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
@@ -4472,8 +4543,12 @@ static app_mode_t menu_display_settings(app_data_t *data) {
     bool screen_off = false;
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
+    printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
+
     while (!exit) {
-        if (*btn == prev_btn) {
+
+        printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
+    	if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
                     display_off();

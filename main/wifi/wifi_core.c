@@ -61,6 +61,7 @@
 #include "ota_update.h"
 #include "version.h"
 
+unsigned char FlashEraseEnableAPMode;
 unsigned char device_health_status;
 unsigned char manually_put_heater_under_repair_enable;
 
@@ -2789,6 +2790,13 @@ void tcpServer_main()
 
     // initFlash();  //
 	readEEPROM();
+
+	// Added only for testing on 28Feb2021 Testing ON
+
+//	if(FlashEraseEnableAPMode ==1)
+//	  esp32_wifi_ap_enable(uniqueDeviceID, ap_password);
+    // Testing End
+
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
 	initialise_wifi();
 }
@@ -3019,12 +3027,19 @@ void writeEEPROM()
 	esp_restart();
 }
 
+
+
 void readEEPROM()
 {
 	// username[0]='a';
 	get_string_from_storage(NVS_LUCIDTRON_SSID_KEY, username); printf("Username 1st time  = %s",username);
+	// Original
+//	if(strlen(username)<=0)
+//	    strcpy(username,"asdf");
+    // Testing
 	if(strlen(username)<=0)
-	    strcpy(username,"asdf");
+	{   FlashEraseEnableAPMode =1; printf("Flash erased and enable AP Mode \n ");
+		strcpy(username,"asdf");}
 
 	get_string_from_storage(NVS_LUCIDTRON_PW_KEY, password); printf("Password = %s",password);
 	get_string_from_storage(NVS_DEVICE_ID, id); printf("DeviceID = %s",id);
