@@ -26,6 +26,7 @@
 #ifndef __WIFI_CORE_H__
 #define __WIFI_CORE_H__
 
+// unsigned char pairON_blinkWifi = 0;
 
 void WatchDogSOftReset_app_main(void);
 
@@ -65,9 +66,14 @@ void getIP_address(void);
 #define SET_TEMP_UNIT_ACK     11
 #define HEATER_CONFIG_SYNCH_ACK     12
 
+
+#define PING_DEVICE_ACK    13
+#define AUTO_SCREEN_OFF_ACK  14
+
+
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 
- int  getSubString(char *source, char *target,int from, int to);
+int  getSubString(char *source, char *target,int from, int to);
 void heater_state_change_task(void *param);
 
 

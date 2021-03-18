@@ -107,6 +107,10 @@
 
 #define REMOTE_CMD_HEATER_CONFIG_SYCH   "hcs"// "heater_config_sync"// "h_c_s"
 
+#define REMOTE_CMD_PING_DEVICE   "ping_device"
+#define REMOTE_CMD_AUTO_SCREEN_OFF   "auto_screen_off"
+
+
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)
  * \brief format before calling the msg handler

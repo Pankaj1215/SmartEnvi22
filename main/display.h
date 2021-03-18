@@ -101,5 +101,7 @@ esp_err_t display_debug_screen_1(int temp_c, int temp_offset_c, int ambient_ligh
 esp_err_t display_debug_screen_2(bool conn, bool internet, bool kaa, bool ap_mode_en, char *ap_ssid, int color);
 
 esp_err_t display_menu_pair_Heater(char *str1, int str1_color, char *str2, int str2_color); // Added on 28Feb2021
+esp_err_t display_wifi_icon_pairing_blinking(int color);
+
 
 #endif /* MAIN_DISPLAY_H */

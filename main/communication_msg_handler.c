@@ -83,6 +83,8 @@ long power(long no,long p);
 
 int nlight_br_TestingInSynchPacket; // Only for testing ..
 
+bool pingDeviceOnFlag;
+
 int getNum(char ch);
 //function : getNum
 //this function will return number corresponding
@@ -731,9 +733,24 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 
 				 // Testing LDS in for testing data packet in synch..
 				// sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_light_LDR_parm(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
-
-
 	 }
+
+	 else if (strcmp(label, REMOTE_CMD_PING_DEVICE) == 0) {
+					 CommandAck = PING_DEVICE_ACK;
+					 //Put this value in the variable for threshold offset value
+					 pingDeviceOnFlag = 1;
+					 printf("REMOTE_CMD_PING_DEVICE \r\n");
+	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "ping_device", "status","success",  "value",value);
+		 }
+	 else if (strcmp(label, REMOTE_CMD_AUTO_SCREEN_OFF) == 0) {
+					 CommandAck = AUTO_SCREEN_OFF_ACK;
+					 //Put this value in the variable for threshold offset value
+
+					 app_enable_auto_screen_off(value);
+
+					 printf("REMOTE_CMD_AUTO_SCREEN_OFF \r\n");
+	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "auto_screen_off", "status","success",  "value",value);
+		 }
 	 else
 	 {
         printf("unhandled label %s %s\r\n", label, value);

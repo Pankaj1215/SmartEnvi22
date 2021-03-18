@@ -61,6 +61,8 @@
 #include "ota_update.h"
 #include "version.h"
 
+#include "display.h"   // Added for displaying Pair success on 03march2021
+
 unsigned char FlashEraseEnableAPMode;
 unsigned char device_health_status;
 unsigned char manually_put_heater_under_repair_enable;
@@ -105,6 +107,8 @@ unsigned char ThermostatStateChangeDataToAWS = 0;
 
 #define HeaterStateChangeSacn_Duration_MS  5000 // 30000
 char replybuff[150];  //  newadded for ack
+
+bool pairON_blinkWifi;
 
 // int commandReceived_SendAck;  //  newadded for ack // Tested for getSetAPPTestFirmware modified to unsigned char..
 unsigned char commandReceived_SendAck;
@@ -463,10 +467,19 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
         case SYSTEM_EVENT_AP_STOP:
             wifi_ap_en = false;
             break;
+
+            // original..
+//        case SYSTEM_EVENT_AP_STACONNECTED:
+//            if (wifi_conn_stat_callback)
+//                wifi_conn_stat_callback(1);
+//            break;
+
+// testing only...
         case SYSTEM_EVENT_AP_STACONNECTED:
             if (wifi_conn_stat_callback)
-                wifi_conn_stat_callback(1);
+            { wifi_conn_stat_callback(1); pairON_blinkWifi = 1; printf("ip assigned blink wifi\n ");}
             break;
+
         case SYSTEM_EVENT_AP_STADISCONNECTED:
             if (wifi_conn_stat_callback)
                 wifi_conn_stat_callback(0);
@@ -733,6 +746,7 @@ int esp32_wifi_client_enable_Testing_menu(char* ssid, char* pw)
 
 int esp32_wifi_ap_enable(char* ssid_ap, char *pw)
 {
+	// tcpServerTask= 1; // New added on 4March2021
     //do not call this, this will erase existing config
     //esp_wifi_stop();
     esp32_wifi_status = ESP32_WIFI_AP;
@@ -1475,6 +1489,45 @@ static void http_get_task(void *pvParameters)
 			// abort();  // Commneted for testing
 			}
 
+// 2 new topic added.
+		                	//Ping Device ..
+							const char *topic_ping_device = "aws/device/command/ping_device";  // testing for param key..
+							const int topic_ping_device_Len = strlen(topic_ping_device);
+							ESP_LOGI(TAG, "Subscribing.topic_ping_device...");
+							rc = aws_iot_mqtt_subscribe(&client, topic_ping_device, topic_ping_device_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_ping_device subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							const char *topic_ping_device_response = "aws/device/command/ping_device/response";  // testing for param key..
+							const int topic_ping_device_response_Len = strlen(topic_ping_device_response);
+							ESP_LOGI(TAG, "Subscribing.topic_ping_device_response...");
+							rc = aws_iot_mqtt_subscribe(&client, topic_ping_device_response, topic_ping_device_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_ping_device_response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							 // Auto_Screen_Off_Enable_Disable
+							const char *topic_auto_screen_off = "aws/device/command/auto_screen_off";  // testing for param key..
+							const int topic_auto_screen_off_Len = strlen(topic_auto_screen_off);
+							ESP_LOGI(TAG, "Subscribing.topic_auto_screen_off..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off, topic_auto_screen_off_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_auto_screen_off subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+
+							const char *topic_auto_screen_off_response = "aws/device/command/auto_screen_off/response";  // testing for param key..
+							const int topic_auto_screen_off_response_Len = strlen(topic_auto_screen_off_response);
+							ESP_LOGI(TAG, "Subscribing.topic_auto_screen_off_response..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off_response, topic_auto_screen_off_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_auto_screen_off_response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
 
 		//  char cPayload1[100];
 		char cPayload1[300];  // Original Working
@@ -1596,6 +1649,15 @@ static void http_get_task(void *pvParameters)
 				    			     	 break;
 				    case HEATER_CONFIG_SYNCH_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_h_c_s_response, topic_h_c_s_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+
+
+				    case PING_DEVICE_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_ping_device_response,topic_ping_device_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+
+				    case AUTO_SCREEN_OFF_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_response, topic_auto_screen_off_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    default:   break;
 				}
@@ -2607,6 +2669,8 @@ void tcp_server_task(void *pvParameters)  // Testing on 13Dec2020
         else
         	ESP_LOGI(TCP_SERVER_TAG, "found sent");
         while (1) {
+
+//        pairON_blinkWifi = 1;
             int len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
             // Error occurred during receiving
             if (len < 0) {
@@ -2736,7 +2800,14 @@ void initialise_wifi(void)
 
 	} else if (bits & WIFI_FAIL_BIT) {
 		ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",username, password);
-		initSoftAP();
+
+
+	 initSoftAP();  // original 	 // commentede on 4MArch for client requirement//
+
+//  // Testing ...Begin // change Worked for standby AP mode disable and Manual mode AP Enable
+//		esp32_wifi_client_enable(username,password);  // New Added on 4 march 2021..
+////End..
+
 		//xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
 		if(tcpServerTask== 1)
 		    {
@@ -2798,10 +2869,81 @@ void tcpServer_main()
     // Testing End
 
 	ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-	initialise_wifi();
+
+	 initialise_wifi();// original line commented ..
+
+	// Tersting lines.. //start
+//	if(FlashEraseEnableAPMode ==0){  // This condition Added only for testing .. 04MArch2021
+//	initialise_wifi(); }
+	// end
 }
 
+// original ..
+//
+//void initSoftAP()
+//{
+//	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+//
+//    wifi_config_t wifi_config = {
+//  		.ap = {
+//  			.password = EXAMPLE_ESP_WIFI_PASS,
+//  			.max_connection = 2,
+//  			// .authmode = WIFI_AUTH_WPA_WPA2_PSK  // original
+//			.authmode = WIFI_AUTH_OPEN       //23nov2020
+//  			},
+//  		};
+//
+////    strcpy((char *)wifi_config.ap.ssid, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+////    strcpy(uniqueDeviceID, comm_wifi_dev.wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+////
+////    printf("(char *)wifi_config.ap.ssid:  %s\n", (char *)wifi_config.ap.ssid);
+////    printf("uniqueDeviceID in initSoftAP  %s\n", uniqueDeviceID);
+////
+////    wifi_config.ap.ssid_len = strlen(comm_wifi_dev.wifi_ap_ssid);
+////    printf("(char *)wifi_config.ap.ssid_len:  %d\n",   wifi_config.ap.ssid_len);
+//
+//    strcpy((char *)wifi_config.ap.ssid, uniqueDeviceID );  // New Added after mac address receiving //For changing the ssid
+//    //strcpy(uniqueDeviceID, comm_wifi_dev->wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
+//
+//    printf("(char *)wifi_config.ap.ssid:  %s\n", (char *)wifi_config.ap.ssid);
+//    printf("uniqueDeviceID in initSoftAP  %s\n", uniqueDeviceID);
+//
+//    wifi_config.ap.ssid_len = strlen(uniqueDeviceID);
+//    printf("(char *)wifi_config.ap.ssid_len:  %d\n",   wifi_config.ap.ssid_len);
+//
+//
+//    // Last working SSID
+////    wifi_config_t wifi_config = {
+////		.ap = {
+////			.ssid = EXAMPLE_ESP_WIFI_SSID,
+////			.ssid_len = strlen(EXAMPLE_ESP_WIFI_SSID),
+////			.password = EXAMPLE_ESP_WIFI_PASS,
+////			.max_connection = 2,
+////			.authmode = WIFI_AUTH_WPA_WPA2_PSK
+////			},
+////		};
+//
+//	if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0) {
+//		wifi_config.ap.authmode = WIFI_AUTH_OPEN;
+//	}
+//	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+//
+//#ifdef  wifi_AP_STA_COMBINE
+//	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+//#else
+//	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+//#endif
+//
+//	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
+//	ESP_ERROR_CHECK(esp_wifi_start());
+//
+//#ifdef DISABLE_HOTSPOT_WHEN_NO_INTERNET_REMAINS_IN_STA_MODE
+//	esp32_wifi_status = ESP32_WIFI_AP;
+//#endif
+//
+//}
 
+//Added for Testing..
 void initSoftAP()
 {
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -2848,6 +2990,10 @@ void initSoftAP()
 	if (strlen(EXAMPLE_ESP_WIFI_PASS) == 0) {
 		wifi_config.ap.authmode = WIFI_AUTH_OPEN;
 	}
+
+	printf("IN init softAP function before condition check \n ");
+//	if(FlashEraseEnableAPMode ==0){  // This condition Added only for testing .. 04MArch2021
+		printf("IN init softAP function after condition check \n ");
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
 #ifdef  wifi_AP_STA_COMBINE
@@ -2863,7 +3009,10 @@ void initSoftAP()
 	esp32_wifi_status = ESP32_WIFI_AP;
 #endif
 
+	// } // Added only of testing ..
+
 }
+
 
 
 void initFlash()
@@ -3024,6 +3173,13 @@ void writeEEPROM()
 	set_string_to_storage(NVS_DEVICE_ID, id);
 	set_string_to_storage(NVS_LOC_ID, locID);
 	set_string_to_storage(NVS_DEVICE_NAME, name);
+
+	// New added on 03MArch20202 begin
+	 display_clear_screen();
+	 display_menu("Heater", DISPLAY_COLOR, "Connected!", DISPLAY_COLOR);
+	 vTaskDelay(3000);
+
+    // end
 	esp_restart();
 }
 

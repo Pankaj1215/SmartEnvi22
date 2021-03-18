@@ -156,8 +156,8 @@ extern char uniqueDeviceID[12];
 #define AUTO_SCREEN_OFF_DELAY_SEC_MAX 300
 #define AUTO_SCREEN_OFF_DELAY_SEC_MIN 5
 #define AUTO_SCREEN_OFF_DELAY_SEC_INCREMENT 5
-// #define AUTO_SCREEN_OFF_DELAY_SEC_DEFAULT 60  // original
-#define AUTO_SCREEN_OFF_DELAY_SEC_DEFAULT 180    // Testing..
+#define AUTO_SCREEN_OFF_DELAY_SEC_DEFAULT 60  // original
+// #define AUTO_SCREEN_OFF_DELAY_SEC_DEFAULT 180    // Testing..
 
 
 #define DIM_PILOT_LIGHT_UPDATE_INTERVAL_MS 1000
@@ -257,6 +257,7 @@ enum menu_energy {
     MENU_ENERGY_MONTH_VAL,
 };
 */
+#define menuDateTime_DST
 
 enum menu_time_and_date {
     MENU_TIME_AND_DATE_AUTO = 1,
@@ -276,6 +277,11 @@ enum menu_time_and_date {
     MENU_TIME_AND_DATE_MANUAL_DATE_DAY_CHANGE,
     MENU_TIME_AND_DATE_MANUAL_TIME_HOUR_CHANGE,
     MENU_TIME_AND_DATE_MANUAL_TIME_MINUTE_CHANGE,
+#ifdef	menuDateTime_DST
+	MENU_TIME_AND_DATE_DST,
+	MENU_TIME_AND_DATE_DST_ON_OFF_CHANGE_EN
+#endif
+
 };
 
 
@@ -300,7 +306,7 @@ enum menu_communications {
 #endif
 };
 
-#define Menu_dayLight_option
+// #define Menu_dayLight_option
 #define HeaterUnderReapir
 
 enum menu_settings {

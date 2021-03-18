@@ -401,7 +401,7 @@ esp_err_t display_menu(char *str1, int str1_color, char *str2, int str2_color) {
     return ESP_OK;
 }
 
-
+// Added for decrease in the font size ..
 esp_err_t display_menu_pair_Heater(char *str1, int str1_color, char *str2, int str2_color) {
     sh1106_ret_t ret = SH1106_OK;
 
@@ -1172,6 +1172,42 @@ esp_err_t display_auto_icon(int color) {
     DISPLAY_MUTEX_LOCK(mutex_lock);
 
     ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_auto->width, OLED_HEIGHT - display_icon_auto->height, display_icon_auto->width, display_icon_auto->height, display_icon_auto->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    ret |= sh1106_update_display(sh1106);
+
+    DISPLAY_MUTEX_UNLOCK(mutex_lock);
+
+    if (ret != SH1106_OK)
+        return ESP_FAIL;
+
+    return ESP_OK;
+}
+
+unsigned char oneTimeRegistrationPacketToAWS;
+
+//esp_err_t display_wifi_icon_pairing_blinking(int color,int Wifi_icon_blink_flag)
+esp_err_t display_wifi_icon_pairing_blinking(int color)
+{
+    sh1106_ret_t ret = SH1106_OK;
+
+    static int pairBlinkFlag = 0;
+
+    DISPLAY_MUTEX_LOCK(mutex_lock);
+
+    pairBlinkFlag = !pairBlinkFlag;
+    printf("pairBlinkFlag: %d \n", pairBlinkFlag);
+
+    if(pairBlinkFlag == 1)
+    {   printf("Wifi icon \n ");
+    	ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level4->width, 0, display_icon_wifi_level4->width, display_icon_wifi_level4->height, display_icon_wifi_level4->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    }
+    else
+    {  printf("Wifi icon low medium \n ");
+    	ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level1->width, 0, display_icon_wifi_level1->width, display_icon_wifi_level1->height, display_icon_wifi_level1->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    }
+
+    if(oneTimeRegistrationPacketToAWS == 0)
+    	ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level4->width, 0, display_icon_wifi_level4->width, display_icon_wifi_level4->height, display_icon_wifi_level4->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
     ret |= sh1106_update_display(sh1106);
 
     DISPLAY_MUTEX_UNLOCK(mutex_lock);
