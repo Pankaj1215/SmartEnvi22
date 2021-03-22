@@ -476,14 +476,27 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 
 // testing only...
         case SYSTEM_EVENT_AP_STACONNECTED:
-            if (wifi_conn_stat_callback)
-            { wifi_conn_stat_callback(1); pairON_blinkWifi = 1; printf("ip assigned blink wifi\n ");}
+
+        	printf("SYSTEM_EVENT_AP_STACONNECTED ip assigned blink wifi\n ");
+        	if (wifi_conn_stat_callback)
+            { wifi_conn_stat_callback(1); // pairON_blinkWifi = 1; printf("ip assigned blink wifi\n ");
+            }
             break;
+
+//            // Testing only for IP assign for soft AP ..22March2021 ..Begin..
+//        case SYSTEM_EVENT_AP_STAIPASSIGNED:
+//        	pairON_blinkWifi = 1; printf("ip assigned blink wifi\n ");
+//            break;
+
+            // testing end
 
         case SYSTEM_EVENT_AP_STADISCONNECTED:
             if (wifi_conn_stat_callback)
-                wifi_conn_stat_callback(0);
+            {  wifi_conn_stat_callback(0); // pairON_blinkWifi = 0;
+               printf("ip disconnected..from AP  wifi\n ");
+              }
             break;
+
         case SYSTEM_EVENT_AP_PROBEREQRECVED:
             break;
 
@@ -514,6 +527,22 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
         default:
             break;
     }
+
+    // New Added for pairing wifi 22March2021
+    // begin
+    if (event_id == WIFI_EVENT_AP_STACONNECTED) { pairON_blinkWifi = 1;
+            wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
+            ESP_LOGI(TAG, "station "MACSTR" join, AID=%d",
+                     MAC2STR(event->mac), event->aid);
+            printf("DILPREET CONNECTED \n ");
+        } else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) { pairON_blinkWifi = 0; printf("DILPREET DISCONNECTED \n ");
+            wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
+            ESP_LOGI(TAG, "station "MACSTR" leave, AID=%d",
+                     MAC2STR(event->mac), event->aid);
+        }
+    // End
+
+
     if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
 		s_retry_num = 0;
 		xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
@@ -1529,6 +1558,26 @@ static void http_get_task(void *pvParameters)
 							// abort();  // Commneted for testing
 							}
 
+							const char *topic_DeleteHeater = "aws/device/command/delete_heater";  // testing for param key..
+							const int topic_DeleteHeater_Len = strlen(topic_DeleteHeater);
+							ESP_LOGI(TAG, "Subscribing.topic_DeleteHeater..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_DeleteHeater, topic_DeleteHeater_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_DeleteHeater subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							const char *topic_DeleteHeater_response = "aws/device/command/delete_heater/response";  // testing for param key..
+							const int topic_DeleteHeater_response_Len = strlen(topic_DeleteHeater_response);
+							ESP_LOGI(TAG, "Subscribing.topic_DeleteHeater_response..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_DeleteHeater_response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+
+
 		//  char cPayload1[100];
 		char cPayload1[300];  // Original Working
 		// char cPayload1[330];
@@ -1658,6 +1707,10 @@ static void http_get_task(void *pvParameters)
 
 				    case AUTO_SCREEN_OFF_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_response, topic_auto_screen_off_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+
+				    case DELETE_HEATER_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    default:   break;
 				}

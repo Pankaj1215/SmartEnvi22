@@ -483,8 +483,8 @@ esp_err_t app_init(void) {
     app_data->display_settings.display_brightness = DISPLAY_BRIGHTNESS_MAX;
     app_data->display_settings.is_auto_display_brightness_en = false;
 
-    // app_data->display_settings.is_auto_screen_off_en = true; // Original or old firmware
-    app_data->display_settings.is_auto_screen_off_en = false; //asked by client to change to never dispaly mode by default.
+     app_data->display_settings.is_auto_screen_off_en = true; // Original or old firmware
+    // app_data->display_settings.is_auto_screen_off_en = false; //CR not yet Approved. asked by client to change to never dispaly mode by default.
 
     app_data->display_settings.auto_screen_off_delay_sec = AUTO_SCREEN_OFF_DELAY_SEC_DEFAULT;
 
@@ -814,7 +814,7 @@ static void standby_mode_task(app_data_t *data) {
                     }
                 }
 
-                // Testing on For displaying SSID short cut
+                // Testing on For displaying SSID short cut   // Working one verification pending..
 
                // else if (!((*btn >> BUTTON_UP_STAT) & 0x01)) && (((*btn >> BUTTON_DOWN_STAT) & 0x01))
                  else if ((!((*btn >> BUTTON_UP_STAT) & 0x01))&& (((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)))
@@ -831,7 +831,7 @@ static void standby_mode_task(app_data_t *data) {
                          btn_up_press_ms = cur_ms;
                 	}
                    }
-
+                 //
                 // Testing end
 
                 else if (!((*btn >> BUTTON_DOWN_STAT) & 0x01)) { // only button down is pressed
@@ -5475,15 +5475,20 @@ static void night_light_task(void *param) {
         else {
 #define MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
 #ifdef MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
+        	// *nlight_cfg = 255255255;
 
             float r_br_NL_disable = 100 *(GET_LED_R_VAL(*nlight_cfg)/2.6) / 100;  // Exsiting logic
             float g_br_NL_disable = 100 * (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
             float b_br_NL_disable = 100 * (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
 
+//            float r_br_NL_disable = 99;  // Exsiting logic
+//            float g_br_NL_disable = 99;
+//            float b_br_NL_disable =99;
+
             if(rgb_led_state == 1)
 			   {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
 				   night_light_set_br((int)r_br_NL_disable, (int)g_br_NL_disable, (int)b_br_NL_disable);  // Original Line..
-		          //  printf("\n night light disable %d %d  %d %d %d %d\r", *ambient_light, *nlight_auto_en,*nlight_cfg, (int)r_br_NL_disable,(int) g_br_NL_disable, (int)b_br_NL_disable);
+		         // printf("\n night light disable %d %d  %d %d %d %d\r", *ambient_light, *nlight_auto_en,*nlight_cfg, (int)r_br_NL_disable,(int) g_br_NL_disable, (int)b_br_NL_disable);
 			   }
 //            else(rgb_led_state == 0)
              else
@@ -5830,6 +5835,16 @@ int app_get_temp_unit(void) {
     if (app_data) {        return app_data->settings.temperature_unit;    }    return -1;}
 bool app_get_rgb_state(void) {
       return rgb_led_state;
+}
+
+void app_delete_heater(bool value)
+{
+	if(value == 1){
+	display_clear_screen();
+	 display_menu("heater", DISPLAY_COLOR, "Deleted!", DISPLAY_COLOR);
+	 vTaskDelay(5000);
+	 erase_storage_all(); // erase flash..
+	 esp_restart();}
 }
 
 int app_get_light_LDR_parm(void) {

@@ -69,7 +69,7 @@ void getIP_address(void);
 
 #define PING_DEVICE_ACK    13
 #define AUTO_SCREEN_OFF_ACK  14
-
+#define DELETE_HEATER_ACK  15
 
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 

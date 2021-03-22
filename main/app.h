@@ -166,12 +166,12 @@ extern char uniqueDeviceID[12];
 
 // night light
 
-#define NIGHT_LIGHT_VAL_DEF 0x00646464
+#define NIGHT_LIGHT_VAL_DEF 0x00646464   // old one
+// #define NIGHT_LIGHT_VAL_DEF 0xffffff       // white colour..working one .. comment  app_data->night_light_cfg = 16711888; // from app_init() function..
 
- // #define NIGHT_LIGHT_VAL_DEF 0x00646464   // Original Value
+
 #define NIGHT_LIGHT_VAL_MIN 0x00000000
 #define NIGHT_LIGHT_VAL_MAX 0x00646464
-
 
 
 #define NIGHT_LIGHT_BRIGHTNESS_MAX 100
@@ -740,6 +740,7 @@ bool app_get_heater_state(void);
 bool app_get_anti_freeze_status(void);
 bool app_get_rgb_state(void);
 bool get_heater_under_repair_status(void);
+void app_delete_heater(bool value);
 
 int app_get_light_LDR_parm(void);
 

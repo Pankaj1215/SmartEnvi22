@@ -110,6 +110,8 @@
 #define REMOTE_CMD_PING_DEVICE   "ping_device"
 #define REMOTE_CMD_AUTO_SCREEN_OFF   "auto_screen_off"
 
+#define REMOTE_CMD_DELETE_HEATER   "delete_heater"
+
 
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)
