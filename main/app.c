@@ -698,6 +698,9 @@ static void standby_mode_task(app_data_t *data) {
     // clear screen
     display_clear_screen();
 
+    bool prev_pairON_blinkWifi = pairON_blinkWifi ;
+	bool prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
+
     // Added for testing begin 03March2021 _Comment not approved CR for standby mode AP off.
 //	if(FlashEraseEnableAPMode ==1)
 //	{    // FlashEraseEnableAPMode = 0;
@@ -705,10 +708,11 @@ static void standby_mode_task(app_data_t *data) {
 //		esp32_wifi_client_enable(username,password);   printf("In standby mode  Disable  AP Mode \n");
 //	}
 
+    // cr not appproved , so comment this ..after testing..
     if((FlashEraseEnableAPMode == 1) ||(pairON_blinkWifi == 1))
 	// if(FlashEraseEnableAPMode ==1)
-	{    //   data->display_settings.auto_screen_off_delay_sec = 500;
-	       data->display_settings.is_auto_screen_off_en = false;
+	{       data->display_settings.auto_screen_off_delay_sec = 180;
+	     //  data->display_settings.is_auto_screen_off_en = false;
 	}
 
      // Test end
@@ -815,8 +819,8 @@ static void standby_mode_task(app_data_t *data) {
                 }
 
                 // Testing on For displaying SSID short cut   // Working one verification pending..
-
-               // else if (!((*btn >> BUTTON_UP_STAT) & 0x01)) && (((*btn >> BUTTON_DOWN_STAT) & 0x01))
+// #define SHORT_CUT_DISPLAYING_SSID
+#ifdef SHORT_CUT_DISPLAYING_SSID
                  else if ((!((*btn >> BUTTON_UP_STAT) & 0x01))&& (((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)))
                 { // only up is pressed
                 	if ((cur_ms - btn_up_press_ms) >= 2000) {
@@ -831,6 +835,7 @@ static void standby_mode_task(app_data_t *data) {
                          btn_up_press_ms = cur_ms;
                 	}
                    }
+#endif
                  //
                 // Testing end
 
@@ -918,14 +923,15 @@ static void standby_mode_task(app_data_t *data) {
    	   }
 
 
-   if(uchUpdateDoneOnce){
-   	if(oneTimeRegistrationPacketToAWS == 0)
-   	{	uchPairDoneDisplayOnceFlag++;
-
-   	   if(uchPairDoneDisplayOnceFlag == 2)
-   	   {  update_display = true;  printf("Update once \n "); uchUpdateDoneOnce = 0;}
-   	  }
-     }
+//   if(uchUpdateDoneOnce){
+////   	if((oneTimeRegistrationPacketToAWS == 0)||(pairON_blinkWifi ==0))
+//	   	if(oneTimeRegistrationPacketToAWS == 0)
+//     	{	uchPairDoneDisplayOnceFlag++;
+//
+//   	   if(uchPairDoneDisplayOnceFlag == 2)
+//   	   {  update_display = true;  printf("Update once \n "); uchUpdateDoneOnce = 0;}
+//   	  }
+//     }
 
         if (update_display) {
                update_display = false;
@@ -953,6 +959,13 @@ static void standby_mode_task(app_data_t *data) {
                if (data->is_child_lock_active)
                    display_child_lock_icon(DISPLAY_COLOR);
            }
+
+        if( prev_pairON_blinkWifi != pairON_blinkWifi )
+        {	update_display = 1; prev_pairON_blinkWifi = pairON_blinkWifi;}
+
+    	if (prev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
+    	{update_display = 1; prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;}
+
 
        // if(oneTimeRegistrationPacketToAWS == 1)
        if((oneTimeRegistrationPacketToAWS ==1)||(pairON_blinkWifi ==1))
@@ -997,6 +1010,12 @@ static void manual_temperature_mode_task(app_data_t *data) {
     timer_t t_target_temp_changed_ms = 0;
   //  bool update_display = true;
     unsigned char uchPairDoneDisplayOnceFlag = 0;
+
+
+    bool mprev_pairON_blinkWifi = pairON_blinkWifi ;
+	bool mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
+
+
     // clear screen
     display_clear_screen();
 
@@ -1007,12 +1026,12 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //		 esp32_wifi_ap_enable(uniqueDeviceID, ap_password); printf("In manual temperature loop  Enable AP Mode \n");
 //	}
 
+    // CR not yet  aprroved    // cr not appproved , so comment this ..after testing..
 	 if((FlashEraseEnableAPMode ==1)||(pairON_blinkWifi ==1))
 	// if(FlashEraseEnableAPMode ==1)
-	{ // data->display_settings.auto_screen_off_delay_sec = 500;
-	   data->display_settings.is_auto_screen_off_en = false;
+	{  data->display_settings.auto_screen_off_delay_sec = 180;
+	  // data->display_settings.is_auto_screen_off_en = false;
 	}
-
 
     // wait until timer button is released so that it will prevent entering AUTO mode if this mode is entered from Timer mode
     while (!((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)) vTaskDelay(1 / portTICK_RATE_MS);
@@ -1345,24 +1364,30 @@ static void manual_temperature_mode_task(app_data_t *data) {
 			 } }//end of else
 
 
-
 	 //  if(paringOnFlag == 1){
 	 // if(oneTimeRegistrationPacketToAWS == 1)
-	if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
-	   {
-		   update_display =1; // display_wifi_icon_pairing_blinking(DISPLAY_COLOR); printf(" in manual temperature  mode wifi icon blinking \n ");
-	   }
-
-	  if(uchUpdateDoneOnce){
-	   	if(oneTimeRegistrationPacketToAWS == 0)
-	   	{	uchPairDoneDisplayOnceFlag++;
-
-	   	   if(uchPairDoneDisplayOnceFlag == 2)
-	   	   {  update_display = true;  printf("Update once \n "); uchUpdateDoneOnce = 0;}
-	   	  }
-	     }
 
 
+//	  if(uchUpdateDoneOnce){
+////	   	if((oneTimeRegistrationPacketToAWS == 0)||(pairON_blinkWifi ==0))
+//	   	if(oneTimeRegistrationPacketToAWS == 0)
+//		  {	uchPairDoneDisplayOnceFlag++;
+//
+//	   	   if(uchPairDoneDisplayOnceFlag == 2)
+//	   	   {  update_display = true;  printf("Update once \n "); uchUpdateDoneOnce = 0;}
+//	   	  }
+//	     }
+
+	        if( mprev_pairON_blinkWifi != pairON_blinkWifi )
+	        {	update_display = 1; mprev_pairON_blinkWifi = pairON_blinkWifi;}
+
+	    	if (mprev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
+	    	{update_display = 1; mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;}
+
+
+		if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
+		   { update_display =1; // display_wifi_icon_pairing_blinking(DISPLAY_COLOR); printf(" in manual temperature  mode wifi icon blinking \n ");
+		   }
 
         if (update_display) {
             update_display = false;
@@ -1391,9 +1416,6 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //            if (data->is_connected)
 //                display_wifi_icon(DISPLAY_COLOR);
 
-            // Testing ..
-           // if(paringOnFlag == 1){
-           	// if(oneTimeRegistrationPacketToAWS == 1)
         	if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
            	 {
                 display_wifi_icon_pairing_blinking(DISPLAY_COLOR);
