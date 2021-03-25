@@ -179,6 +179,7 @@ extern unsigned char manually_put_heater_under_repair_enable;
 extern unsigned char manually_put_heater_under_repair_status_for_malfunctionMonitor;
 
 extern int nlight_br_TestingInSynchPacket;
+extern bool PairDataRecievedFromAPP;
 
 #endif
 
@@ -933,12 +934,20 @@ static void standby_mode_task(app_data_t *data) {
 //   	  }
 //     }
 
+   	if(PairDataRecievedFromAPP == 0){
         if (update_display) {
                update_display = false;
 
                display_clear_screen();
+
+               if(pairON_blinkWifi ==1)
+               {
+            	   display_menu_pair_Heater("please wait..", DISPLAY_COLOR, "pairing heater", DISPLAY_COLOR);
+            	 //  display_menu_pair_Heater("connecting....", DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
+               }
+               else
                // display standby message
-               display_standby_message(DISPLAY_COLOR);
+               { display_standby_message(DISPLAY_COLOR);}
 
                // display connection status indication if connected
 //               if (data->is_connected)
@@ -959,9 +968,11 @@ static void standby_mode_task(app_data_t *data) {
                if (data->is_child_lock_active)
                    display_child_lock_icon(DISPLAY_COLOR);
            }
+   	   }
 
         if( prev_pairON_blinkWifi != pairON_blinkWifi )
-        {	update_display = 1; prev_pairON_blinkWifi = pairON_blinkWifi;}
+        {  	 update_display = 1; prev_pairON_blinkWifi = pairON_blinkWifi;
+        }
 
     	if (prev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
     	{update_display = 1; prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;}
@@ -1389,27 +1400,36 @@ static void manual_temperature_mode_task(app_data_t *data) {
 		   { update_display =1; // display_wifi_icon_pairing_blinking(DISPLAY_COLOR); printf(" in manual temperature  mode wifi icon blinking \n ");
 		   }
 
+		if(PairDataRecievedFromAPP == 0){
         if (update_display) {
             update_display = false;
             display_clear_screen();
 
-            if (display_target_temp) {
-                display_temperature(*temp, DISPLAY_COLOR);
-            } else {
-
-            	// Original
-               // display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), *temp, DISPLAY_COLOR);
-//				float lf_temp =0;         // Testing Line Begin_TEST
-//				float lf_temp_roundOff =0;
-//				int ambient_temp_f = 0;
-//				lf_temp = celsius_to_fahr(*ambient_temp_c);
-//				lf_temp_roundOff = round(lf_temp);
-//				ambient_temp_f = lf_temp_roundOff;
-            	int ambient_temp_f = 0;
-				ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
-
-                display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, *temp, DISPLAY_COLOR);
+            if(pairON_blinkWifi ==1)
+            {
+            	display_menu_pair_Heater("please wait..", DISPLAY_COLOR, "pairing heater", DISPLAY_COLOR);
+            	// display_menu_pair_Heater("Please wait....", DISPLAY_COLOR, "connecting heater !!", DISPLAY_COLOR);
+            //	display_menu_pair_Heater("connecting....", DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
             }
+            else{
+					if (display_target_temp) {
+						display_temperature(*temp, DISPLAY_COLOR);
+					} else {
+
+						// Original
+					   // display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), *temp, DISPLAY_COLOR);
+		//				float lf_temp =0;         // Testing Line Begin_TEST
+		//				float lf_temp_roundOff =0;
+		//				int ambient_temp_f = 0;
+		//				lf_temp = celsius_to_fahr(*ambient_temp_c);
+		//				lf_temp_roundOff = round(lf_temp);
+		//				ambient_temp_f = lf_temp_roundOff;
+						int ambient_temp_f = 0;
+						ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
+						display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, *temp, DISPLAY_COLOR);
+					}
+            }//end of else of  if(pairON_blinkWifi ==1)
+
 
             // display connected status icon if connected
             // Original ...
@@ -1429,6 +1449,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
             if (data->is_child_lock_active)
                 display_child_lock_icon(DISPLAY_COLOR);
         }// end of if diplay update
+		} // end if(PairDataRecievedFromAPP == 0){
+
 
         // Original ..
        // vTaskDelay(1 / portTICK_RATE_MS);

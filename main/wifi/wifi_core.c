@@ -63,6 +63,7 @@
 
 #include "display.h"   // Added for displaying Pair success on 03march2021
 
+bool PairDataRecievedFromAPP;
 unsigned char FlashEraseEnableAPMode;
 unsigned char device_health_status;
 unsigned char manually_put_heater_under_repair_enable;
@@ -3227,10 +3228,14 @@ void writeEEPROM()
 	set_string_to_storage(NVS_LOC_ID, locID);
 	set_string_to_storage(NVS_DEVICE_NAME, name);
 
+	PairDataRecievedFromAPP = 1;
+
 	// New added on 03MArch20202 begin
 	 display_clear_screen();
-	 display_menu("Heater", DISPLAY_COLOR, "Connected!", DISPLAY_COLOR);
-	 vTaskDelay(3000);
+	 // display_menu("Heater", DISPLAY_COLOR, "Connected!", DISPLAY_COLOR);
+	// display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
+	 display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully!!", DISPLAY_COLOR);
+	 vTaskDelay(5000);
 
     // end
 	esp_restart();
