@@ -1194,14 +1194,14 @@ esp_err_t display_wifi_icon_pairing_blinking(int color)
     DISPLAY_MUTEX_LOCK(mutex_lock);
 
     pairBlinkFlag = !pairBlinkFlag;
-    printf("pairBlinkFlag: %d \n", pairBlinkFlag);
+    // printf("pairBlinkFlag: %d \n", pairBlinkFlag);
 
     if(pairBlinkFlag == 1)
-    {   printf("Wifi icon \n ");
+    {  // printf("Wifi icon \n ");
     	ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level4->width, 0, display_icon_wifi_level4->width, display_icon_wifi_level4->height, display_icon_wifi_level4->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
     }
     else
-    {  printf("Wifi icon low medium \n ");
+    {  // printf("Wifi icon low medium \n ");
     	ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_wifi_level1->width, 0, display_icon_wifi_level1->width, display_icon_wifi_level1->height, display_icon_wifi_level1->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
     }
 

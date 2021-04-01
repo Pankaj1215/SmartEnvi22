@@ -536,10 +536,12 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
             ESP_LOGI(TAG, "station "MACSTR" join, AID=%d",
                      MAC2STR(event->mac), event->aid);
             printf("DILPREET CONNECTED \n ");
+           // app_data->display_settings.is_auto_screen_off_en = false;
         } else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) { pairON_blinkWifi = 0; printf("DILPREET DISCONNECTED \n ");
             wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
             ESP_LOGI(TAG, "station "MACSTR" leave, AID=%d",
                      MAC2STR(event->mac), event->aid);
+
         }
     // End
 
@@ -3229,16 +3231,21 @@ void writeEEPROM()
 	set_string_to_storage(NVS_DEVICE_NAME, name);
 
 	PairDataRecievedFromAPP = 1;
-
+	// data->display_settings.is_auto_screen_off_en = 0;
+	 while(1){
+    // printf("connected successfully \n ");
+    app_data->display_settings.is_auto_screen_off_en = false;
+	 display_on();
 	// New added on 03MArch20202 begin
 	 display_clear_screen();
 	 // display_menu("Heater", DISPLAY_COLOR, "Connected!", DISPLAY_COLOR);
 	// display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-	 display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully!!", DISPLAY_COLOR);
+	 display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
 	 vTaskDelay(5000);
 
     // end
 	esp_restart();
+	}// end of while(1)
 }
 
 

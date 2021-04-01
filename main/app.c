@@ -349,10 +349,10 @@ static void print_fw_version(void)
    //   ESP_LOGI("firmware_version", "%s", fw_version);
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
-   //  display_clear_screen();
+     display_clear_screen();
    //   display_menu("Firm_ver", DISPLAY_COLOR, fw_version, DISPLAY_COLOR);
-   // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
-  //   vTaskDelay(3000); //    // wait for at least Firmware version..
+    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+    vTaskDelay(3000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
 
@@ -398,14 +398,13 @@ void Display_uniqueID_onbootup(void)
 	     display_clear_screen();
 //	     display_menu_pair_Heater("pair on", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
 	     display_menu_pair_Heater("Connect to", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
-
-	     vTaskDelay(10000);
+	     vTaskDelay(4000); // vTaskDelay(10000);
 	}
 	else
 	{
 		 display_clear_screen();
 		 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
-		 vTaskDelay(10000);
+		 vTaskDelay(4000); // vTaskDelay(10000);
 	}
 }
 
@@ -712,12 +711,14 @@ static void standby_mode_task(app_data_t *data) {
     // cr not appproved , so comment this ..after testing..
     if((FlashEraseEnableAPMode == 1) ||(pairON_blinkWifi == 1))
 	// if(FlashEraseEnableAPMode ==1)
-	{       data->display_settings.auto_screen_off_delay_sec = 180;
-	     //  data->display_settings.is_auto_screen_off_en = false;
+	{
+    	  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+    	 // data->display_settings.auto_screen_off_delay_sec = 15;
+    	//  data->display_settings.is_auto_screen_off_en = false;
 	}
 
-     // Test end
 
+     // Test end
 
     // wait until power button is released
     while (!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01)) vTaskDelay(1 / portTICK_RATE_MS);
@@ -918,28 +919,19 @@ static void standby_mode_task(app_data_t *data) {
 
         // Added for testing ..Begin
 
-   	 // if(oneTimeRegistrationPacketToAWS == 1)
-   	  if((oneTimeRegistrationPacketToAWS ==1) ||(pairON_blinkWifi ==1))
+
+        // wifi blink working ..commented as rejected..
+
+   	//  if((oneTimeRegistrationPacketToAWS ==1) ||(pairON_blinkWifi ==1))
+   	   if(pairON_blinkWifi == 1)
    	   {   update_display =1; // display_wifi_icon_pairing_blinking(DISPLAY_COLOR); printf(" in manual temperature  mode wifi icon blinking \n ");
    	   }
 
 
-//   if(uchUpdateDoneOnce){
-////   	if((oneTimeRegistrationPacketToAWS == 0)||(pairON_blinkWifi ==0))
-//	   	if(oneTimeRegistrationPacketToAWS == 0)
-//     	{	uchPairDoneDisplayOnceFlag++;
-//
-//   	   if(uchPairDoneDisplayOnceFlag == 2)
-//   	   {  update_display = true;  printf("Update once \n "); uchUpdateDoneOnce = 0;}
-//   	  }
-//     }
-
    	if(PairDataRecievedFromAPP == 0){
         if (update_display) {
                update_display = false;
-
                display_clear_screen();
-
                if(pairON_blinkWifi ==1)
                {
             	   display_menu_pair_Heater("please wait..", DISPLAY_COLOR, "pairing heater", DISPLAY_COLOR);
@@ -953,8 +945,9 @@ static void standby_mode_task(app_data_t *data) {
 //               if (data->is_connected)
 //                   display_wifi_icon(DISPLAY_COLOR);
 
-           	 //if(oneTimeRegistrationPacketToAWS == 1)
-             if((oneTimeRegistrationPacketToAWS ==1)||(pairON_blinkWifi ==1))
+               // wifi blink working ..commented as rejected..//
+              // if((oneTimeRegistrationPacketToAWS ==1)||(pairON_blinkWifi ==1))
+              if((pairON_blinkWifi ==1))
               {
                   display_wifi_icon_pairing_blinking(DISPLAY_COLOR);
               }
@@ -962,7 +955,6 @@ static void standby_mode_task(app_data_t *data) {
               if (data->is_connected)
                   display_wifi_icon(DISPLAY_COLOR);
               }// end of else of  if(paringOnFlag == 1)
-
 
                // display lock icon if child lock is active
                if (data->is_child_lock_active)
@@ -972,20 +964,28 @@ static void standby_mode_task(app_data_t *data) {
 
         if( prev_pairON_blinkWifi != pairON_blinkWifi )
         {  	 update_display = 1; prev_pairON_blinkWifi = pairON_blinkWifi;
+
+        // new added ..
+                screen_off = false;
+      		    display_on();// end .
         }
 
+    	if(pairON_blinkWifi ==1)
+    		  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+
+        // wifi blink working ..commented as rejected..
     	if (prev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
     	{update_display = 1; prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;}
 
-
-       // if(oneTimeRegistrationPacketToAWS == 1)
-       if((oneTimeRegistrationPacketToAWS ==1)||(pairON_blinkWifi ==1))
-        {   	vTaskDelay(1000);	}
+        // wifi blink working ..commented as rejected..
+      // if((oneTimeRegistrationPacketToAWS ==1)||(pairON_blinkWifi ==1))
+        if((pairON_blinkWifi ==1))
+        {   vTaskDelay(1000);	}
         else
         { vTaskDelay(1 / portTICK_RATE_MS);}
 
-         // Testing End..
-
+        // Added for testing ..end
+       // vTaskDelay(1 / portTICK_RATE_MS);
     }
     // exit with display on
     if (screen_off)
@@ -1040,7 +1040,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
     // CR not yet  aprroved    // cr not appproved , so comment this ..after testing..
 	 if((FlashEraseEnableAPMode ==1)||(pairON_blinkWifi ==1))
 	// if(FlashEraseEnableAPMode ==1)
-	{  data->display_settings.auto_screen_off_delay_sec = 180;
+	{   data->display_settings.auto_screen_off_delay_sec = 180;  // o
+	   // data->display_settings.auto_screen_off_delay_sec = 15;
 	  // data->display_settings.is_auto_screen_off_en = false;
 	}
 
@@ -1210,12 +1211,12 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //                    screen_off = true;
 //                }
                 // Testing..
-            	if(AutoDisplayOffInParingOnFlag == 0){
+            //	if(AutoDisplayOffInParingOnFlag == 0){
             	if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
             		display_off();
                     screen_off = true;
                   } // end of
-                }// end of if(paringOnFlag == 0){
+               // }// end of if(paringOnFlag == 0){
             }
 
             if (!screen_off) {
@@ -1378,7 +1379,6 @@ static void manual_temperature_mode_task(app_data_t *data) {
 	 //  if(paringOnFlag == 1){
 	 // if(oneTimeRegistrationPacketToAWS == 1)
 
-
 //	  if(uchUpdateDoneOnce){
 ////	   	if((oneTimeRegistrationPacketToAWS == 0)||(pairON_blinkWifi ==0))
 //	   	if(oneTimeRegistrationPacketToAWS == 0)
@@ -1390,13 +1390,20 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //	     }
 
 	        if( mprev_pairON_blinkWifi != pairON_blinkWifi )
-	        {	update_display = 1; mprev_pairON_blinkWifi = pairON_blinkWifi;}
+	        {	update_display = 1; mprev_pairON_blinkWifi = pairON_blinkWifi;         // new added ..
+	           // new added ..
+	                screen_off = false;
+	      		    display_on();// end .
+	        }
+
+	    	if(pairON_blinkWifi ==1)
+	    		  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
 
 	    	if (mprev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
 	    	{update_display = 1; mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;}
 
-
-		if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
+		//if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
+		if(pairON_blinkWifi ==1)
 		   { update_display =1; // display_wifi_icon_pairing_blinking(DISPLAY_COLOR); printf(" in manual temperature  mode wifi icon blinking \n ");
 		   }
 
@@ -1428,6 +1435,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
 						ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
 						display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, *temp, DISPLAY_COLOR);
 					}
+
             }//end of else of  if(pairON_blinkWifi ==1)
 
 
@@ -1436,7 +1444,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //            if (data->is_connected)
 //                display_wifi_icon(DISPLAY_COLOR);
 
-        	if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
+        //	if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
+         	if((pairON_blinkWifi ==1))
            	 {
                 display_wifi_icon_pairing_blinking(DISPLAY_COLOR);
             }
@@ -1456,8 +1465,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
        // vTaskDelay(1 / portTICK_RATE_MS);
 
         // testing ..
-      // if(oneTimeRegistrationPacketToAWS == 1)
-      if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
+
+     // if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
+       if(pairON_blinkWifi == 1)
         {
         	vTaskDelay(1000);	}
         else
