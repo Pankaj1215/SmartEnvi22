@@ -759,6 +759,21 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "delete_heater", "status","success",  "value",value);
 	 				 app_delete_heater(value);
 	 }
+	 else if (strcmp(label, REMOTE_CMD_AUTO_DIM_PILOT_LIGHT_EN) == 0) {
+						 CommandAck = AUTO_DIM_PILOT_EN_ACK;
+						 //Put this value in the variable for threshold offset value
+						 printf("REMOTE_CMD_AUTO_DIM_PILOT_LIGHT_EN \r\n");
+		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "dim_pilot_light_en", "status","success",  "value",value);
+		 				app_enable_autodim_pilot_light(value);
+		 }
+	 else if (strcmp(label, REMOTE_CMD_AUTO_DISPLAY_BRIGHTNESS_EN) == 0) {
+						 CommandAck = AUTO_DISPLAY_BRIGHTNESS_EN_ACK;
+						 //Put this value in the variable for threshold offset value
+						 printf("REMOTE_CMD_DELETE_HEATER \r\n");
+		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "auto_display_brightness_en", "status","success",  "value",value);
+		 				app_enable_autodim_display(value);
+		 }
+
 	 else
 	 {
         printf("unhandled label %s %s\r\n", label, value);

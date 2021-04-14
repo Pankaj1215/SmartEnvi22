@@ -1541,6 +1541,47 @@ static void http_get_task(void *pvParameters)
 							// abort();  // Commneted for testing
 							}
 
+
+                            // Auto Dim Display and Auto Dim Pliot light Begin
+							const char *topic_dim_pilot_light_en = "aws/device/command/dim_pilot_light_en";  // testing for param key..
+							const int topic_dim_pilot_light_en_Len = strlen(topic_dim_pilot_light_en);
+							ESP_LOGI(TAG, "Subscribing.topic_dim_pilot_light_en...");
+							rc = aws_iot_mqtt_subscribe(&client, topic_dim_pilot_light_en, topic_dim_pilot_light_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_dim_pilot_light_en subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							const char *topic_dim_pilot_light_en_response = "aws/device/command/dim_pilot_light_en/response";  // testing for param key..
+							const int topic_dim_pilot_light_en_response_Len = strlen(topic_dim_pilot_light_en_response);
+							ESP_LOGI(TAG, "Subscribing.topic_dim_pilot_light_en_response...");
+							rc = aws_iot_mqtt_subscribe(&client, topic_dim_pilot_light_en_response, topic_dim_pilot_light_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_dim_pilot_light_en_response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							const char *topic_auto_display_brightness_en = "aws/device/command/auto_display_brightness_en";  // testing for param key..
+							const int topic_auto_display_brightness_en_Len = strlen(topic_auto_display_brightness_en);
+							ESP_LOGI(TAG, "Subscribing.topic_auto_display_brightness_en...");
+							rc = aws_iot_mqtt_subscribe(&client, topic_auto_display_brightness_en, topic_auto_display_brightness_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_auto_display_brightness_en subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							const char *topic_auto_display_brightness_en_response = "aws/device/command/auto_display_brightness_en/response";  // testing for param key..
+							const int topic_auto_display_brightness_en_response_Len = strlen(topic_auto_display_brightness_en_response);
+							ESP_LOGI(TAG, "Subscribing.topic_auto_display_brightness_en_response...");
+							rc = aws_iot_mqtt_subscribe(&client, topic_auto_display_brightness_en_response, topic_auto_display_brightness_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_auto_display_brightness_en_response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							// Auto Dim Display and Auto Dim Pliot light End..
+
+
 							 // Auto_Screen_Off_Enable_Disable
 							const char *topic_auto_screen_off = "aws/device/command/auto_screen_off";  // testing for param key..
 							const int topic_auto_screen_off_Len = strlen(topic_auto_screen_off);
@@ -1702,19 +1743,21 @@ static void http_get_task(void *pvParameters)
 				    case HEATER_CONFIG_SYNCH_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_h_c_s_response, topic_h_c_s_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-
-
 				    case PING_DEVICE_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_ping_device_response,topic_ping_device_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-
 				    case AUTO_SCREEN_OFF_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_response, topic_auto_screen_off_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-
 				    case DELETE_HEATER_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
+				    case AUTO_DIM_PILOT_EN_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topic_dim_pilot_light_en_response,topic_dim_pilot_light_en_response_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
+				    case AUTO_DISPLAY_BRIGHTNESS_EN_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topic_auto_display_brightness_en_response, topic_auto_display_brightness_en_response_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
 				    default:   break;
 				}
 

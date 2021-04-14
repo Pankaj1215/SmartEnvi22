@@ -74,7 +74,8 @@
 #define REMOTE_CMD_IS_AUTO_SET_TIME_DATE_EN      "is_auto_set_time_date_en"
 #define REMOTE_CMD_SET_TEMP_UNIT                 "set_temp_unit"
 #define REMOTE_CMD_GET_TEMP_UNIT                 "get_temp_unit"
-#define REMOTE_CMD_EN_AUTO_DIM_PILOT_LIGHT       "en_auto_dim_pilot_light"
+
+
 #define REMOTE_CMD_IS_AUTO_DIM_PILOT_LIGHT_EN    "is_auto_dim_pilot_light_en"
 
 // #define REMOTE_CMD_EN_NIGHT_LIGHT_AUTO_BRIGHTNESS "en_night_light_auto_brightness"
@@ -86,8 +87,13 @@
 #define REMOTE_CMD_GET_NIGHT_LIGHT_CONFIG        "get_night_light_config"
 #define REMOTE_CMD_EN_CHILD_LOCK                 "en_child_lock"
 #define REMOTE_CMD_IS_CHILD_LOCK_EN              "is_child_lock_en"
+
+#define REMOTE_CMD_EN_AUTO_DIM_PILOT_LIGHT       "en_auto_dim_pilot_light"  // Not in use .. only written for compile, these need to be clear/comment..
 #define REMOTE_CMD_EN_AUTO_DIM_DISPLAY           "en_auto_dim_display"
+
 #define REMOTE_CMD_IS_AUTO_DIM_DISPLAY_EN        "is_auto_dim_display_en"
+
+
 #define REMOTE_CMD_SET_SCREEN_BRIGHTNESS         "set_screen_brightness"
 #define REMOTE_CMD_GET_SCREEN_BRIGHTNESS         "get_screen_brightness"
 #define REMOTE_CMD_EN_AUTO_SCREEN_OFF            "en_auto_screen_off"
@@ -112,7 +118,8 @@
 
 #define REMOTE_CMD_DELETE_HEATER   "delete_heater"
 
-
+#define REMOTE_CMD_AUTO_DIM_PILOT_LIGHT_EN       "dim_pilot_light_en"    // Actual pay load for AWS IOT server level/App level..
+#define REMOTE_CMD_AUTO_DISPLAY_BRIGHTNESS_EN       "auto_display_brightness_en"
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)
  * \brief format before calling the msg handler
