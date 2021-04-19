@@ -120,6 +120,9 @@
 
 #define REMOTE_CMD_AUTO_DIM_PILOT_LIGHT_EN       "dim_pilot_light_en"    // Actual pay load for AWS IOT server level/App level..
 #define REMOTE_CMD_AUTO_DISPLAY_BRIGHTNESS_EN       "auto_display_brightness_en"
+
+#define REMOTE_CMD_MANUAL_CHANGE_DISPLAY_BRIGHTNESS      "manual_change_display_brightness"
+
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)
  * \brief format before calling the msg handler

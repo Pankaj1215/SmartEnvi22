@@ -74,6 +74,8 @@ void getIP_address(void);
 #define AUTO_DIM_PILOT_EN_ACK  16
 #define AUTO_DISPLAY_BRIGHTNESS_EN_ACK  17
 
+#define MANUAL_CHANGE_DISPLAY_BRIGHTNESS_ACK  18
+
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 
 int  getSubString(char *source, char *target,int from, int to);

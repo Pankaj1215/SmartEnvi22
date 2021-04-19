@@ -567,7 +567,9 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
            	if (app_data->is_auto_time_date_en)
            		 get_NTP_Time();
 
-           xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);  // Commented only for testing ..
+       //    xTaskCreate(&aws_iot_task, "aws_iot_task", 8192, NULL, 5, NULL);  // Commented for stack over flow issue .. 8192 to 12000. changed on 19April2021
+           xTaskCreate(&aws_iot_task, "aws_iot_task", 12000, NULL, 5, NULL);  // Commented only for testing ..
+
            getIP_address();
 
            	ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
@@ -1579,6 +1581,25 @@ static void http_get_task(void *pvParameters)
 							// abort();  // Commneted for testing
 							}
 
+							// Manual_change_display_brightness
+							const char *topic_manual_change_display_brightness = "aws/device/command/manual_change_display_brightness";  // testing for param key..
+							const int topic_manual_change_display_brightness_Len = strlen(topic_manual_change_display_brightness);
+							ESP_LOGI(TAG, "Subscribing.topic_manual_change_display_brightness...");
+							rc = aws_iot_mqtt_subscribe(&client, topic_manual_change_display_brightness, topic_manual_change_display_brightness_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_manual_change_display_brightness subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							const char *topic_manual_change_display_brightness_response = "aws/device/command/manual_change_display_brightness/response";  // testing for param key..
+							const int topic_manual_change_display_brightness_response_Len = strlen(topic_manual_change_display_brightness_response);
+							ESP_LOGI(TAG, "Subscribing.topic_manual_change_display_brightness_response...");
+							rc = aws_iot_mqtt_subscribe(&client, topic_manual_change_display_brightness_response, topic_manual_change_display_brightness_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_manual_change_display_brightness_response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
 							// Auto Dim Display and Auto Dim Pliot light End..
 
 
@@ -1757,6 +1778,9 @@ static void http_get_task(void *pvParameters)
 										 break;
 				    case AUTO_DISPLAY_BRIGHTNESS_EN_ACK :
 										 rc = aws_iot_mqtt_publish(&client, topic_auto_display_brightness_en_response, topic_auto_display_brightness_en_response_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
+				    case MANUAL_CHANGE_DISPLAY_BRIGHTNESS_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topic_manual_change_display_brightness_response, topic_manual_change_display_brightness_response_Len, &HeaterMeassage); CommandAck = 0;
 										 break;
 				    default:   break;
 				}

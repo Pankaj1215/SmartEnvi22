@@ -350,10 +350,10 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-   //   display_menu("Firm_ver", DISPLAY_COLOR, fw_version, DISPLAY_COLOR);
+    //  display_menu("Firm_v1", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(3000); //    // wait for at least Firmware version..
-    printf("FIRMWARE VERSION: %s\n",fwVersion);
+    printf("1FIRMWARE VERSION: %s\n",fwVersion);
 }
 
 void test_Display_wifi_strenth(void)
@@ -956,6 +956,7 @@ static void standby_mode_task(app_data_t *data) {
                   display_wifi_icon(DISPLAY_COLOR);
               }// end of else of  if(paringOnFlag == 1)
 
+              printf("Child lock status in Standby : %d  data->is_child_lock_active :%d ", data->settings.is_child_lock_en , data->is_child_lock_active);
                // display lock icon if child lock is active
                if (data->is_child_lock_active)
                    display_child_lock_icon(DISPLAY_COLOR);
@@ -1454,6 +1455,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                 display_wifi_icon(DISPLAY_COLOR);
             }// end of else of  if(paringOnFlag == 1)
 
+            printf("Child lock status in Manual Temp : %d  data->is_child_lock_active :%d ", data->settings.is_child_lock_en , data->is_child_lock_active);
             // display lock icon if child lock is active
             if (data->is_child_lock_active)
                 display_child_lock_icon(DISPLAY_COLOR);
@@ -2303,10 +2305,12 @@ static void auto_mode_task(app_data_t *data) {
     int wday = -1;
     int i = -1, j = -1;
 
+    printf("In Auto Mode %d \n ", *mode);
+
     while(*mode == APP_MODE_AUTO) {
         int sched_past_idx = -1;
         int sched_next_idx = -1;
-
+        printf("In Auto Mode in while %d\n " , *mode);
         wday = clock_get_day_of_week();
 
         auto_mode_sched_t *sched_week[7 * AUTO_MODE_SCHED_NUM];
@@ -2772,9 +2776,9 @@ static void menu_mode_task(app_data_t *data) {
                             *mode = menu_energy(data);
                             break;
 */
-//                        case MENU_CALENDAR:   // Earlier Working in last firmware..
-//                            *mode = menu_calendar(data);
-//                            break;
+                      case MENU_CALENDAR:   // Earlier Working in last firmware..
+                            *mode = menu_calendar(data);
+                            break;
                         case MENU_TIME_DATE:
                             *mode = menu_time_and_date(data);
                             break;
@@ -4523,8 +4527,8 @@ static app_mode_t menu_settings(app_data_t *data) {
 #ifdef Menu_dayLight_option
                          m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE;
 #else
-                       //  m_settings = MENU_SETTINGS_CHILD_LOCK;  // working // 1st change before day light added
-                         m_settings = MENU_SETTINGS_PILOT_LIGHT;
+                         m_settings = MENU_SETTINGS_CHILD_LOCK;  // working // 1st change before day light added
+                       //  m_settings = MENU_SETTINGS_PILOT_LIGHT;
  #endif
                             break;
 
@@ -4570,6 +4574,7 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Enable <--> Disable
                             data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
+                            printf("Child lock status: %d ", data->settings.is_child_lock_en);
                            // manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
                             break;
 #ifdef Menu_dayLight_option
@@ -4657,8 +4662,8 @@ static app_mode_t menu_settings(app_data_t *data) {
 #ifdef Menu_dayLight_option
                         	m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE;
 #else
-                         m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
-                        //	m_settings = MENU_SETTINGS_CHILD_LOCK;
+                       //  m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+                        	m_settings = MENU_SETTINGS_CHILD_LOCK;
 #endif
                             break;
 
@@ -4683,6 +4688,9 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Enable <--> Disable
                             data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
+
+                            printf("Child lock status: %d ", data->settings.is_child_lock_en);
+
                            // manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
                             break;
 
