@@ -31,6 +31,11 @@
 #include "communication_server_hal.h"
 #include "communication_msg_handler.h"
 
+//#include "freertos/FreeRTOS.h"   // Added for TaskDelayFunction ..s FreeRTOS HEADERS
+//#include "freertos/task.h"
+//#include "freertos/event_groups.h"
+
+
 #include "common.h"
 //TODO: #include "debug.h"
 #include "lucidtron_core.h"
@@ -39,6 +44,8 @@
 #include "app.h"
 #include "mqtt.h"
 #include "version.h"
+
+#include "display.h"  // Display on Screen
 
 #include "wifi_core.h" // New Added for P_Testing included in wifi_core.h
 // #include <math.h>
@@ -637,6 +644,12 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 		   printf("dev_registered successfully \n");
 		oneTimeRegistrationPacketToAWS= 0;
 		keepAliveFlag = 1;
+
+//		display_clear_screen();
+//		display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
+//		printf("/n Connected Successfully /n ");
+//		vTaskDelay(4000);
+
 	}
 	 else if (strcmp(label, REMOTE_CMD_HEATER_ON_OFF) == 0) {
 		  printf("REMOTE_CMD_HEATER_ON OFF \n");

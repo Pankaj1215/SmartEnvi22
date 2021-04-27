@@ -166,7 +166,7 @@ extern char uniqueDeviceID[12];
 
 // night light
 
-#define NIGHT_LIGHT_VAL_DEF 0x00646464   // old one
+ #define NIGHT_LIGHT_VAL_DEF 0x00646464   // old one
 // #define NIGHT_LIGHT_VAL_DEF 0xffffff       // white colour..working one .. comment  app_data->night_light_cfg = 16711888; // from app_init() function..
 
 
@@ -327,9 +327,14 @@ enum menu_settings {
 #endif
 #ifdef HeaterUnderReapir
 	MENU_SETTINGS_HEATER_UNDER_REPAIR,
-	MENU_SETTINGS_HEATER_UNDER_REPAIR_EN
+	MENU_SETTINGS_HEATER_UNDER_REPAIR_EN,
 #endif
 
+// #define HEATER_NAME_SETTING
+#ifdef HEATER_NAME_SETTING
+	MENU_SETTING_HEATER_NAME,
+	MENU_SETTING_HEATER_NAME_SHOW
+#endif
 };
 
 enum menu_display_settings {

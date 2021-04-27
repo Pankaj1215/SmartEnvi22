@@ -266,7 +266,7 @@ int ping_TwentySecFirstIterationOver = 0;
 int ping_TwentySecOver = 0;
 
  extern bool pingDeviceOnFlag;
-
+ extern char name[30];
 void init_Variables(void);
 
 void init_Variables(void){
@@ -350,9 +350,11 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-    //  display_menu("Firm_v1", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+    // display_menu("Firm_v8", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+    // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
+    // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
     display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
-    vTaskDelay(3000); //    // wait for at least Firmware version..
+    vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("1FIRMWARE VERSION: %s\n",fwVersion);
 }
 
@@ -398,13 +400,13 @@ void Display_uniqueID_onbootup(void)
 	     display_clear_screen();
 //	     display_menu_pair_Heater("pair on", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
 	     display_menu_pair_Heater("Connect to", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
-	     vTaskDelay(4000); // vTaskDelay(10000);
+	     vTaskDelay(3000); // vTaskDelay(10000);
 	}
 	else
 	{
 		 display_clear_screen();
 		 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
-		 vTaskDelay(4000); // vTaskDelay(10000);
+		 vTaskDelay(3000); // vTaskDelay(10000);
 	}
 }
 
@@ -533,7 +535,7 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_TIMEZONE_OFFSET_INDEX, &(app_data->timezone_offset_idx));
     get_integer_from_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, &(app_data->night_light_cfg));
 
-    app_data->night_light_cfg = 16711888; // Only For testing ..
+     app_data->night_light_cfg = 16711888; // Only For testing ..
 
     get_data_from_storage(STORAGE_KEY_SETTINGS, &(app_data->settings));
     printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
@@ -655,6 +657,7 @@ static void app_task(void *param) {
      xTaskCreate(Temp_MalfunctionTask, "tMalFunc_task", 4096, (void *)app_data, 12, NULL);
 
      Display_uniqueID_onbootup(); // Testing only ////
+    // print_fw_version();  // Comment FW_version...
 
     while (1) {
         switch (*mode) {
@@ -714,9 +717,12 @@ static void standby_mode_task(app_data_t *data) {
 	{
     	  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
     	 // data->display_settings.auto_screen_off_delay_sec = 15;
-    	//  data->display_settings.is_auto_screen_off_en = false;
+    	// data->display_settings.is_auto_screen_off_en = false;
 	}
-
+//    else // new added for else condition on 23 April 2021
+//    {
+//    	data->display_settings.is_auto_screen_off_en = true;
+//    }
 
      // Test end
 
@@ -830,8 +836,7 @@ static void standby_mode_task(app_data_t *data) {
                 		  {
                 			display_clear_screen();
                 		   display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
-                		   printf("Display SSID on short cut ");
-
+                		   printf("Display SSID up ");
                 		 vTaskDelay(4000);}
                 		 update_display = 1;
                          btn_up_press_ms = cur_ms;
@@ -972,14 +977,29 @@ static void standby_mode_task(app_data_t *data) {
         }
 
     	if(pairON_blinkWifi ==1)
-    		  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+    	{  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+    	}
 
         // wifi blink working ..commented as rejected..
     	if (prev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
-    	{update_display = 1; prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;}
+    	{ prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
+			display_clear_screen();
+			display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
+			printf("/n Connected Successfully /n ");
+			 vTaskDelay(4000);
+		    update_display = 1;
+    	}
 
         // wifi blink working ..commented as rejected..
       // if((oneTimeRegistrationPacketToAWS ==1)||(pairON_blinkWifi ==1))
+//    	 if(oneTimeRegistrationPacketToAWS == 0)
+//    	 {
+//    		   	display_clear_screen();
+//    		    display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+//    		    printf("Display SSID on short cut ");
+//          		 vTaskDelay(4000);
+//    	 }
+
         if((pairON_blinkWifi ==1))
         {   vTaskDelay(1000);	}
         else
@@ -1045,6 +1065,12 @@ static void manual_temperature_mode_task(app_data_t *data) {
 	   // data->display_settings.auto_screen_off_delay_sec = 15;
 	  // data->display_settings.is_auto_screen_off_en = false;
 	}
+//    else // new added for else condition on 23 April 2021
+//	{
+//	   	data->display_settings.is_auto_screen_off_en = true;
+//	}
+
+
 
     // wait until timer button is released so that it will prevent entering AUTO mode if this mode is entered from Timer mode
     while (!((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)) vTaskDelay(1 / portTICK_RATE_MS);
@@ -1233,12 +1259,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
-
                             manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
-
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
-
                             btn_up_press_ms = cur_ms;
                             btn_down_press_ms = cur_ms;
                         }
@@ -1398,10 +1421,18 @@ static void manual_temperature_mode_task(app_data_t *data) {
 	        }
 
 	    	if(pairON_blinkWifi ==1)
-	    		  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+	    	{  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+	    	}
 
 	    	if (mprev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
-	    	{update_display = 1; mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;}
+	    	{ mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
+
+			display_clear_screen();
+			display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
+			printf("/n Connected Successfully /n ");
+			 vTaskDelay(4000);
+			 update_display = 1;
+	    	}
 
 		//if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
 		if(pairON_blinkWifi ==1)
@@ -2310,7 +2341,7 @@ static void auto_mode_task(app_data_t *data) {
     while(*mode == APP_MODE_AUTO) {
         int sched_past_idx = -1;
         int sched_next_idx = -1;
-        printf("In Auto Mode in while %d\n " , *mode);
+        //printf("In Auto Mode in while %d\n " , *mode);
         wday = clock_get_day_of_week();
 
         auto_mode_sched_t *sched_week[7 * AUTO_MODE_SCHED_NUM];
@@ -4421,7 +4452,12 @@ static app_mode_t menu_settings(app_data_t *data) {
     bool exit = false;
     app_mode_t next_mode = data->mode;
 
-    uint8_t m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+#ifdef HEATER_NAME_SETTING
+    uint8_t m_settings = MENU_SETTING_HEATER_NAME;
+#else
+    uint8_t m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;  // old Firmware..
+#endif
+
     bool update_display = true;
     time_t btn_power_press_ms = 0;
 
@@ -4469,6 +4505,11 @@ static app_mode_t menu_settings(app_data_t *data) {
                 if ((*btn & (1 << BUTTON_POWER_BACK_STAT)) != (prev_btn & (1 << BUTTON_POWER_BACK_STAT))) { // power button toggles
                     if ((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) { // unpressed
                         switch (m_settings) {
+
+#ifdef HEATER_NAME_SETTING
+                        case MENU_SETTING_HEATER_NAME:
+#endif
+
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
 #ifdef Menu_dayLight_option
                          case MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE:
@@ -4511,9 +4552,13 @@ static app_mode_t menu_settings(app_data_t *data) {
 #ifdef HeaterUnderReapir
                         case  MENU_SETTINGS_HEATER_UNDER_REPAIR_EN:
                         	   m_settings = MENU_SETTINGS_HEATER_UNDER_REPAIR ;
-                        	    break;
+                        	   break;
 #endif
-
+#ifdef HEATER_NAME_SETTING
+                        case MENU_SETTING_HEATER_NAME_SHOW:
+                        	   m_settings = MENU_SETTING_HEATER_NAME ;
+                          break;
+#endif
                         }
 
                         update_display = true;
@@ -4523,6 +4568,11 @@ static app_mode_t menu_settings(app_data_t *data) {
                 } else if ((*btn & (1 << BUTTON_UP_STAT)) != (prev_btn & (1 << BUTTON_UP_STAT))) { // up button toggles
                     if ((*btn >> BUTTON_UP_STAT) & 0x01) { // unpressed
                         switch (m_settings) {
+#ifdef HEATER_NAME_SETTING
+                        case MENU_SETTING_HEATER_NAME:
+                        	   m_settings = MENU_SETTINGS_TEMPERATURE_UNIT ;
+                          break;
+#endif
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
 #ifdef Menu_dayLight_option
                          m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE;
@@ -4531,7 +4581,6 @@ static app_mode_t menu_settings(app_data_t *data) {
                        //  m_settings = MENU_SETTINGS_PILOT_LIGHT;
  #endif
                             break;
-
                             // It was commented for earlier-- uncommented on 16MArch 2021 again..
                         case MENU_SETTINGS_CHILD_LOCK:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT;
@@ -4556,7 +4605,11 @@ static app_mode_t menu_settings(app_data_t *data) {
                             break;
 #ifdef HeaterUnderReapir
                         case MENU_SETTINGS_HEATER_UNDER_REPAIR:
-                        	  m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+#ifdef HEATER_NAME_SETTING
+                        	m_settings = MENU_SETTING_HEATER_NAME;
+#else
+                        	m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
+#endif
                         	  break;
 #endif
                         case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
@@ -4635,9 +4688,17 @@ static app_mode_t menu_settings(app_data_t *data) {
                 } else if ((*btn & (1 << BUTTON_DOWN_STAT)) != (prev_btn & (1 << BUTTON_DOWN_STAT))) { // down button toggles
                     if ((*btn >> BUTTON_DOWN_STAT) & 0x01) { // unpressed
                         switch (m_settings) {
+#ifdef HEATER_NAME_SETTING
+                        case MENU_SETTING_HEATER_NAME:  m_settings = MENU_SETTINGS_HEATER_UNDER_REPAIR ;  break;
+#endif
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
 #ifdef HeaterUnderReapir
-                       	     m_settings = MENU_SETTINGS_HEATER_UNDER_REPAIR;
+#ifdef HEATER_NAME_SETTING
+                       	    m_settings = MENU_SETTING_HEATER_NAME;  // Old Firware
+#else
+                            m_settings = MENU_SETTINGS_HEATER_UNDER_REPAIR;
+#endif
+
 #else
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
 #endif
@@ -4647,7 +4708,6 @@ static app_mode_t menu_settings(app_data_t *data) {
                           m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
             	          break;
 #endif
-
             	          // It was commented for earlier-- uncommented on 16MArch 2021 again..
                         case MENU_SETTINGS_CHILD_LOCK:
                             m_settings = MENU_SETTINGS_TEMPERATURE_UNIT;
@@ -4750,6 +4810,9 @@ static app_mode_t menu_settings(app_data_t *data) {
                 } else if ((*btn & (1 << BUTTON_TIMER_FORWARD_STAT)) != (prev_btn & (1 << BUTTON_TIMER_FORWARD_STAT))) { // timer button toggles
                     if ((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01) { // unpressed
                         switch (m_settings) {
+#ifdef HEATER_NAME_SETTING
+                        case MENU_SETTING_HEATER_NAME:  m_settings = MENU_SETTING_HEATER_NAME_SHOW ;   break;
+#endif
                         case MENU_SETTINGS_TEMPERATURE_UNIT:
                             m_settings = MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE;
                             break;
@@ -4872,6 +4935,16 @@ static app_mode_t menu_settings(app_data_t *data) {
                 printf("MENU_SETTINGS_NIGHT_LIGHT_CFG\r\n");
                 display_menu((data->settings.is_night_light_auto_brightness_en) ? "Auto" : "Off", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
+#ifdef HEATER_NAME_SETTING
+            case MENU_SETTING_HEATER_NAME:
+                printf("MENU_SETTING_HEATER_NAME:\r\n");
+                display_menu("Heater", DISPLAY_COLOR, "Name", DISPLAY_COLOR);                break;
+            case MENU_SETTING_HEATER_NAME_SHOW:
+                printf("MENU_SETTING_HEATER_NAME_SHOW\r\n");
+               //  display_menu(name, DISPLAY_COLOR, NULL, DISPLAY_COLOR);                break;  // name - HeaterName
+                display_menu_pair_Heater(name, DISPLAY_COLOR, NULL, DISPLAY_COLOR);                break;
+
+#endif
             }
             update_display = false;
         }
@@ -5492,42 +5565,28 @@ static void night_light_task(void *param) {
 
                      nlight_br_TestingInSynchPacket = nlight_br; // Added only for Testing..
 
-                   // *nlight_cfg = 0xFFFFFF;
-                //     nlight_br = 76 ;  // Added for Testing // 77 bright will be less // 99 brightness will be high
-//                    int r_br = nlight_br * GET_LED_R_VAL(*nlight_cfg) / 100;  // Exsiting logic
-//                    int g_br = nlight_br * GET_LED_G_VAL(*nlight_cfg) / 100;
-//                    int b_br = nlight_br * GET_LED_B_VAL(*nlight_cfg) / 100;
-
                     float r_br = nlight_br * (GET_LED_R_VAL(*nlight_cfg)/2.6) / 100;  // Exsiting logic
                     float g_br = nlight_br * (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
                     float b_br = nlight_br * (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
 
-//                    float r_br =  GET_LED_R_VAL(*nlight_cfg)/2.6 ;   // New logic with out light sensor calculation.
-//                    float g_br =  GET_LED_G_VAL(*nlight_cfg)/2.6;
-//                    float b_br =  GET_LED_B_VAL(*nlight_cfg)/2.6;
+// #define AUTO_ON_OFF_MODE
+#ifdef AUTO_ON_OFF_MODE
+                    night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
+                    printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
 
-                    // set night light color and brightness
-                	// printf("night_light_task data->night_light_cfg %d \n ",data->night_light_cfg);
-                	// printf("app_data->night_light_cfg %d \n ",app_data->night_light_cfg);
-                   //  printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,r_br, g_br, b_br);
+#else
+			if(rgb_led_state == 1)
+			{
+			  night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
+			  printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
+			}
+			if(rgb_led_state == 0)
+			{     night_light_off();
+			   printf("Led OFF in night light enable \n ");
+			}
 
-                    if(rgb_led_state == 1)
-                    {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
-                        night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
-                    	// night_light_set_br(99, 0, 0); //  night_light_set_br(0, 255, 0);
-                        printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
-                       // printf("Led ON in night light task function \n ");
-                    }
-                    if(rgb_led_state == 0)
-                    {     night_light_off();
-                         printf("Led OFF in night light enable \n ");
-                    }
+#endif
 
-                   // int temp = 0;
-                   // uint_32 temp = 0;
-                   // temp = ((b_br | temp) << 16) | (( g_br | temp) <<8) |( r_br | temp);
-                  //  printf("\n temp : %d vs nlight_cfg  %d\n ",temp,*nlight_cfg );
-                   // night_light_set_br(0, 255, 0);       //  night_light_set_br(50, 255, 50);
                     t_set_brightness_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                    // printf("nlight_br %d \n ",nlight_br);                        // printf("\n\n*ambient_light %d \n ",*ambient_light);         // printf("*nlight_cfg %d \n ",*nlight_cfg);                  // printf("night light %d %d %d\r\n", r_br, g_br, b_br);
                 }
@@ -5535,6 +5594,7 @@ static void night_light_task(void *param) {
             prev_nlight_auto_en = true;
         }// end of if (*nlight_auto_en) {
         else {
+
 #define MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
 #ifdef MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
         	// *nlight_cfg = 255255255;
@@ -5542,10 +5602,6 @@ static void night_light_task(void *param) {
             float r_br_NL_disable = 100 *(GET_LED_R_VAL(*nlight_cfg)/2.6) / 100;  // Exsiting logic
             float g_br_NL_disable = 100 * (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
             float b_br_NL_disable = 100 * (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
-
-//            float r_br_NL_disable = 99;  // Exsiting logic
-//            float g_br_NL_disable = 99;
-//            float b_br_NL_disable =99;
 
             if(rgb_led_state == 1)
 			   {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..

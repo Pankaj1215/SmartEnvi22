@@ -99,6 +99,9 @@ char uniqueDeviceID[12];
 time_t keepAlive_ms = 0;
 
 unsigned char keepAliveSendDataToAWS = 0;
+unsigned char keepAliveSendDataToAWS_OneMinuteOver = 0;
+unsigned char Count_Minutes_keepAlivePacket = 0;
+
 #define KEEP_ALIVE_DATA__PACKET_DUR_MS  60000
 
 time_t heaterStateChangeScan_ms = 0;
@@ -202,7 +205,9 @@ int esp32_wifi_status = ESP32_WIFI_UNKNOWN;
 int web_server_status = WEB_SVR_STAT_UNKNOWN;
 
 // Short Packet Size..
+// char username[32],password[64],id[30],locID[30],name[30],timeZone[20]; // Original
 char username[32],password[64],id[30],locID[30],name[30],timeZone[20];
+
 
 wifi_config_t global_wifi_config;
 
@@ -1803,9 +1808,20 @@ static void http_get_task(void *pvParameters)
 				int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 				if ((cur_ms - keepAlive_ms) >= KEEP_ALIVE_DATA__PACKET_DUR_MS) {
 					keepAlive_ms = cur_ms;
-					keepAliveSendDataToAWS = 1;
+					// keepAliveSendDataToAWS = 1;
+					keepAliveSendDataToAWS_OneMinuteOver = 1;
 				  }
 			 }
+
+			 if (keepAliveSendDataToAWS_OneMinuteOver == 1)
+			 {
+			    keepAliveSendDataToAWS_OneMinuteOver = 0;
+			    Count_Minutes_keepAlivePacket++;
+			    if (Count_Minutes_keepAlivePacket >= 5)
+			    {  Count_Minutes_keepAlivePacket = 0;
+			       keepAliveSendDataToAWS = 1; }
+    	     }
+
 			// if(keepAliveSendDataToAWS==1)
 			 if((keepAliveSendDataToAWS==1)&&( CommandAck == 0))
 			 {
@@ -3307,7 +3323,10 @@ void writeEEPROM()
 	 display_clear_screen();
 	 // display_menu("Heater", DISPLAY_COLOR, "Connected!", DISPLAY_COLOR);
 	// display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-	 display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
+
+	// display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
+	 display_menu_pair_Heater("Device pairing",DISPLAY_COLOR, "in process !!", DISPLAY_COLOR);
+
 	 vTaskDelay(5000);
 
     // end
