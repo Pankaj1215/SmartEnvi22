@@ -267,6 +267,11 @@ int ping_TwentySecOver = 0;
 
  extern bool pingDeviceOnFlag;
  extern char name[30];
+ extern char WifiCreditialValidFlag;
+char ValidCreditentialCountForDisplay = 0;
+
+#define VALID_WIFI_CRENDTIALS
+
 void init_Variables(void);
 
 void init_Variables(void){
@@ -350,12 +355,12 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-    // display_menu("Firm_v8", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+     // display_menu("Firm_v4", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
     display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(2000); //    // wait for at least Firmware version..
-    printf("1FIRMWARE VERSION: %s\n",fwVersion);
+    printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
 
 void test_Display_wifi_strenth(void)
@@ -384,31 +389,31 @@ void test_Display_wifi_strenth(void)
 
 void Display_uniqueID_onbootup(void);
 // Original One..
-//void Display_uniqueID_onbootup(void)
-//{
-//	display_clear_screen();
-//	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
-//	 vTaskDelay(10000);
-//}
-
-// Testing one
 void Display_uniqueID_onbootup(void)
 {
-	if(FlashEraseEnableAPMode ==1)
-	{   // FlashEraseEnableAPMode = 0;
-		 esp32_wifi_ap_enable(uniqueDeviceID, ap_password); printf("In Display_uniqueID_onbootup  Enable AP Mode \n");
-	     display_clear_screen();
-//	     display_menu_pair_Heater("pair on", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
-	     display_menu_pair_Heater("Connect to", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
-	     vTaskDelay(3000); // vTaskDelay(10000);
-	}
-	else
-	{
-		 display_clear_screen();
-		 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
-		 vTaskDelay(3000); // vTaskDelay(10000);
-	}
+	 display_clear_screen();
+	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+	 vTaskDelay(3000); // vTaskDelay(10000);
 }
+
+// Testing one
+//void Display_uniqueID_onbootup(void)
+//{
+//	if(FlashEraseEnableAPMode ==1)
+//	{   // FlashEraseEnableAPMode = 0;
+//		 esp32_wifi_ap_enable(uniqueDeviceID, ap_password); printf("In Display_uniqueID_onbootup  Enable AP Mode \n");
+//	     display_clear_screen();
+////	     display_menu_pair_Heater("pair on", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
+//	     display_menu_pair_Heater("Connect to", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
+//	     vTaskDelay(3000); // vTaskDelay(10000);
+//	}
+//	else
+//	{
+//		 display_clear_screen();
+//		 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+//		 vTaskDelay(3000); // vTaskDelay(10000);
+//	}
+//}
 
 
 // void WatchDogSOftReset_app_main(void);
@@ -925,6 +930,31 @@ static void standby_mode_task(app_data_t *data) {
         // Added for testing ..Begin
 
 
+#ifdef VALID_WIFI_CRENDTIALS
+        if ((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 0))
+        {
+			display_clear_screen();
+			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect... !!", DISPLAY_COLOR);
+			printf("/n Not able to connect .. /n ");
+			vTaskDelay(4000);
+			update_display = 1;
+			ValidCreditentialCountForDisplay = 1;
+        }
+
+
+//			display_clear_screen();
+//			display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
+//			printf("/n Connecting please wait .. /n ");
+//			// vTaskDelay(4000);
+//			 update_display = 1;
+//
+//			// while(oneTimeRegistrationPacketToAWS);
+//	    	if (prev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
+//	    	{ prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
+//
+//	    	}
+//        }
+#endif
         // wifi blink working ..commented as rejected..
 
    	//  if((oneTimeRegistrationPacketToAWS ==1) ||(pairON_blinkWifi ==1))
@@ -944,7 +974,16 @@ static void standby_mode_task(app_data_t *data) {
                }
                else
                // display standby message
-               { display_standby_message(DISPLAY_COLOR);}
+               {
+#ifdef VALID_WIFI_CRENDTIALS
+            	   if ((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 1))
+            	   { display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR); }
+            	   else
+            	   display_standby_message(DISPLAY_COLOR);
+#else
+            	   display_standby_message(DISPLAY_COLOR);
+#endif
+               }
 
                // display connection status indication if connected
 //               if (data->is_connected)
@@ -961,7 +1000,7 @@ static void standby_mode_task(app_data_t *data) {
                   display_wifi_icon(DISPLAY_COLOR);
               }// end of else of  if(paringOnFlag == 1)
 
-              printf("Child lock status in Standby : %d  data->is_child_lock_active :%d ", data->settings.is_child_lock_en , data->is_child_lock_active);
+              //printf("Child lock status in Standby : %d  data->is_child_lock_active :%d ", data->settings.is_child_lock_en , data->is_child_lock_active);
                // display lock icon if child lock is active
                if (data->is_child_lock_active)
                    display_child_lock_icon(DISPLAY_COLOR);
@@ -984,10 +1023,13 @@ static void standby_mode_task(app_data_t *data) {
     	if (prev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
     	{ prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
 			display_clear_screen();
-			display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
+			display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
 			printf("/n Connected Successfully /n ");
 			 vTaskDelay(4000);
 		    update_display = 1;
+#ifdef VALID_WIFI_CRENDTIALS
+		    ValidCreditentialCountForDisplay = 1;
+#endif
     	}
 
         // wifi blink working ..commented as rejected..
@@ -1413,6 +1455,19 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //	   	  }
 //	     }
 
+
+#ifdef VALID_WIFI_CRENDTIALS
+        if ((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 0))
+        {
+			display_clear_screen();
+			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect... !!", DISPLAY_COLOR);
+			printf("/n Not able to connect .. /n ");
+			vTaskDelay(4000);
+			update_display = 1;
+			ValidCreditentialCountForDisplay = 1;
+        }
+#endif
+
 	        if( mprev_pairON_blinkWifi != pairON_blinkWifi )
 	        {	update_display = 1; mprev_pairON_blinkWifi = pairON_blinkWifi;         // new added ..
 	           // new added ..
@@ -1428,10 +1483,13 @@ static void manual_temperature_mode_task(app_data_t *data) {
 	    	{ mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
 
 			display_clear_screen();
-			display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
+			display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
 			printf("/n Connected Successfully /n ");
 			 vTaskDelay(4000);
 			 update_display = 1;
+#ifdef VALID_WIFI_CRENDTIALS
+		    ValidCreditentialCountForDisplay = 1;
+#endif
 	    	}
 
 		//if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
@@ -1451,22 +1509,35 @@ static void manual_temperature_mode_task(app_data_t *data) {
             //	display_menu_pair_Heater("connecting....", DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
             }
             else{
+
+#ifdef VALID_WIFI_CRENDTIALS
+            	   if ((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 1))
+            	   { display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR); }
+            	   else
+            	   {
+						if (display_target_temp) {
+							display_temperature(*temp, DISPLAY_COLOR);
+						} else {
+
+							// Original
+						   // display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), *temp, DISPLAY_COLOR);
+							int ambient_temp_f = 0;
+							ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
+							display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, *temp, DISPLAY_COLOR);
+						}
+            	   }//end if else of if((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 1))
+#else
 					if (display_target_temp) {
 						display_temperature(*temp, DISPLAY_COLOR);
 					} else {
 
 						// Original
 					   // display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : celsius_to_fahr(*ambient_temp_c), *temp, DISPLAY_COLOR);
-		//				float lf_temp =0;         // Testing Line Begin_TEST
-		//				float lf_temp_roundOff =0;
-		//				int ambient_temp_f = 0;
-		//				lf_temp = celsius_to_fahr(*ambient_temp_c);
-		//				lf_temp_roundOff = round(lf_temp);
-		//				ambient_temp_f = lf_temp_roundOff;
 						int ambient_temp_f = 0;
 						ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
 						display_manual_temperature_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, *temp, DISPLAY_COLOR);
 					}
+#endif
 
             }//end of else of  if(pairON_blinkWifi ==1)
 
@@ -1486,7 +1557,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                 display_wifi_icon(DISPLAY_COLOR);
             }// end of else of  if(paringOnFlag == 1)
 
-            printf("Child lock status in Manual Temp : %d  data->is_child_lock_active :%d ", data->settings.is_child_lock_en , data->is_child_lock_active);
+           // printf("Child lock status in Manual Temp : %d  data->is_child_lock_active :%d ", data->settings.is_child_lock_en , data->is_child_lock_active);
             // display lock icon if child lock is active
             if (data->is_child_lock_active)
                 display_child_lock_icon(DISPLAY_COLOR);

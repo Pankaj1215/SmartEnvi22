@@ -208,6 +208,7 @@ int web_server_status = WEB_SVR_STAT_UNKNOWN;
 // char username[32],password[64],id[30],locID[30],name[30],timeZone[20]; // Original
 char username[32],password[64],id[30],locID[30],name[30],timeZone[20];
 
+char WifiCreditialValidFlag;
 
 wifi_config_t global_wifi_config;
 
@@ -2929,7 +2930,7 @@ void initialise_wifi(void)
 	 * happened. */
 	if (bits & WIFI_CONNECTED_BIT) {
 		ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",username, password);
-
+		WifiCreditialValidFlag = 1;
 #ifdef wifi_AP_STA_COMBINE
 		// aws iot task is called in event handler..commented here in this function for application of wifi AP STATION Mode..
 #else
@@ -2939,7 +2940,7 @@ void initialise_wifi(void)
 
 	} else if (bits & WIFI_FAIL_BIT) {
 		ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",username, password);
-
+		WifiCreditialValidFlag = 0;
 
 	 initSoftAP();  // original 	 // commentede on 4MArch for client requirement//
 
@@ -3325,7 +3326,8 @@ void writeEEPROM()
 	// display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
 
 	// display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
-	 display_menu_pair_Heater("Device pairing",DISPLAY_COLOR, "in process !!", DISPLAY_COLOR);
+	// display_menu_pair_Heater("Device pairing",DISPLAY_COLOR, "in process !!", DISPLAY_COLOR);
+	 display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
 
 	 vTaskDelay(5000);
 
