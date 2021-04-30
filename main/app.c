@@ -355,10 +355,10 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-     // display_menu("Firm_v4", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+    //  display_menu("Firm_v2", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+     display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
@@ -5052,11 +5052,11 @@ static app_mode_t menu_display_settings(app_data_t *data) {
     bool screen_off = false;
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
-    printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
+   // printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
 
     while (!exit) {
 
-        printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
+       // printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
     	if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
@@ -5717,17 +5717,20 @@ static void display_brightness_task(void *param) {
                     display_set_brightness(*display_brightness);
                     prev_display_brightness = *display_brightness;
                 }
-
+              //  printf("Task enable display_brightness: %d  data->display_settings.is_auto_display_brightness_ene %d\n", *display_brightness, data->display_settings.is_auto_display_brightness_en);
                 t_set_brightness_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
             }
         } else {
             if (*display_brightness != prev_display_brightness) {
-                printf("change screen brightness\r\n");
+                printf("change screen brightness disable mode \r\n");
                 // set screen brightness
                 display_set_brightness(*display_brightness);
                 prev_display_brightness = *display_brightness;
             }
+          //  printf("Task disable display_brightness: %d  data->display_settings.is_auto_display_brightness_ene %d\n", *display_brightness, data->display_settings.is_auto_display_brightness_en);
+
         }
+
         vTaskDelay(1 / portTICK_RATE_MS);
     }
 }
@@ -6140,6 +6143,9 @@ int app_enable_autodim_display(bool en) {
         bool *is_auto_display_brightness_en = &(app_data->display_settings.is_auto_display_brightness_en);
         if (en != *is_auto_display_brightness_en) {
             *is_auto_display_brightness_en = en;
+
+            printf(" Auto Command display_brightness: %d  app_data->display_settings.is_auto_display_brightness_ene %d\n",  app_data->display_settings.display_brightness, app_data->display_settings.is_auto_display_brightness_en);
+
             set_data_to_storage(STORAGE_KEY_DISPLAY_SETTINGS, (void *) &app_data->display_settings, sizeof(display_settings_t));
         }        return 0;    }    return -1;
 }
@@ -6147,13 +6153,23 @@ bool app_is_autodim_display_enabled(void) {
     if (app_data) {        return app_data->display_settings.is_auto_display_brightness_en;    }    return false;}
 int app_set_screen_brightness(int br) {
     if (app_data) {
+
+       // printf(" Manual br: %d  \n",  br);
         if (br >= DISPLAY_BRIGHTNESS_MIN
             && br <= DISPLAY_BRIGHTNESS_MAX) {
             int *display_brightness = &(app_data->display_settings.display_brightness);
             if (br != *display_brightness) {
                 *display_brightness = br;
+                // New added For disable the functionality on 29April2021_Begin
+                app_data->display_settings.is_auto_display_brightness_en = false;
+                // End
+              //  printf(" Manual Command  display_brightness: %d  app_data->display_settings.is_auto_display_brightness_ene %d\n",  app_data->display_settings.display_brightness, app_data->display_settings.is_auto_display_brightness_en);
+
                 set_data_to_storage(STORAGE_KEY_DISPLAY_SETTINGS, (void *) &app_data->display_settings, sizeof(display_settings_t));
-            }            return 0;        }    }    return -1;
+            }
+           // printf(" Manual After storage  display_brightness: %d  app_data->display_settings.is_auto_display_brightness_ene %d\n",  app_data->display_settings.display_brightness, app_data->display_settings.is_auto_display_brightness_en);
+
+            return 0;        }    }    return -1;
 }
 int app_get_screen_brightness(void) {
     if (app_data) {        return app_data->display_settings.display_brightness;    }    return 0x80000000;}
