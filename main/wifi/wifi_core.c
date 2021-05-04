@@ -1610,24 +1610,44 @@ static void http_get_task(void *pvParameters)
 
 
 							 // Auto_Screen_Off_Enable_Disable
-							const char *topic_auto_screen_off = "aws/device/command/auto_screen_off";  // testing for param key..
-							const int topic_auto_screen_off_Len = strlen(topic_auto_screen_off);
-							ESP_LOGI(TAG, "Subscribing.topic_auto_screen_off..");
-							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off, topic_auto_screen_off_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							const char *topic_auto_screen_off_en = "aws/device/command/auto_screen_off_en";  // testing for param key..
+							const int topic_auto_screen_off_en_Len = strlen(topic_auto_screen_off_en);
+							ESP_LOGI(TAG, "Subscribing.topic_auto_screen_off_en..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off_en, topic_auto_screen_off_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "Error topic_auto_screen_off subscribing : %d ", rc);
+							ESP_LOGE(TAG, "Error topic_auto_screen_off_en subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
 
-							const char *topic_auto_screen_off_response = "aws/device/command/auto_screen_off/response";  // testing for param key..
-							const int topic_auto_screen_off_response_Len = strlen(topic_auto_screen_off_response);
-							ESP_LOGI(TAG, "Subscribing.topic_auto_screen_off_response..");
-							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off_response, topic_auto_screen_off_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							const char *topic_auto_screen_off_en_response = "aws/device/command/auto_screen_off_en/response";  // testing for param key..
+							const int topic_auto_screen_off_en_response_Len = strlen(topic_auto_screen_off_en_response);
+							ESP_LOGI(TAG, "Subscribing.topic_auto_screen_off_en_response_en..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "Error topic_auto_screen_off_response subscribing : %d ", rc);
+							ESP_LOGE(TAG, "Error topic_auto_screen_off_en_response subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
+
+							 // Delay for Auto_Screen_Off
+							const char *topic_delay_for_auto_screen_off = "aws/device/command/delay_for_auto_screen_off";  // testing for param key..
+							const int topic_delay_for_auto_screen_off_Len = strlen(topic_delay_for_auto_screen_off);
+							ESP_LOGI(TAG, "Subscribing.topic_delay_for_auto_screen_off..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_delay_for_auto_screen_off, topic_delay_for_auto_screen_off_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_delay_for_auto_screen_off subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							const char *topic_delay_for_auto_screen_off_response = "aws/device/command/delay_for_auto_screen_off/response";  // testing for param key..
+							const int topic_delay_for_auto_screen_off_response_Len = strlen(topic_delay_for_auto_screen_off_response);
+							ESP_LOGI(TAG, "Subscribing.topic_delay_for_auto_screen_off_response..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_delay_for_auto_screen_off_response, topic_delay_for_auto_screen_off_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "Error topic_delay_for_auto_screen_off_response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
 
 							const char *topic_DeleteHeater = "aws/device/command/delete_heater";  // testing for param key..
 							const int topic_DeleteHeater_Len = strlen(topic_DeleteHeater);
@@ -1773,8 +1793,8 @@ static void http_get_task(void *pvParameters)
 				    case PING_DEVICE_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_ping_device_response,topic_ping_device_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-				    case AUTO_SCREEN_OFF_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_response, topic_auto_screen_off_response_Len, &HeaterMeassage); CommandAck = 0;
+				    case AUTO_SCREEN_OFF_EN_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case DELETE_HEATER_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, &HeaterMeassage); CommandAck = 0;

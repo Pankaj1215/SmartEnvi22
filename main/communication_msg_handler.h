@@ -114,7 +114,7 @@
 #define REMOTE_CMD_HEATER_CONFIG_SYCH   "hcs"// "heater_config_sync"// "h_c_s"
 
 #define REMOTE_CMD_PING_DEVICE   "ping_device"
-#define REMOTE_CMD_AUTO_SCREEN_OFF   "auto_screen_off"
+#define REMOTE_CMD_AUTO_SCREEN_OFF   "auto_screen_off_en"
 
 #define REMOTE_CMD_DELETE_HEATER   "delete_heater"
 
@@ -122,6 +122,8 @@
 #define REMOTE_CMD_AUTO_DISPLAY_BRIGHTNESS_EN       "auto_display_brightness_en"
 
 #define REMOTE_CMD_MANUAL_CHANGE_DISPLAY_BRIGHTNESS      "manual_change_display_brightness"
+
+#define REMOTE_CMD_DELAY_AUTO_SCREEN_OFF     "delay_for_auto_screen_off"
 
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)

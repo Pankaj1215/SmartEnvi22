@@ -397,6 +397,8 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     memset(password, 0, MAX_STR_BUFF_SIZE); 
     memset(channel, 0, MAX_STR_BUFF_SIZE); 
 
+    unsigned char luchRGB_MODE = 0;
+
     space_char_decode(value);
 
    // printf("I am in message_label_value_handler \n ");
@@ -587,7 +589,30 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 //        else
 //    		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "dis_night_light_mode", "status","success",  "value",value);
 
-        app_enable_night_light_auto_brightness(atoi(value));
+        // app_enable_night_light_auto_brightness(atoi(value));  // original code line commented for Auo,OFF, ON mode
+
+// #define RGB_AUTO_ON_OFF_MODE
+#ifdef  RGB_AUTO_ON_OFF_MODE
+			if (strcmp(value, "01") == 0)
+			{
+			  app_enable_night_light_auto_brightness(atoi(value));
+			}
+			if (strcmp(value, "00") == 0)
+			{  rgb_led_state = 0;
+			   app_enable_night_light_auto_brightness(atoi(value));  // here value passed is Zero only, so passed value in that fucntion.
+			   printf(" rgb_led_state OFF \n  ");
+			}
+			if (strcmp(value, "02") == 0)
+			{  rgb_led_state = 1;
+			   app_enable_night_light_auto_brightness(0); // Zero is passed to disable the night light --
+			   printf("rgb_led_state ON \n ");
+			}
+
+#else
+       	app_enable_night_light_auto_brightness(atoi(value));
+#endif
+
+
     } else if (strcmp(label, REMOTE_CMD_IS_NIGHT_LIGHT_AUTO_BRIGHTNESS_EN) == 0) {
         printf("REMOTE_CMD_IS_NIGHT_LIGHT_AUTO_BRIGHTNESS_EN %s\r\n", value);
         sprintf(reply_buff, "%d", app_is_night_light_auto_brightness_enabled());
@@ -645,40 +670,14 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 		oneTimeRegistrationPacketToAWS= 0;
 		keepAliveFlag = 1;
 
-//		display_clear_screen();
-//		display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
-//		printf("/n Connected Successfully /n ");
-//		vTaskDelay(4000);
-
 	}
 	 else if (strcmp(label, REMOTE_CMD_HEATER_ON_OFF) == 0) {
 		  printf("REMOTE_CMD_HEATER_ON OFF \n");
 		  CommandAck = HEATER_ON_OFF_ACK;
-		  // if(*value == '1')
-//	      if (strcmp(value, "01") == 0)
-//		  {
-//	    	  heater_on();
-//	    	  heater_On_Off_state_by_command =1;
-//	    	  // Last state saving Pending. in message handler
-//		     printf("Heater ON \n ");
-//		  }
-//	      if (strcmp(value, "00") == 0)
-//		  {
-//	    	 heater_off();
-//	    	 heater_On_Off_state_by_command =0;
-//		     printf("Heater Off \n  ");
-//		  }
-
 		  app_set_heater_state(atoi(value));
 
 	      sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_on_off", "status","success",  "value",value);
 		}
-//	 else if (strcmp(label, REMOTE_CMD_HEATER_OFF) == 0) {
-//		   printf("REMOTE_CMD_HEATER_OFF \n");
-//		   CommandAck = HEATER_OFF_ACK;
-//		   heater_off();
-//		   sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_off", "status","success",  "value","00");
-//		}
 	 else if (strcmp(label, REMOTE_CMD_EN_ANTI_FREEZE) == 0) {
 		   printf("REMOTE_CMD_EN_ANTI_FREEZE \n");
 		   CommandAck = EN_ANTI_FREEZE_ACK;
@@ -741,8 +740,23 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 				 // working upto thermo state problem..
 				 // sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
 
+#ifdef RGB_AUTO_ON_OFF_MODE
+				if(app_is_night_light_auto_brightness_enabled() == 1)
+				{	luchRGB_MODE = 1; }
+				else
+				{ 	if (rgb_led_state == 1)
+						luchRGB_MODE = 2;
+					else
+						luchRGB_MODE = 0; }
+
+			    sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",luchRGB_MODE, "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
+
+#else
 				 // Working line for app get mode
 				 sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
+#endif
+
+
 
 				 // Testing LDS in for testing data packet in synch..
 				// sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_light_LDR_parm(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
@@ -756,7 +770,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "ping_device", "status","success",  "value",value);
 		 }
 	 else if (strcmp(label, REMOTE_CMD_AUTO_SCREEN_OFF) == 0) {
-					 CommandAck = AUTO_SCREEN_OFF_ACK;
+					 CommandAck = AUTO_SCREEN_OFF_EN_ACK;
 					 //Put this value in the variable for threshold offset value
 
 					 app_enable_auto_screen_off(atoi(value));
@@ -794,6 +808,15 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "manual_change_display_brightness", "status","success",  "value",value);
 	 		 				 app_set_screen_brightness(atoi(value));
 	 		 }
+
+	 else if (strcmp(label, REMOTE_CMD_DELAY_AUTO_SCREEN_OFF) == 0) {
+	 						 CommandAck = DELAY_AUTO_SCREEN_OFF_ACK;
+	 						 //Put this value in the variable for threshold offset value
+	 						 printf("REMOTE_CMD_DELAY_AUTO_SCREEN_OFF  Value %s\r\n", value);
+	 		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "delay_for_auto_screen_off", "status","success",  "value",value);
+	 		 				app_set_auto_screen_off_delay(atoi(value));
+	 		 }
+
 	 else
 	 {
         printf("unhandled label %s %s\r\n", label, value);

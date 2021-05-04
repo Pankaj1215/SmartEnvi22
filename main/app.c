@@ -4613,9 +4613,20 @@ static app_mode_t menu_settings(app_data_t *data) {
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT;
                             break;
+
+#ifdef NIGHT_LIGHT_AUTO_ON_OFF
+                        case MENU_SETTINGS_NIGHT_LIGHT_AUTO:
+                        case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON:
+                        case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF:
+							m_settings = MENU_SETTINGS_NIGHT_LIGHT;
+							break;
+#else
                         case MENU_SETTINGS_NIGHT_LIGHT_CFG:
                             m_settings = MENU_SETTINGS_NIGHT_LIGHT;
                             break;
+#endif
+
+
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE_WARNING:
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
@@ -4724,18 +4735,33 @@ static app_mode_t menu_settings(app_data_t *data) {
                         	  printf("MENU_SETTINGS_HEATER_UNDER_REPAIR_EN status : %d device_health_status %d \n", heater_underControl_status ,device_health_status );
                         	  break;
 #endif
-
                         case MENU_SETTINGS_PILOT_LIGHT_EN:
                             is_settings_changed = true;
                             // Enable <--> Disable
                             data->settings.is_dim_pilot_light_en = !data->settings.is_dim_pilot_light_en;
                             break;
+
+#ifdef NIGHT_LIGHT_AUTO_ON_OFF
+                        case MENU_SETTINGS_NIGHT_LIGHT_AUTO:
+                        	m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON;
+                        	 break;
+                        case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON:
+                        	  m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF;
+                        	 break;
+                        case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF:
+                        	  m_settings = MENU_SETTINGS_NIGHT_LIGHT_AUTO;
+                             break;
+
+#else
                         case MENU_SETTINGS_NIGHT_LIGHT_CFG:
                             is_settings_changed = true;
                             // Auto <--> Off
                             data->settings.is_night_light_auto_brightness_en = !data->settings.is_night_light_auto_brightness_en;
                             manaully_night_Light_State_change= 1;  // New Added for manaully_night_Light_State_change notification to AWS
                             break;
+#endif
+
+
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
                                 if (*temp_hysteresis_c < TEMPERATURE_HYSTERESIS_CELSIUS_MAX) {
@@ -4851,12 +4877,27 @@ static app_mode_t menu_settings(app_data_t *data) {
                             // Enable <--> Disable
                             data->settings.is_dim_pilot_light_en = !data->settings.is_dim_pilot_light_en;
                             break;
+
+#ifdef NIGHT_LIGHT_AUTO_ON_OFF
+                        case MENU_SETTINGS_NIGHT_LIGHT_AUTO:
+                        	   m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF;
+                        	 break;
+                        case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON:
+                        	   m_settings = MENU_SETTINGS_NIGHT_LIGHT_AUTO;
+                        	 break;
+                        case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF:
+                        	   m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON;
+                             break;
+#else
                         case MENU_SETTINGS_NIGHT_LIGHT_CFG:
                             is_settings_changed = true;
                             // Auto <--> Off
                             data->settings.is_night_light_auto_brightness_en = !data->settings.is_night_light_auto_brightness_en;
                             manaully_night_Light_State_change= 1;  // New Added for manaully_night_Light_State_change notification to AWS
                             break;
+
+#endif
+
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
                                 if (*temp_hysteresis_c > TEMPERATURE_HYSTERESIS_CELSIUS_MIN) {
@@ -4906,15 +4947,32 @@ static app_mode_t menu_settings(app_data_t *data) {
                         case MENU_SETTINGS_PILOT_LIGHT:
                             m_settings = MENU_SETTINGS_PILOT_LIGHT_EN;
                             break;
+
+#ifdef NIGHT_LIGHT_AUTO_ON_OFF
+						case MENU_SETTINGS_NIGHT_LIGHT:
+							if(data->settings.is_night_light_auto_brightness_en == 1)
+							  m_settings = MENU_SETTINGS_NIGHT_LIGHT_AUTO;
+							else
+							{
+								if (rgb_led_state == 1)
+									 m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON;
+								else
+									 m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF;
+							}
+						   break;
+#else
                         case MENU_SETTINGS_NIGHT_LIGHT:
                             m_settings = MENU_SETTINGS_NIGHT_LIGHT_CFG;
                             break;
+#endif
+
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS:
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE_WARNING;
                             break;
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE_WARNING:
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE;
                             break;
+
                         }
                         update_display = true;
                     }
@@ -5002,10 +5060,39 @@ static app_mode_t menu_settings(app_data_t *data) {
                 printf("MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE\r\n");
                 display_temperature(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *temp_hysteresis_c : *temp_hysteresis_f, DISPLAY_COLOR);
                 break;
+
+#ifdef NIGHT_LIGHT_AUTO_ON_OFF
+		case MENU_SETTINGS_NIGHT_LIGHT_AUTO:
+				printf("MENU_SETTINGS_NIGHT_LIGHT_AUTO\r\n");
+//                            display_menu((data->settings.is_night_light_auto_brightness_en) ? "Auto" : "Off", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+				  is_settings_changed = true;
+				  data->settings.is_night_light_auto_brightness_en  = 1;
+				  display_menu("Auto", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
+				break;
+
+		case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON:
+				printf("MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON\r\n");
+			   is_settings_changed = true;
+			   data->settings.is_night_light_auto_brightness_en  = 0;
+			   rgb_led_state = 1;
+			   display_menu("RGB LED", DISPLAY_COLOR, "ON", !DISPLAY_COLOR);
+			   break;
+
+		case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF:
+				printf("MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF \r\n");
+			   is_settings_changed = true;
+			   data->settings.is_night_light_auto_brightness_en  = 0;
+			   rgb_led_state = 0;
+				display_menu("RGB LED", DISPLAY_COLOR, "OFF", !DISPLAY_COLOR);
+				break;
+#else
             case MENU_SETTINGS_NIGHT_LIGHT_CFG:
                 printf("MENU_SETTINGS_NIGHT_LIGHT_CFG\r\n");
                 display_menu((data->settings.is_night_light_auto_brightness_en) ? "Auto" : "Off", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
+#endif
+
+
 #ifdef HEATER_NAME_SETTING
             case MENU_SETTING_HEATER_NAME:
                 printf("MENU_SETTING_HEATER_NAME:\r\n");
@@ -5640,7 +5727,7 @@ static void night_light_task(void *param) {
                     float g_br = nlight_br * (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
                     float b_br = nlight_br * (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
 
-// #define AUTO_ON_OFF_MODE
+#define AUTO_ON_OFF_MODE
 #ifdef AUTO_ON_OFF_MODE
                     night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
                     printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
@@ -6143,9 +6230,7 @@ int app_enable_autodim_display(bool en) {
         bool *is_auto_display_brightness_en = &(app_data->display_settings.is_auto_display_brightness_en);
         if (en != *is_auto_display_brightness_en) {
             *is_auto_display_brightness_en = en;
-
             printf(" Auto Command display_brightness: %d  app_data->display_settings.is_auto_display_brightness_ene %d\n",  app_data->display_settings.display_brightness, app_data->display_settings.is_auto_display_brightness_en);
-
             set_data_to_storage(STORAGE_KEY_DISPLAY_SETTINGS, (void *) &app_data->display_settings, sizeof(display_settings_t));
         }        return 0;    }    return -1;
 }
