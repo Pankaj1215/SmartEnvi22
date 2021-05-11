@@ -355,10 +355,10 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-    //  display_menu("Firm_v2", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+      display_menu("Firm_v2", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-     display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+    // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
@@ -720,9 +720,9 @@ static void standby_mode_task(app_data_t *data) {
     if((FlashEraseEnableAPMode == 1) ||(pairON_blinkWifi == 1))
 	// if(FlashEraseEnableAPMode ==1)
 	{
-    	  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+    	 // data->display_settings.auto_screen_off_delay_sec = 180; // original ..
     	 // data->display_settings.auto_screen_off_delay_sec = 15;
-    	// data->display_settings.is_auto_screen_off_en = false;
+    	 data->display_settings.is_auto_screen_off_en = false;
 	}
 //    else // new added for else condition on 23 April 2021
 //    {
@@ -832,7 +832,7 @@ static void standby_mode_task(app_data_t *data) {
                 }
 
                 // Testing on For displaying SSID short cut   // Working one verification pending..
-// #define SHORT_CUT_DISPLAYING_SSID
+#define SHORT_CUT_DISPLAYING_SSID
 #ifdef SHORT_CUT_DISPLAYING_SSID
                  else if ((!((*btn >> BUTTON_UP_STAT) & 0x01))&& (((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)))
                 { // only up is pressed
@@ -1103,9 +1103,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
     // CR not yet  aprroved    // cr not appproved , so comment this ..after testing..
 	 if((FlashEraseEnableAPMode ==1)||(pairON_blinkWifi ==1))
 	// if(FlashEraseEnableAPMode ==1)
-	{   data->display_settings.auto_screen_off_delay_sec = 180;  // o
+	{  // data->display_settings.auto_screen_off_delay_sec = 180;  // o
 	   // data->display_settings.auto_screen_off_delay_sec = 15;
-	  // data->display_settings.is_auto_screen_off_en = false;
+	   data->display_settings.is_auto_screen_off_en = false;
 	}
 //    else // new added for else condition on 23 April 2021
 //	{

@@ -1808,6 +1808,10 @@ static void http_get_task(void *pvParameters)
 				    case MANUAL_CHANGE_DISPLAY_BRIGHTNESS_ACK :
 										 rc = aws_iot_mqtt_publish(&client, topic_manual_change_display_brightness_response, topic_manual_change_display_brightness_response_Len, &HeaterMeassage); CommandAck = 0;
 										 break;
+				    case DELAY_AUTO_SCREEN_OFF_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topic_delay_for_auto_screen_off_response, topic_delay_for_auto_screen_off_response_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
+
 				    default:   break;
 				}
 
