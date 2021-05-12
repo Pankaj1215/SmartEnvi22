@@ -591,7 +591,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 
         // app_enable_night_light_auto_brightness(atoi(value));  // original code line commented for Auo,OFF, ON mode
 
-// #define RGB_AUTO_ON_OFF_MODE
+#define RGB_AUTO_ON_OFF_MODE
 #ifdef  RGB_AUTO_ON_OFF_MODE
 			if (strcmp(value, "01") == 0)
 			{
@@ -755,8 +755,6 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 				 // Working line for app get mode
 				 sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
 #endif
-
-
 
 				 // Testing LDS in for testing data packet in synch..
 				// sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_light_LDR_parm(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());

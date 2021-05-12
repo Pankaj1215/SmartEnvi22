@@ -355,7 +355,7 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-      display_menu("Firm_v2", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+      display_menu("Firm_v3", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
     // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
@@ -5764,12 +5764,12 @@ static void night_light_task(void *param) {
             if(rgb_led_state == 1)
 			   {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
 				   night_light_set_br((int)r_br_NL_disable, (int)g_br_NL_disable, (int)b_br_NL_disable);  // Original Line..
-		         // printf("\n night light disable %d %d  %d %d %d %d\r", *ambient_light, *nlight_auto_en,*nlight_cfg, (int)r_br_NL_disable,(int) g_br_NL_disable, (int)b_br_NL_disable);
+		          printf("\n night light disable led on  %d %d  %d %d %d %d\r", *ambient_light, *nlight_auto_en,*nlight_cfg, (int)r_br_NL_disable,(int) g_br_NL_disable, (int)b_br_NL_disable);
 			   }
-//            else(rgb_led_state == 0)
+        //    else(rgb_led_state == 0)
              else
 			   {     night_light_off();
-				   //  printf("Led OFF in night light disable \n ");
+				     printf("Led OFF in night light disable \n ");
 			   }
 
               prev_nlight_auto_en = false;
