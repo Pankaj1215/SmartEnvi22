@@ -1265,26 +1265,26 @@ static void http_get_task(void *pvParameters)
 				 // abort();  // Commneted for testing
 				}
 
-				const char *topic_Set_RGB = "aws/device/command/set_rgb_led";  // testing for param key..
-
-				const int topic_Set_RGB_Len = strlen(topic_Set_RGB);
-				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB, topic_Set_RGB_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_Set_RGB subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
-
-				// const char *topic_Set_RGB_Response = "aws/device/command/set_rgb/response";  // testing for param key..
-				const char *topic_Set_RGB_Response = "aws/device/command/set_rgb_led/response";  // testing for param key..
-
-				const int topic_Set_RGB_Response_Len = strlen(topic_Set_RGB_Response);
-				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB_Response..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				 ESP_LOGE(TAG, "Error topic_Set_RGB_Response subscribing : %d ", rc);
-				 // abort();  // Commneted for testing
-				}
+//				const char *topic_Set_RGB = "aws/device/command/set_rgb_led";  // testing for param key..
+//
+//				const int topic_Set_RGB_Len = strlen(topic_Set_RGB);
+//				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB, topic_Set_RGB_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_Set_RGB subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+//
+//				// const char *topic_Set_RGB_Response = "aws/device/command/set_rgb/response";  // testing for param key..
+//				const char *topic_Set_RGB_Response = "aws/device/command/set_rgb_led/response";  // testing for param key..
+//
+//				const int topic_Set_RGB_Response_Len = strlen(topic_Set_RGB_Response);
+//				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB_Response..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				 ESP_LOGE(TAG, "Error topic_Set_RGB_Response subscribing : %d ", rc);
+//				 // abort();  // Commneted for testing
+//				}
 
 				const char *topic_Enable_Night_Light_Mode = "aws/device/command/night_light";  // testing for param key..
 				const int topic_Enable_Night_Light_Mode_Len = strlen(topic_Enable_Night_Light_Mode);
@@ -1321,23 +1321,23 @@ static void http_get_task(void *pvParameters)
 				// abort();  // Commneted for testing
 				}
 //
-				const char *topic_RGB_LED_STATE = "aws/device/command/rgb_led_state";  // testing for param key..
-				const int topic_RGB_LED_STATE_Len = strlen(topic_RGB_LED_STATE);
-				ESP_LOGI(TAG, "Subscribing.topic_RGB_LED_STATE..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_RGB_LED_STATE, topic_RGB_LED_STATE_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_RGB_LED_STATE subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
-
-				const char *topic_RGB_LED_STATE_Response = "aws/device/command/rgb_led_state/response";  // testing for param key..
-				const int topic_RGB_LED_STATE_Response_Len = strlen(topic_RGB_LED_STATE_Response);
-				ESP_LOGI(TAG, "Subscribing.topic_RGB_LED_STATE_Response..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_RGB_LED_STATE_Response subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
+//				const char *topic_RGB_LED_STATE = "aws/device/command/rgb_led_state";  // testing for param key..
+//				const int topic_RGB_LED_STATE_Len = strlen(topic_RGB_LED_STATE);
+//				ESP_LOGI(TAG, "Subscribing.topic_RGB_LED_STATE..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_RGB_LED_STATE, topic_RGB_LED_STATE_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_RGB_LED_STATE subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+//
+//				const char *topic_RGB_LED_STATE_Response = "aws/device/command/rgb_led_state/response";  // testing for param key..
+//				const int topic_RGB_LED_STATE_Response_Len = strlen(topic_RGB_LED_STATE_Response);
+//				ESP_LOGI(TAG, "Subscribing.topic_RGB_LED_STATE_Response..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_RGB_LED_STATE_Response subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
 
 				const char *topic_Day_Light_State = "aws/device/command/day_light_state";  // testing for param key..
 				const int topic_Day_Light_State_Len = strlen(topic_Day_Light_State);
@@ -1429,42 +1429,42 @@ static void http_get_task(void *pvParameters)
 				// abort();  // Commneted for testing
 				}
 
-				const char *topic_Hysteris_Thresh_Off_Set_UnderWarning= "aws/device/event/hysteris_thresh_off_set_under_warning";  // testing for param key..
-				const int topic_Hysteris_Thresh_Off_Set_UnderWarning_Len = strlen(topic_Hysteris_Thresh_Off_Set_UnderWarning);
-				ESP_LOGI(TAG, "Subscribing.topic_Hysteris_Thresh_Off_Set_UnderWarning..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Hysteris_Thresh_Off_Set_UnderWarning, topic_Hysteris_Thresh_Off_Set_UnderWarning_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_Hysteris_Thresh_Off_Set_UnderWarning subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
+//				const char *topic_Hysteris_Thresh_Off_Set_UnderWarning= "aws/device/event/hysteris_thresh_off_set_under_warning";  // testing for param key..
+//				const int topic_Hysteris_Thresh_Off_Set_UnderWarning_Len = strlen(topic_Hysteris_Thresh_Off_Set_UnderWarning);
+//				ESP_LOGI(TAG, "Subscribing.topic_Hysteris_Thresh_Off_Set_UnderWarning..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Hysteris_Thresh_Off_Set_UnderWarning, topic_Hysteris_Thresh_Off_Set_UnderWarning_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_Hysteris_Thresh_Off_Set_UnderWarning subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
 
-
-				const char *topic_Hysteris_Thresh_Off_Set_OverWarning= "aws/device/event/hysteris_thresh_off_set_over_warning";  // testing for param key..
-				const int topic_Hysteris_Thresh_Off_Set_OverWarning_Len = strlen(topic_Hysteris_Thresh_Off_Set_OverWarning);
-				ESP_LOGI(TAG, "Subscribing.topic_Hysteris_Thresh_Off_Set_OverWarning..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Hysteris_Thresh_Off_Set_OverWarning, topic_Hysteris_Thresh_Off_Set_OverWarning_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_Hysteris_Thresh_Off_Set_OverWarning subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
 //
-				const char *topic_TimeInterval_Thresh_OffSet_UnderWarning = "aws/device/event/time_interval_thresh_offset_under_warning";  // testing for param key..
-				const int topic_TimeInterval_Thresh_OffSet_UnderWarning_Len = strlen(topic_TimeInterval_Thresh_OffSet_UnderWarning);
-				ESP_LOGI(TAG, "Subscribing.topic_TimeInterval_Thresh_OffSet_UnderWarning..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_TimeInterval_Thresh_OffSet_UnderWarning, topic_TimeInterval_Thresh_OffSet_UnderWarning_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_TimeInterval_Thresh_OffSet_UnderWarning subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
-
-				const char *topic_TimeInterval_Thresh_OffSet_OverWarning= "aws/device/event/time_interval_thresh_offset_over_warning";  // testing for param key..
-				const int topic_TimeInterval_Thresh_OffSet_OverWarning_Len = strlen(topic_TimeInterval_Thresh_OffSet_OverWarning);
-				ESP_LOGI(TAG, "Subscribing.topic_TimeInterval_Thresh_OffSet_OverWarning..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_TimeInterval_Thresh_OffSet_OverWarning, topic_TimeInterval_Thresh_OffSet_OverWarning_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_TimeInterval_Thresh_OffSet_OverWarning subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
+//				const char *topic_Hysteris_Thresh_Off_Set_OverWarning= "aws/device/event/hysteris_thresh_off_set_over_warning";  // testing for param key..
+//				const int topic_Hysteris_Thresh_Off_Set_OverWarning_Len = strlen(topic_Hysteris_Thresh_Off_Set_OverWarning);
+//				ESP_LOGI(TAG, "Subscribing.topic_Hysteris_Thresh_Off_Set_OverWarning..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Hysteris_Thresh_Off_Set_OverWarning, topic_Hysteris_Thresh_Off_Set_OverWarning_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_Hysteris_Thresh_Off_Set_OverWarning subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+////
+//				const char *topic_TimeInterval_Thresh_OffSet_UnderWarning = "aws/device/event/time_interval_thresh_offset_under_warning";  // testing for param key..
+//				const int topic_TimeInterval_Thresh_OffSet_UnderWarning_Len = strlen(topic_TimeInterval_Thresh_OffSet_UnderWarning);
+//				ESP_LOGI(TAG, "Subscribing.topic_TimeInterval_Thresh_OffSet_UnderWarning..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_TimeInterval_Thresh_OffSet_UnderWarning, topic_TimeInterval_Thresh_OffSet_UnderWarning_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_TimeInterval_Thresh_OffSet_UnderWarning subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+//
+//				const char *topic_TimeInterval_Thresh_OffSet_OverWarning= "aws/device/event/time_interval_thresh_offset_over_warning";  // testing for param key..
+//				const int topic_TimeInterval_Thresh_OffSet_OverWarning_Len = strlen(topic_TimeInterval_Thresh_OffSet_OverWarning);
+//				ESP_LOGI(TAG, "Subscribing.topic_TimeInterval_Thresh_OffSet_OverWarning..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_TimeInterval_Thresh_OffSet_OverWarning, topic_TimeInterval_Thresh_OffSet_OverWarning_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_TimeInterval_Thresh_OffSet_OverWarning subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
 
 				const char *topic_Manual_Child_Lock_change = "aws/device/event/child_lock_changed";  // testing for param key..
 				const int topic_Manual_Child_Lock_change_Len = strlen(topic_Manual_Child_Lock_change);
@@ -1639,6 +1639,7 @@ static void http_get_task(void *pvParameters)
 							// abort();  // Commneted for testing
 							}
 
+
 							const char *topic_delay_for_auto_screen_off_response = "aws/device/command/delay_for_auto_screen_off/response";  // testing for param key..
 							const int topic_delay_for_auto_screen_off_response_Len = strlen(topic_delay_for_auto_screen_off_response);
 							ESP_LOGI(TAG, "Subscribing.topic_delay_for_auto_screen_off_response..");
@@ -1647,7 +1648,6 @@ static void http_get_task(void *pvParameters)
 							ESP_LOGE(TAG, "Error topic_delay_for_auto_screen_off_response subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
-
 
 							const char *topic_DeleteHeater = "aws/device/command/delete_heater";  // testing for param key..
 							const int topic_DeleteHeater_Len = strlen(topic_DeleteHeater);
@@ -1758,10 +1758,10 @@ static void http_get_task(void *pvParameters)
 //				    case HEATER_OFF_ACK :
 //				    			     	 rc = aws_iot_mqtt_publish(&client, topicHeaterOffResponse, topicHeaterOffResponse_Len, &HeaterMeassage);
 //				    			     	 break;
-
-				    case SET_RGB_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, &HeaterMeassage); CommandAck = 0;
-				    			     	 break;
+//
+//				    case SET_RGB_ACK :
+//				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, &HeaterMeassage); CommandAck = 0;
+//				    			     	 break;
 				    case EN_NIGHT_LIGHT_MODE_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Enable_Night_Light_Mode_Response, topic_Enable_Night_Light_Mode_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
@@ -1774,9 +1774,9 @@ static void http_get_task(void *pvParameters)
 				    case EN_ANTI_FREEZE_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-				    case RGB_LED_STATE_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, &HeaterMeassage); CommandAck = 0;
-				    			     	 break;
+//				    case RGB_LED_STATE_ACK :
+//				    			     	 rc = aws_iot_mqtt_publish(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, &HeaterMeassage); CommandAck = 0;
+//				    			     	 break;
 				    case DAY_LIGHT_TIME_STATE_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
@@ -1796,7 +1796,7 @@ static void http_get_task(void *pvParameters)
 				    case AUTO_SCREEN_OFF_EN_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-				    case DELETE_HEATER_ACK :
+				    case DELETE_HEATER_ACK :  printf("\n delete heater deleted \n ");
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case AUTO_DIM_PILOT_EN_ACK :

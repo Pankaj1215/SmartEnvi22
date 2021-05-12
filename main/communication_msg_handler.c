@@ -774,7 +774,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 					 app_enable_auto_screen_off(atoi(value));
 
 					 printf("REMOTE_CMD_AUTO_SCREEN_OFF \r\n");
-	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "auto_screen_off", "status","success",  "value",value);
+	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "auto_screen_off_en", "status","success",  "value",value);
 		 }
 
 	 else if (strcmp(label, REMOTE_CMD_DELETE_HEATER) == 0) {
