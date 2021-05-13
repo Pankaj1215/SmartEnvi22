@@ -759,6 +759,8 @@ void app_delete_heater(bool value);
 int app_get_light_LDR_parm(void);
 
 int valueRoundOff(int pvalue, int ptemp_Conversion_unit);
+void DeleteHeater(void);
+
 
 #define CONVERT_C_TO_F  0
 #define CONVERT_F_TO_C  1

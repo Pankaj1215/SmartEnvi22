@@ -63,6 +63,7 @@
 
 #include "display.h"   // Added for displaying Pair success on 03march2021
 
+unsigned char deleteHeaterAckSendToServer ;
 bool PairDataRecievedFromAPP;
 unsigned char FlashEraseEnableAPMode;
 unsigned char device_health_status;
@@ -1667,8 +1668,6 @@ static void http_get_task(void *pvParameters)
 							// abort();  // Commneted for testing
 							}
 
-
-
 		//  char cPayload1[100];
 		char cPayload1[300];  // Original Working
 		// char cPayload1[330];
@@ -1790,10 +1789,10 @@ static void http_get_task(void *pvParameters)
 				    case HEATER_CONFIG_SYNCH_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_h_c_s_response, topic_h_c_s_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-				    case PING_DEVICE_ACK :
+				    case PING_DEVICE_ACK :  printf("\n PING_DEVICE_ACK \n ");
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_ping_device_response,topic_ping_device_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-				    case AUTO_SCREEN_OFF_EN_ACK :
+				    case AUTO_SCREEN_OFF_EN_ACK :  printf("\n AUTO_SCREEN_OFF_EN_ACK \n ");
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case DELETE_HEATER_ACK :  printf("\n delete heater deleted \n ");
@@ -1927,6 +1926,7 @@ static void http_get_task(void *pvParameters)
 
 			if( oneTimeRegistrationPacketToAWS == 0){
 
+				// printf("manually trigger Event  \n ");
 			if(manaully_Set_Temp_change==1){
 				memset(cPayload1,0,sizeof(cPayload1));
                 // Working One
@@ -2079,6 +2079,9 @@ static void http_get_task(void *pvParameters)
 				manaully_Temp_unit_change= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
 
+
+				// printf("manually reset ssid_pass _enable\n ");
+
 				// manaully_reset_ssid_pass_enable
 				if(manaully_reset_ssid_pass_enable ==1){
 
@@ -2097,6 +2100,9 @@ static void http_get_task(void *pvParameters)
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
 				manaully_reset_ssid_pass_enable= 0;
+
+				deleteHeaterAckSendToServer = 1 ;
+
 				} // end of if(manaully_child_Lock_State_change==1){
 
 				// manually_day_light_on_off_change_enable

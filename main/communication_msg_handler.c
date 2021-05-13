@@ -778,10 +778,10 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 		 }
 
 	 else if (strcmp(label, REMOTE_CMD_DELETE_HEATER) == 0) {
-					 CommandAck = DELETE_HEATER_ACK;
+					 // CommandAck = DELETE_HEATER_ACK;
 					 //Put this value in the variable for threshold offset value
 					 printf("REMOTE_CMD_DELETE_HEATER \r\n");
-	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "delete_heater", "status","success",  "value",value);
+	 				// sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "delete_heater", "status","success",  "value",value);
 	 				 app_delete_heater(atoi(value));
 	 }
 	 else if (strcmp(label, REMOTE_CMD_AUTO_DIM_PILOT_LIGHT_EN) == 0) {

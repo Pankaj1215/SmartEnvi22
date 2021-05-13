@@ -151,6 +151,7 @@ extern unsigned char rgb_led_state;
 //extern unsigned char ambientTempChangeDataToAWS;
 
 
+
 unsigned char oneTimeRegistrationPacketToAWS;
 unsigned char pingDeviceEnablePilotLed = 0;
 // extern unsigned char daylightSaving;   // New Added for Day light on Off
@@ -269,6 +270,8 @@ int ping_TwentySecOver = 0;
  extern char name[30];
  extern char WifiCreditialValidFlag;
 char ValidCreditentialCountForDisplay = 0;
+
+extern unsigned char deleteHeaterAckSendToServer;
 
 #define VALID_WIFI_CRENDTIALS
 
@@ -766,6 +769,9 @@ static void standby_mode_task(app_data_t *data) {
     	   //  Testing End
 
 
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
 #ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
      menuModeKeypressedFlag = 0;
 #endif
@@ -1147,7 +1153,11 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
        prevTempUnit = data->settings.temperature_unit ;
     while(*mode == APP_MODE_MANUAL_TEMPERATURE) {
-       // Added for testing ctof
+
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
+    	// Added for testing ctof
     	// data->settings.temperature_unit =1;
     	// data->settings.temperature_unit =0;
 
@@ -1608,7 +1618,11 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
     prev_btn = *btn;
 
     while(*mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET) {
-        if (*ambient_temp_c != prev_ambient_temp_c) {
+
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
+    	if (*ambient_temp_c != prev_ambient_temp_c) {
             prev_ambient_temp_c = *ambient_temp_c;
             update_display = true;
         }
@@ -1772,7 +1786,10 @@ static void debug_mode_task(app_data_t *data) {
     prev_btn = *btn;
 
     while(*mode == APP_MODE_DEBUG) {
-        /* button
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
+    	/* button
            - single press BACK button to go back to standby mode
            - long press POWER button to go to standby mode
            - long press UP and DOWN buttons to activate/deactivate child lock
@@ -1987,7 +2004,11 @@ static void timer_increment_mode_task(app_data_t *data) {
 #endif
 
     while(*mode == APP_MODE_TIMER_INCREMENT) {
-        if (*timer_min == 0)
+
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
+    	if (*timer_min == 0)
         {
 				if (is_timer_expired) {
 					// go to standby only if there is no timer increment within 5 seconds
@@ -2410,7 +2431,11 @@ static void auto_mode_task(app_data_t *data) {
     printf("In Auto Mode %d \n ", *mode);
 
     while(*mode == APP_MODE_AUTO) {
-        int sched_past_idx = -1;
+
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
+    	int sched_past_idx = -1;
         int sched_next_idx = -1;
         //printf("In Auto Mode in while %d\n " , *mode);
         wday = clock_get_day_of_week();
@@ -2803,7 +2828,8 @@ static void menu_mode_task(app_data_t *data) {
     menu = MENU_CALENDAR;
 
     while(*mode == APP_MODE_MENU) {
-
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
 
         /* button
            - single press BACK button to go back to previous screen if not on the first level
@@ -3041,7 +3067,11 @@ static app_mode_t menu_calendar(app_data_t *data) {
 #endif
 
     while (!exit) {
-        if (*btn == prev_btn) {
+
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
+    	if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
                     display_off();
@@ -3442,6 +3472,10 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
 #endif
 
     while (!exit) {
+
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
@@ -3950,6 +3984,10 @@ static app_mode_t menu_communications(app_data_t *data) {
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
     while (!exit) {
+
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
@@ -4540,6 +4578,10 @@ static app_mode_t menu_settings(app_data_t *data) {
     time_t t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
     while (!exit) {
+
+      if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
+
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
@@ -5142,7 +5184,8 @@ static app_mode_t menu_display_settings(app_data_t *data) {
    // printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
 
     while (!exit) {
-
+    	if(deleteHeaterAckSendToServer ==1)
+    	   DeleteHeater();
        // printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
     	if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
@@ -5409,6 +5452,10 @@ static app_mode_t menu_update(app_data_t *data) {
 
     while (!exit) {
         if (*btn == prev_btn) {
+
+        	if(deleteHeaterAckSendToServer ==1)
+        	   DeleteHeater();
+
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
                     display_off();
@@ -6116,14 +6163,22 @@ bool app_get_rgb_state(void) {
       return rgb_led_state;
 }
 
+
 void app_delete_heater(bool value)
 {
 	if(value == 1){
+	  manaully_reset_ssid_pass_enable = 1;
+	  printf("Command for delete heater received before delay \n");
+	}
+}
+
+void DeleteHeater(void)
+{   display_on();
 	display_clear_screen();
-	 display_menu("heater", DISPLAY_COLOR, "Deleted!", DISPLAY_COLOR);
-	 vTaskDelay(10000);
-	 erase_storage_all(); // erase flash..
-	 esp_restart();}
+	display_menu("heater", DISPLAY_COLOR, "deleted!", DISPLAY_COLOR);
+	vTaskDelay(5000);
+	erase_storage_all(); // erase flash..
+	esp_restart();
 }
 
 int app_get_light_LDR_parm(void) {
