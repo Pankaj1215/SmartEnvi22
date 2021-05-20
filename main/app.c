@@ -151,7 +151,6 @@ extern unsigned char rgb_led_state;
 //extern unsigned char ambientTempChangeDataToAWS;
 
 
-
 unsigned char oneTimeRegistrationPacketToAWS;
 unsigned char pingDeviceEnablePilotLed = 0;
 // extern unsigned char daylightSaving;   // New Added for Day light on Off
@@ -272,8 +271,8 @@ int ping_TwentySecOver = 0;
 char ValidCreditentialCountForDisplay = 0;
 
 extern unsigned char deleteHeaterAckSendToServer;
-
-#define VALID_WIFI_CRENDTIALS
+unsigned char uchDeviceGotNetworkDisplayOnceFlag = 1;
+// #define VALID_WIFI_CRENDTIALS
 
 void init_Variables(void);
 
@@ -543,7 +542,7 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_TIMEZONE_OFFSET_INDEX, &(app_data->timezone_offset_idx));
     get_integer_from_storage(STORAGE_KEY_NIGHT_LIGHT_CFG, &(app_data->night_light_cfg));
 
-     app_data->night_light_cfg = 16711888; // Only For testing ..
+    // app_data->night_light_cfg = 16711888; // Only For testing ..
 
     get_data_from_storage(STORAGE_KEY_SETTINGS, &(app_data->settings));
     printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
@@ -700,8 +699,6 @@ static void standby_mode_task(app_data_t *data) {
     int prev_btn = 0;
     app_mode_t *mode = &(data->mode);
     time_t btn_up_press_ms = 0, btn_down_press_ms = 0, btn_timer_press_ms = 0;
-
-    unsigned char uchPairDoneDisplayOnceFlag = 0;
 
     bool update_display = true;
     bool screen_off = false;
@@ -940,13 +937,12 @@ static void standby_mode_task(app_data_t *data) {
         if ((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 0))
         {
 			display_clear_screen();
-			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect... !!", DISPLAY_COLOR);
+			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect...", DISPLAY_COLOR);
 			printf("/n Not able to connect .. /n ");
 			vTaskDelay(4000);
 			update_display = 1;
 			ValidCreditentialCountForDisplay = 1;
         }
-
 
 //			display_clear_screen();
 //			display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
@@ -983,7 +979,7 @@ static void standby_mode_task(app_data_t *data) {
                {
 #ifdef VALID_WIFI_CRENDTIALS
             	   if ((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 1))
-            	   { display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR); }
+            	   { display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait", DISPLAY_COLOR); }
             	   else
             	   display_standby_message(DISPLAY_COLOR);
 #else
@@ -1025,18 +1021,34 @@ static void standby_mode_task(app_data_t *data) {
     	{  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
     	}
 
+// #define connectedDisplayOnGettingWifi	 // Added on 19May2021
+#ifdef connectedDisplayOnGettingWifi
         // wifi blink working ..commented as rejected..
     	if (prev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
     	{ prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
-			display_clear_screen();
-			display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
+#else
+       	if(uchDeviceGotNetworkDisplayOnceFlag == 1){
+           	if(WifiCreditialValidFlag == 1){
+           		uchDeviceGotNetworkDisplayOnceFlag = 0;
+#endif
+        	display_clear_screen();
+			display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully", DISPLAY_COLOR);
 			printf("/n Connected Successfully /n ");
-			 vTaskDelay(4000);
+			 vTaskDelay(2000);
 		    update_display = 1;
 #ifdef VALID_WIFI_CRENDTIALS
 		    ValidCreditentialCountForDisplay = 1;
 #endif
-    	}
+       	}
+       	else{
+           		uchDeviceGotNetworkDisplayOnceFlag = 0;
+    			display_clear_screen();
+    			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect...", DISPLAY_COLOR);
+    			printf("/n Not able to connect .. /n ");
+    			vTaskDelay(2000);
+    			update_display = 1;
+           	}
+      	}
 
         // wifi blink working ..commented as rejected..
       // if((oneTimeRegistrationPacketToAWS ==1)||(pairON_blinkWifi ==1))
@@ -1089,8 +1101,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
     bool display_target_temp = false;
     timer_t t_target_temp_changed_ms = 0;
   //  bool update_display = true;
-    unsigned char uchPairDoneDisplayOnceFlag = 0;
-
+  //  unsigned char uchPairDoneDisplayOnceFlag_Manual = 0;
 
     bool mprev_pairON_blinkWifi = pairON_blinkWifi ;
 	bool mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
@@ -1470,7 +1481,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
         if ((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 0))
         {
 			display_clear_screen();
-			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect... !!", DISPLAY_COLOR);
+			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect...", DISPLAY_COLOR);
 			printf("/n Not able to connect .. /n ");
 			vTaskDelay(4000);
 			update_display = 1;
@@ -1489,18 +1500,58 @@ static void manual_temperature_mode_task(app_data_t *data) {
 	    	{  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
 	    	}
 
-	    	if (mprev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
-	    	{ mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
 
-			display_clear_screen();
-			display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
-			printf("/n Connected Successfully /n ");
-			 vTaskDelay(4000);
-			 update_display = 1;
-#ifdef VALID_WIFI_CRENDTIALS
-		    ValidCreditentialCountForDisplay = 1;
-#endif
-	    	}
+//// #define connectedDisplayOnGettingWifi_ManualMode	 // Added on 19May2021
+//#ifdef connectedDisplayOnGettingWifi_ManualMode
+//
+//	    	if (mprev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
+//	    	{ mprev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
+//
+//#else
+//       	if(oneTimeRegistrationPacketToAWS == 1){
+//       	if(uchDeviceGotNetworkDisplayOnceFlag == 1){
+//       		uchDeviceGotNetworkDisplayOnceFlag = 0;
+//#endif
+//			display_clear_screen();
+//			display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully", DISPLAY_COLOR);
+//			printf("/n Connected Successfully /n ");
+//			 vTaskDelay(2000);
+//			 update_display = 1;
+//#ifdef VALID_WIFI_CRENDTIALS
+//		    ValidCreditentialCountForDisplay = 1;
+//#endif
+//       	   }
+//       	}
+
+	    	// #define connectedDisplayOnGettingWifi	 // Added on 19May2021
+	    	#ifdef connectedDisplayOnGettingWifi
+	    	        // wifi blink working ..commented as rejected..
+	    	    	if (prev_oneTimeRegistrationPacketToAWS != oneTimeRegistrationPacketToAWS)
+	    	    	{ prev_oneTimeRegistrationPacketToAWS = oneTimeRegistrationPacketToAWS ;
+	    	#else
+	    	       	if(uchDeviceGotNetworkDisplayOnceFlag == 1){
+	    	           	if(WifiCreditialValidFlag == 1){
+	    	           		uchDeviceGotNetworkDisplayOnceFlag = 0;
+	    	#endif
+	    	        	display_clear_screen();
+	    				display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully", DISPLAY_COLOR);
+	    				printf("/n Connected Successfully /n ");
+	    				 vTaskDelay(2000);
+	    			    update_display = 1;
+	    	#ifdef VALID_WIFI_CRENDTIALS
+	    			    ValidCreditentialCountForDisplay = 1;
+	    	#endif
+	    	       	}
+	    	       	else{
+	    	           		uchDeviceGotNetworkDisplayOnceFlag = 0;
+	    	    			display_clear_screen();
+	    	    			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect...", DISPLAY_COLOR);
+	    	    			printf("/n Not able to connect .. /n ");
+	    	    			vTaskDelay(2000);
+	    	    			update_display = 1;
+	    	           	}
+	    	      	}
+
 
 		//if((oneTimeRegistrationPacketToAWS == 1) ||(pairON_blinkWifi ==1))
 		if(pairON_blinkWifi ==1)
@@ -1522,7 +1573,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
 #ifdef VALID_WIFI_CRENDTIALS
             	   if ((ValidCreditentialCountForDisplay == 0) && (WifiCreditialValidFlag == 1))
-            	   { display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR); }
+            	   { display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait", DISPLAY_COLOR); }
             	   else
             	   {
 						if (display_target_temp) {
@@ -2796,8 +2847,6 @@ static void auto_mode_task(app_data_t *data) {
 
 
 
-
-
 static void menu_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = -1;
@@ -2816,7 +2865,6 @@ static void menu_mode_task(app_data_t *data) {
     // display menu navigation screen
     display_clear_screen();
     display_menu_inst(DISPLAY_COLOR);
-
 
     // display for MENU_NAVIGATION_SCREEN_DISPLAY_DURATION_MS milliseconds
     vTaskDelay(MENU_NAVIGATION_SCREEN_DISPLAY_DURATION_MS / portTICK_RATE_MS);
@@ -5926,16 +5974,35 @@ int app_set_mode(int mode) {
         }
         return 0;}    return -1;
 }
+// working one
+//int app_get_mode(void) {
+//    if (app_data) {
+//   // printf("app_get_mode app_data->mode %d",app_data->mode);
+//    if (app_data->mode == APP_MODE_STANDBY) return (0);
+//      // working.. condition..
+////     else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO) // || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
+//     else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
+//   	// else
+//    return (1);}
+//    return -1;
+//}
 
+// #define FOUR_MODES_DEVICE
 int app_get_mode(void) {
     if (app_data) {
    // printf("app_get_mode app_data->mode %d",app_data->mode);
     if (app_data->mode == APP_MODE_STANDBY) return (0);
-      // working.. condition..
-//     else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO) // || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
+#ifdef FOUR_MODES_DEVICE
+    else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE) return (1);
+    else if(app_data->mode == APP_MODE_TIMER_INCREMENT) return (2);
+    else if(app_data->mode == APP_MODE_AUTO) return (3);
+    else if(app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
+    return (4);
+#else
      else if(app_data->mode == APP_MODE_MANUAL_TEMPERATURE || app_data->mode == APP_MODE_TIMER_INCREMENT || app_data->mode == APP_MODE_AUTO || app_data->mode == APP_MODE_TEMPERATURE_SENSOR_OFFSET_SET ||  app_data->mode == APP_MODE_DEBUG || app_data->mode == APP_MODE_MENU)
-   	// else
-    return (1);}
+    return (1);
+#endif
+    }
     return -1;
 }
 
@@ -6219,17 +6286,23 @@ bool app_is_night_light_auto_brightness_enabled(void) {
 bool app_get_heater_state(void) {
     if (app_data) {        return app_data->lastHeaterState;    }    return false;}
 void app_set_heater_state(int heater_state)
-{
+{ int heaterSaveState =0;
 	heater_On_Off_state_by_command = heater_state ;
 	if(heater_On_Off_state_by_command ==1)
 	 { heater_On_Off_state_by_command_ExistFromStandByMode = 1;}// heater_on(); }
+
+#ifdef FOUR_MODES_DEVICE
+	else if(heater_On_Off_state_by_command ==2 )
+		app_data->mode  = APP_MODE_TIMER_INCREMENT;
+	else if(heater_On_Off_state_by_command == 3 )
+		app_data->mode  = APP_MODE_AUTO;
+#endif
 	else
 	{ heater_On_Off_state_by_command_ExistFromStandByMode = 0;}// heater_off(); }
 
     if(heater_On_Off_state_by_command_ExistFromStandByMode == 0){ // New Added for Coming out of stand by mode
     	app_data->mode  = APP_MODE_STANDBY;   } // printf(" Come to stand by mode by Heater OFF commmand \n");
-
-    // Original Lines
+// Original Lines
 //    if(heater_On_Off_state_by_command_ExistFromStandByMode == 1){ // New Added for Coming out of stand by mode
 //    	app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; }  // printf(" Come to stand by mode by Heater OFF commmand \n");
 
@@ -6245,7 +6318,13 @@ void app_set_heater_state(int heater_state)
 
     }  // printf(" Come to stand by mode by Heater OFF commmand \n");
 
-	  app_data->lastHeaterState = heater_state;
+
+#ifdef FOUR_MODES_DEVICE
+      if(heater_state !=0) {heaterSaveState = 1;} else{heaterSaveState = 0;}
+	  app_data->lastHeaterState = heaterSaveState;
+#else
+	  app_data->lastHeaterState = heater_state;  // original Line
+#endif
 //	  	if(app_data->lastHeaterState == 1)
 //	       printf("Heater ON from app  \n ");
 //	  	else
@@ -6253,6 +6332,8 @@ void app_set_heater_state(int heater_state)
 	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 	 // printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 }
+
+
 void RGB_LED_ON_OFF(int value)
 {	if(value == 1)	{	rgb_led_state = 1;  printf("RGB LED ON \n");}
 	else	{rgb_led_state = 0;   printf("RGB LED OFF \n");	}

@@ -1795,9 +1795,10 @@ static void http_get_task(void *pvParameters)
 				    case AUTO_SCREEN_OFF_EN_ACK :  printf("\n AUTO_SCREEN_OFF_EN_ACK \n ");
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-				    case DELETE_HEATER_ACK :  printf("\n delete heater deleted \n ");
+				    case DELETE_HEATER_ACK : printf("\n delete heater deleted \n ");
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, &HeaterMeassage); CommandAck = 0;
-				    			     	 break;
+				    			     	deleteHeaterAckSendToServer = 1 ;
+				    			     	break;
 				    case AUTO_DIM_PILOT_EN_ACK :
 										 rc = aws_iot_mqtt_publish(&client, topic_dim_pilot_light_en_response,topic_dim_pilot_light_en_response_Len, &HeaterMeassage); CommandAck = 0;
 										 break;
@@ -2100,9 +2101,7 @@ static void http_get_task(void *pvParameters)
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
 				manaully_reset_ssid_pass_enable= 0;
-
-				deleteHeaterAckSendToServer = 1 ;
-
+				// deleteHeaterAckSendToServer = 1 ;
 				} // end of if(manaully_child_Lock_State_change==1){
 
 				// manually_day_light_on_off_change_enable
@@ -2826,7 +2825,8 @@ void tcp_server_task(void *pvParameters)  // Testing on 13Dec2020
          char tcpPayload[70];
                // sprintf(tcpPayload, "{\n\t\"%s\" : \"%s\"}", "deviceID", uniqueDeviceID);
                 sprintf(tcpPayload, "{\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID);
-                send(sock, "found\r\n", 7, 0);
+                // send(sock, "found\r\n", 7, 0);
+                send(sock, "Success\r\n", 7, 0);
                 err = send(sock, tcpPayload, strlen(tcpPayload), 0);
 #else
         err = send(sock, "found\r\n", 7, 0);
@@ -3357,7 +3357,7 @@ void writeEEPROM()
 
 	// display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
 	// display_menu_pair_Heater("Device pairing",DISPLAY_COLOR, "in process !!", DISPLAY_COLOR);
-	 display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
+	 display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait", DISPLAY_COLOR);
 
 	 vTaskDelay(5000);
 
