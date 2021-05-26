@@ -154,7 +154,8 @@ extern char uniqueDeviceID[12];
 
 // Testing..
 #define AUTO_SCREEN_OFF_DELAY_SEC_MAX 300
-#define AUTO_SCREEN_OFF_DELAY_SEC_MIN 5
+// #define AUTO_SCREEN_OFF_DELAY_SEC_MIN 5  / /Original
+#define AUTO_SCREEN_OFF_DELAY_SEC_MIN 60  // changed to 60
 
 // #define AUTO_SCREEN_OFF_DELAY_SEC_INCREMENT 5    // Original
 #define AUTO_SCREEN_OFF_DELAY_SEC_INCREMENT 60   // Suggested by manav sir to change it to 60 sec.

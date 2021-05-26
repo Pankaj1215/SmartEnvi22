@@ -357,10 +357,10 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-    //  display_menu("Firm_v5", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+    // display_menu("Firm_v1", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-     display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+   display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
@@ -694,6 +694,8 @@ static void app_task(void *param) {
     }// end of while
 } //static void app_task(void *param) {
 
+// unsigned char uchdisplayOnDuringPairing = 0;
+
 static void standby_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = 0;
@@ -717,13 +719,17 @@ static void standby_mode_task(app_data_t *data) {
 //	}
 
     // cr not appproved , so comment this ..after testing..
-    if((FlashEraseEnableAPMode == 1) ||(pairON_blinkWifi == 1))
-	// if(FlashEraseEnableAPMode ==1)
-	{
-    	 // data->display_settings.auto_screen_off_delay_sec = 180; // original ..
-    	 // data->display_settings.auto_screen_off_delay_sec = 15;
-    	 data->display_settings.is_auto_screen_off_en = false;
-	}
+
+//    if((FlashEraseEnableAPMode == 1) ||(pairON_blinkWifi == 1))
+//	// if(FlashEraseEnableAPMode ==1)
+//	{
+//    	 // data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+//    	 // data->display_settings.auto_screen_off_delay_sec = 15;
+//    	 data->display_settings.is_auto_screen_off_en = false;
+//	}
+//
+
+
 //    else // new added for else condition on 23 April 2021
 //    {
 //    	data->display_settings.is_auto_screen_off_en = true;
@@ -781,8 +787,11 @@ static void standby_mode_task(app_data_t *data) {
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
-                    display_off();
+                   if(pairON_blinkWifi == 0)
+                   {
+                	display_off();
                     screen_off = true;
+                   }
                 }
             }
 
@@ -970,7 +979,7 @@ static void standby_mode_task(app_data_t *data) {
                update_display = false;
                display_clear_screen();
                if(pairON_blinkWifi ==1)
-               {
+               {  // uchdisplayOnDuringPairing = 1;
             	   display_menu_pair_Heater("please wait..", DISPLAY_COLOR, "pairing heater", DISPLAY_COLOR);
             	 //  display_menu_pair_Heater("connecting....", DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
                }
@@ -983,6 +992,7 @@ static void standby_mode_task(app_data_t *data) {
             	   else
             	   display_standby_message(DISPLAY_COLOR);
 #else
+            	   //uchdisplayOnDuringPairing = 0;
             	   display_standby_message(DISPLAY_COLOR);
 #endif
                }
@@ -1011,15 +1021,14 @@ static void standby_mode_task(app_data_t *data) {
 
         if( prev_pairON_blinkWifi != pairON_blinkWifi )
         {  	 update_display = 1; prev_pairON_blinkWifi = pairON_blinkWifi;
-
         // new added ..
                 screen_off = false;
       		    display_on();// end .
         }
 
-    	if(pairON_blinkWifi ==1)
-    	{  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
-    	}
+//    	if(pairON_blinkWifi ==1)
+//    	{  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+//    	}
 
 // #define connectedDisplayOnGettingWifi	 // Added on 19May2021
 #ifdef connectedDisplayOnGettingWifi
@@ -1118,12 +1127,12 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //	}
 
     // CR not yet  aprroved    // cr not appproved , so comment this ..after testing..
-	 if((FlashEraseEnableAPMode ==1)||(pairON_blinkWifi ==1))
-	// if(FlashEraseEnableAPMode ==1)
-	{  // data->display_settings.auto_screen_off_delay_sec = 180;  // o
-	   // data->display_settings.auto_screen_off_delay_sec = 15;
-	   data->display_settings.is_auto_screen_off_en = false;
-	}
+//	 if((FlashEraseEnableAPMode ==1)||(pairON_blinkWifi ==1))
+//	// if(FlashEraseEnableAPMode ==1)
+//	{  // data->display_settings.auto_screen_off_delay_sec = 180;  // o
+//	   // data->display_settings.auto_screen_off_delay_sec = 15;
+//	   data->display_settings.is_auto_screen_off_en = false;
+//	}
 //    else // new added for else condition on 23 April 2021
 //	{
 //	   	data->display_settings.is_auto_screen_off_en = true;
@@ -1301,12 +1310,13 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //                    screen_off = true;
 //                }
                 // Testing..
-            //	if(AutoDisplayOffInParingOnFlag == 0){
             	if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
+          	     if(pairON_blinkWifi == 0)
+                   {
             		display_off();
                     screen_off = true;
-                  } // end of
-               // }// end of if(paringOnFlag == 0){
+                  } // end of if(pairON_blinkWifi == 0)
+            	} //
             }
 
             if (!screen_off) {
@@ -1496,9 +1506,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
 	      		    display_on();// end .
 	        }
 
-	    	if(pairON_blinkWifi ==1)
-	    	{  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
-	    	}
+//	    	if(pairON_blinkWifi ==1)
+//	    	{  data->display_settings.auto_screen_off_delay_sec = 180; // original ..
+//	    	}
 
 
 //// #define connectedDisplayOnGettingWifi_ManualMode	 // Added on 19May2021
