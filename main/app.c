@@ -179,6 +179,8 @@ extern unsigned char manually_Dim_Pilot_Light_changed;
 extern unsigned char manually_RGB_Mode_Changed;
 // extern unsigned char manaully_DST_changed;
 
+extern unsigned char manually_Timer_Mode_min_changed;
+
 extern unsigned char device_health_status;
 
 extern unsigned char FlashEraseEnableAPMode; // Added for direct AP mode enable After Flash erased.
@@ -2308,6 +2310,9 @@ static void timer_increment_mode_task(app_data_t *data) {
                         if (!data->is_child_lock_active) {
                             if (is_timer_change_en) {
                                 is_timer_changed = true;
+
+                                manually_Timer_Mode_min_changed = 1;
+
                                 int temp_timer_min = (*timer_min / TIMER_INCREMENT_MINUTES) * TIMER_INCREMENT_MINUTES + TIMER_INCREMENT_MINUTES;
                                 if (temp_timer_min < TIMER_MAX_VALUE_MINUTES)
                                     *timer_min = temp_timer_min;
@@ -2331,6 +2336,9 @@ static void timer_increment_mode_task(app_data_t *data) {
                             if (is_timer_change_en) {
                                 if (*timer_min > TIMER_MIN_VALUE_MINUTES) {
                                     is_timer_changed = true;
+
+                                    manually_Timer_Mode_min_changed = 1;
+
                                     int temp_timer_min = (*timer_min % TIMER_INCREMENT_MINUTES  == 0) ? *timer_min - TIMER_INCREMENT_MINUTES
                                         : (*timer_min / TIMER_INCREMENT_MINUTES) * TIMER_INCREMENT_MINUTES;
                                     if (temp_timer_min > TIMER_MIN_VALUE_MINUTES)

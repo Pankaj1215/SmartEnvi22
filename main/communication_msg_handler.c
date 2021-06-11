@@ -914,9 +914,24 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 		 				app_set_auto_screen_off_delay(atoi(value));
 							display_on();
 							display_clear_screen();
-							display_menu_small_font("delay auto scree off", DISPLAY_COLOR, value, DISPLAY_COLOR);
+							display_menu_small_font("delay auto screen off", DISPLAY_COLOR, value, DISPLAY_COLOR);
 							updateDisplayAfterAppCommand = 1;
 	 		 }
+
+	 else if (strcmp(label, REMOTE_CMD_TIMER_MODE_COUNTER_MIN) == 0) {
+		 						 CommandAck = SET_TIMER_MODE_MIN_ACK;
+		 						 //Put this value in the variable for threshold offset value
+		 						 printf("REMOTE_CMD_TIMER_MODE_COUNTER_MIN  Value %s\r\n", value);
+		 		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "timer_mode_set_min", "status","success",  "value",value);
+		 		 				 app_set_timer(atoi(value));
+								display_on();
+								display_clear_screen();
+								display_menu_small_font("timer mode min", DISPLAY_COLOR, value, DISPLAY_COLOR);
+								updateDisplayAfterAppCommand = 1;
+		 		 }
+
+
+
 	 else
 	 {
         printf("unhandled label %s %s\r\n", label, value);

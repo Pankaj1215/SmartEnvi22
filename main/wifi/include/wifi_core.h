@@ -77,6 +77,7 @@ void getIP_address(void);
 #define MANUAL_CHANGE_DISPLAY_BRIGHTNESS_ACK  18
 #define DELAY_AUTO_SCREEN_OFF_ACK 19
 
+#define SET_TIMER_MODE_MIN_ACK  20
 
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 

@@ -79,6 +79,7 @@ unsigned char manually_Dim_Pilot_Light_changed;
 unsigned char manually_RGB_Mode_Changed;
 // unsigned char manaully_DST_changed;
 
+unsigned char manually_Timer_Mode_min_changed;
 
 unsigned char daylightSaving;
 
@@ -2203,24 +2204,45 @@ void aws_iot_task(void *param) {
 				// abort();  // Commneted for testing
 				}
 //
-//               // set_threshold_offset_time
-				const char *topic_Set_Threshold_Offset_Time = "aws/device/command/set_threshold_offset_time";  // testing for param key..
-				const int topic_Set_Threshold_Offset_Time_Len = strlen(topic_Set_Threshold_Offset_Time);
-				ESP_LOGI(TAG, "Subscribing.topic_Set_Threshold_Offset_Time..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Set_Threshold_Offset_Time, topic_Set_Threshold_Offset_Time_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+////               // set_threshold_offset_time
+//				const char *topic_Set_Threshold_Offset_Time = "aws/device/command/set_threshold_offset_time";  // testing for param key..
+//				const int topic_Set_Threshold_Offset_Time_Len = strlen(topic_Set_Threshold_Offset_Time);
+//				ESP_LOGI(TAG, "Subscribing.topic_Set_Threshold_Offset_Time..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Set_Threshold_Offset_Time, topic_Set_Threshold_Offset_Time_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+//
+//				const char *topic_Set_Threshold_Offset_Time_Response = "aws/device/command/set_threshold_offset_time/response";  // testing for param key..
+//				const int topic_topic_Set_Threshold_Offset_Time_Response_Len = strlen(topic_Set_Threshold_Offset_Time_Response);
+//				ESP_LOGI(TAG, "Subscribing.topic_Set_Threshold_Offset_Time_Response..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time_Response subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+
+
+				//       Set Timer Time
+				const char *topic_timer_mode_set_min = "aws/device/command/timer_mode_set_min";  // testing for param key..
+				const int topic_timer_mode_set_min_Len = strlen(topic_timer_mode_set_min);
+				ESP_LOGI(TAG, "Subscribing.topic_timer_mode_set_min_Len..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_timer_mode_set_min, topic_timer_mode_set_min_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time subscribing : %d ", rc);
+				ESP_LOGE(TAG, "Error topic_timer_mode_set_min_Len subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
 
-				const char *topic_Set_Threshold_Offset_Time_Response = "aws/device/command/set_threshold_offset_time/response";  // testing for param key..
-				const int topic_topic_Set_Threshold_Offset_Time_Response_Len = strlen(topic_Set_Threshold_Offset_Time_Response);
+				const char *topic_timer_mode_set_min_Response = "aws/device/command/timer_mode_set_min/response";  // testing for param key..
+				const int topic_timer_mode_set_min_Response_Len = strlen(topic_timer_mode_set_min_Response);
 				ESP_LOGI(TAG, "Subscribing.topic_Set_Threshold_Offset_Time_Response..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				rc = aws_iot_mqtt_subscribe(&client, topic_timer_mode_set_min_Response, topic_timer_mode_set_min_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time_Response subscribing : %d ", rc);
+				ESP_LOGE(TAG, "Error topic_timer_mode_set_min_Response subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
+
 
 				 // temp unit temp..
 				const char *topic_set_temp_unit = "aws/device/command/set_temp_unit";  // testing for param key..
@@ -2437,7 +2459,17 @@ void aws_iot_task(void *param) {
 			if(SUCCESS != rc) {
 			ESP_LOGE(TAG, "Error topic_manually_Set_Display_Brightness subscribing : %d ", rc);
 			// abort();  // Commneted for testing
-}
+            }
+
+			const char *topic_manually_timer_mode_min_changed= "aws/device/event/manually_timer_mode_min_changed";  // testing for param key..// heater ON_OFF
+			const int topic_manually_timer_mode_min_changed_Len = strlen(topic_manually_timer_mode_min_changed);
+			ESP_LOGI(TAG, "Subscribing.topic_manually_timer_mode_min_changed..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_timer_mode_min_changed, topic_manually_timer_mode_min_changed_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_manually_timer_mode_min_changed subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
 
 // 2 new topic added.
 		                	//Ping Device ..
@@ -2688,9 +2720,15 @@ void aws_iot_task(void *param) {
 				    case DAY_LIGHT_TIME_STATE_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
-				    case SET_THRESHOLD_OFFSET_TIME_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, &HeaterMeassage); CommandAck = 0;
-				    			     	 break;
+//				    case SET_THRESHOLD_OFFSET_TIME_ACK :
+//				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, &HeaterMeassage); CommandAck = 0;
+//				    			     	 break;
+//
+
+				    case SET_TIMER_MODE_MIN_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topic_timer_mode_set_min_Response, topic_timer_mode_set_min_Response_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
+
 
 				    case SET_TEMP_UNIT_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, &HeaterMeassage); CommandAck = 0;
@@ -3198,6 +3236,29 @@ void aws_iot_task(void *param) {
 				manually_Set_Brightness_changed = 0;
 				// deleteHeaterAckSendToServer = 1 ;
 				} // end of if(manaully_child_Lock_State_change==1){
+
+
+				if(manually_Timer_Mode_min_changed ==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_timer_mode_min_changed", "status","success",  "value",app_get_timer());//
+				printf("\n manually_Timer_Mode_min_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topic_manually_timer_mode_min_changed, topic_manually_timer_mode_min_changed_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_Set_Brightness_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
 
 
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)

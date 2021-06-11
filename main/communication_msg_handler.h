@@ -127,6 +127,8 @@ void CommandResponseOnDisplay(void);
 
 #define REMOTE_CMD_DELAY_AUTO_SCREEN_OFF     "delay_for_auto_screen_off"
 
+#define REMOTE_CMD_TIMER_MODE_COUNTER_MIN     "timer_mode_set_min"
+
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)
  * \brief format before calling the msg handler
