@@ -71,6 +71,15 @@ unsigned char manually_put_heater_under_repair_enable;
 
 unsigned char manually_put_heater_under_repair_status_for_malfunctionMonitor;
 
+unsigned char manually_Set_Brightness_changed;
+unsigned char manually_Delay_Auto_Screen_Off_changed;
+unsigned char manually_Auto_Screen_Off_changed;
+unsigned char manually_Auto_Screen_Brightness_changed;
+unsigned char manually_Dim_Pilot_Light_changed;
+unsigned char manually_RGB_Mode_Changed;
+// unsigned char manaully_DST_changed;
+
+
 unsigned char daylightSaving;
 
 static EventGroupHandle_t wifi_event_group;
@@ -124,12 +133,14 @@ unsigned char oneTimeRegistrationPacketToAWS;
 unsigned char keepAliveFlag;
 unsigned char CommandAck;  // CommandACk for all commands triggered from Server
 
-unsigned char manaully_Set_Temp_change;
-unsigned char manaully_night_Light_State_change;
-unsigned char manaully_child_Lock_State_change;
-unsigned char manaully_Temp_unit_change;
-unsigned char manaully_reset_ssid_pass_enable;
+unsigned char manually_Set_Temp_change;
+unsigned char manually_night_Light_State_change;
+unsigned char manually_child_Lock_State_change;
+unsigned char manually_Temp_unit_change;
+unsigned char manually_reset_ssid_pass_enable;
 unsigned char manually_day_light_on_off_change_enable;
+
+//#define DEVICE_ID_ONE_TOPIC
 
 #define TimeZoneAdded
 
@@ -1073,9 +1084,843 @@ static void http_get_task(void *pvParameters)
 }
 
 
- #define HeaterTopicData  // Latest for Testing Reply buffer
+#define HeaterTopicData  // Latest for Testing Reply buffer
+
+
+#ifdef  DEVICE_ID_ONE_TOPIC
 
  void aws_iot_task(void *param) {
+
+     int count = 0 , count_DEV = 0;
+	//  while(1){
+	//  unsigned char luchDone = false;
+      IoT_Error_t rc = FAILURE;
+
+      AWS_IoT_Client client;
+      IoT_Client_Init_Params mqttInitParams = iotClientInitParamsDefault;
+      IoT_Client_Connect_Params connectParams = iotClientConnectParamsDefault;
+
+      char fwVersion[8];
+      sprintf(fwVersion,"%d.%d.%d",FW_VERSION_MAJOR,FW_VERSION_MINOR,FW_VERSION_REVISION);
+
+ #ifdef HeaterTopicData
+      IoT_Publish_Message_Params HeaterMeassage;
+ #endif
+
+      ESP_LOGI(TAG, "AWS IoT SDK Version %d.%d.%d-%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_TAG);
+
+      mqttInitParams.enableAutoReconnect = false; // We enable this later below
+      mqttInitParams.pHostURL = HostAddress;
+     // mqttInitParams.port = port;
+       mqttInitParams.port = 8883;  // testing only
+
+  #if defined(CONFIG_EXAMPLE_EMBEDDED_CERTS)
+      mqttInitParams.pRootCALocation = (const char *)aws_root_ca_pem_start;
+      mqttInitParams.pDeviceCertLocation = (const char *)certificate_pem_crt_start;
+      mqttInitParams.pDevicePrivateKeyLocation = (const char *)private_pem_key_start;
+
+  #elif defined(CONFIG_EXAMPLE_FILESYSTEM_CERTS)
+      mqttInitParams.pRootCALocation = ROOT_CA_PATH;
+      mqttInitParams.pDeviceCertLocation = DEVICE_CERTIFICATE_PATH;
+      mqttInitParams.pDevicePrivateKeyLocation = DEVICE_PRIVATE_KEY_PATH;
+  #endif
+
+      mqttInitParams.mqttCommandTimeout_ms = 20000;
+      mqttInitParams.tlsHandshakeTimeout_ms = 5000;
+      mqttInitParams.isSSLHostnameVerify = true;
+      mqttInitParams.disconnectHandler = disconnectCallbackHandler;
+      mqttInitParams.disconnectHandlerData = NULL;
+
+  #ifdef CONFIG_EXAMPLE_SDCARD_CERTS
+      ESP_LOGI(TAG, "Mounting SD card...");
+      sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+      sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+      esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+          .format_if_mount_failed = false,
+          .max_files = 3,
+      };
+      sdmmc_card_t* card;
+      esp_err_t ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
+      if (ret != ESP_OK) {
+          ESP_LOGE(TAG, "Failed to mount SD card VFAT filesystem. Error: %s", esp_err_to_name(ret));
+          abort();
+      }
+  #endif
+
+      while(1){// new added on 17Nov2020
+
+      rc = aws_iot_mqtt_init(&client, &mqttInitParams);
+      if(SUCCESS != rc) {
+          ESP_LOGE(TAG, "aws_iot_mqtt_init returned error : %d ", rc);
+         // abort(); // Commneted for testing
+      }
+
+//      /* Wait for WiFI to show as connected */   // Commented fro testing only
+//      xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
+//                          false, true, portMAX_DELAY);
+
+      connectParams.keepAliveIntervalInSec = 10;
+      connectParams.isCleanSession = true;
+      connectParams.MQTTVersion = MQTT_3_1_1;
+
+      /* Client ID is set in the menuconfig of the example */
+     // connectParams.pClientID = CONFIG_AWS_EXAMPLE_CLIENT_ID;  // Original
+     // connectParams.pClientID = "envi-860b58";
+      connectParams.pClientID = uniqueDeviceID;
+     // memcpy(connectParams.pClientID, uniqueDeviceID , strlen(uniqueDeviceID)+1 );
+
+     // connectParams.clientIDLen = (uint16_t) strlen(CONFIG_AWS_EXAMPLE_CLIENT_ID);
+      connectParams.clientIDLen = (uint16_t) strlen(uniqueDeviceID);
+      connectParams.isWillMsgPresent = false;
+
+      ESP_LOGI(TAG, "Connecting to AWS...");
+      do {
+          rc = aws_iot_mqtt_connect(&client, &connectParams);
+          if(SUCCESS != rc) {
+              ESP_LOGE(TAG, "Error(%d) connecting to %s:%d", rc, mqttInitParams.pHostURL, mqttInitParams.port);
+              printf("waiting for AWS SERVER\n ");
+              vTaskDelay(1000 / portTICK_RATE_MS);
+          }
+      } while(SUCCESS != rc);
+
+      /*
+       * Enable Auto Reconnect functionality. Minimum and Maximum time of Exponential backoff are set in aws_iot_config.h
+       *  #AWS_IOT_MQTT_MIN_RECONNECT_WAIT_INTERVAL
+       *  #AWS_IOT_MQTT_MAX_RECONNECT_WAIT_INTERVAL
+       */
+      rc = aws_iot_mqtt_autoreconnect_set_status(&client, true);
+      if(SUCCESS != rc) {
+          ESP_LOGE(TAG, "Unable to set Auto Reconnect to true - %d", rc);
+         // abort(); // Commneted for testing
+      }
+
+
+	char topicDevRegisInitial[] = "/command";  // testing for param key..
+	char TopicStarter[19];
+	 char catBackSp[] = "/";
+	strcpy(TopicStarter, uniqueDeviceID );
+	// strcat( TopicStarter,catBackSp);
+	printf(" TopicStarter %s", TopicStarter);
+	strcat( TopicStarter, topicDevRegisInitial );
+	printf(" \n topicDevRegisInitial  %s", TopicStarter );
+
+	 int Len =0; Len = strlen(TopicStarter);
+
+	// char *topicDeviceIDReg = (char *)malloc(strlen(TopicStarter)+1);
+	 char topicDeviceIDReg[Len];
+	 strcpy(topicDeviceIDReg,TopicStarter);
+
+	printf(" \n topicDevRegis  %s", topicDeviceIDReg );
+
+	printf(" \n topicDevRegis len  %d", strlen(topicDeviceIDReg));
+
+           // Topics Started for subscription ..
+
+       			const int topicDeviceIDReg_Len = strlen(topicDeviceIDReg);
+      			 ESP_LOGI(TAG, "Subscribing.topicDevRegis..");
+      			 rc = aws_iot_mqtt_subscribe(&client, &topicDeviceIDReg, topicDeviceIDReg_Len, QOS1, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+      			 if(SUCCESS != rc) {
+      				 ESP_LOGE(TAG, "Error topicDevRegis subscribing : %d ", rc);
+      				// abort();  // Commneted for testing
+      			 }
+
+		char TopicStarterResponse[17];
+		strcpy(TopicStarterResponse, uniqueDeviceID );
+		// strcat( TopicStarterResponse,catBackSp);
+		printf(" TopicStarterResponse %s", TopicStarterResponse);
+
+		char topicDevRegisResponse[] = "/event";  // testing for param key..
+
+		strcat( TopicStarterResponse, topicDevRegisResponse );
+		printf(" \n TopicStarterResponse  %s", TopicStarterResponse );
+
+		 int Len1 =0; Len1 = strlen(TopicStarterResponse);
+		// char *topicDeviceID_event = (char *)malloc(strlen(TopicStarter)+1);
+		char topicDeviceID_event[Len1];
+		strcpy(topicDeviceID_event,TopicStarterResponse);
+
+		printf(" \n topicDeviceID_event  %s", topicDeviceID_event );
+		printf(" \n topicDeviceID_event len  %d", strlen(topicDeviceID_event));
+
+      			const int topicDeviceID_event_Len = strlen(topicDeviceID_event);
+      			ESP_LOGI(TAG, "Subscribing..topicSetTemp_Res.");
+      			rc = aws_iot_mqtt_subscribe(&client, &topicDeviceID_event, topicDeviceID_event_Len, QOS1, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+      			if(SUCCESS != rc) {
+      			ESP_LOGE(TAG, "Error topicSetTemp_Res subscribing : %d ", rc);
+      			// abort();  // Commneted for testing
+      			}
+
+      			const char *topicDevRegis = "aws/device/registration/consumer";  // testing for param key..
+				const int topicDevRegis_Len = strlen(topicDevRegis);
+				ESP_LOGI(TAG, "Subscribing..topicSetTemp_Res.");
+				rc = aws_iot_mqtt_subscribe(&client, topicDevRegis, topicDevRegis_Len, QOS1, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topicSetTemp_Res subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+
+
+		//  char cPayload1[100];
+		char cPayload1[300];  // Original Working
+		// char cPayload1[330];
+		HeaterMeassage.qos = QOS1;
+		HeaterMeassage.payload = (void *) cPayload1;
+		HeaterMeassage.isRetained = 0;
+
+
+#define TEST_WIFI_STUCK_PROB   //
+#ifdef TEST_WIFI_STUCK_PROB
+    // while(1){  // Testing only
+      //	while(luchDone != false){  // Testing only
+     	// printf("\n In while loop of AWS \n ");
+#else
+      while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {  // Original Line..
+#endif
+    	 while((NETWORK_ATTEMPTING_RECONNECT == rc || NETWORK_RECONNECTED == rc || SUCCESS == rc)) {
+
+          //Max time the yield function will wait for read messages
+          rc = aws_iot_mqtt_yield(&client, 100);
+          if(NETWORK_ATTEMPTING_RECONNECT == rc) {
+              // If the client is attempting to reconnect we will skip the rest of the loop.
+               continue; // Last working one commented on 11Nov 2020
+        	  //luchDone = true;
+          }
+
+        //  ESP_LOGI(TAG, "Stack remaining for task '%s' is %d bytes", pcTaskGetTaskName(NULL), uxTaskGetStackHighWaterMark(NULL));
+
+           vTaskDelay(1000 / portTICK_RATE_MS);  // Original Testing
+          // vTaskDelay(3000 / portTICK_RATE_MS);  // Testing
+
+#define SEPERATE_TOPIC_LOGIC
+#ifdef SEPERATE_TOPIC_LOGIC
+            // if(oneTimeRegistrationPacketToAWS==1)// Commented only For Testing  // original
+			 if(oneTimeRegistrationPacketToAWS== 0)  //  For Testing
+			{
+				memset(cPayload1,0,sizeof(cPayload1));
+				printf("One Time Registration \n");
+				//Original Line
+				printf("account ID : %s\n",id);
+			   // Adviced to Amit..
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\", \n\"%s\":\"%s\", \n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone);
+
+				 // working one // Commented on 14Dec2020
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion);
+
+				 // Testing for IP address sending to server ..
+				 sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip);
+
+				// Testing one ..
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"st", app_get_target_temp(),"tu",app_get_temp_unit(), "hs", app_get_heater_state());
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"gt", app_get_ambient_temp(),"st", app_get_target_temp(),"tu",app_get_temp_unit(), "hs", app_get_heater_state());
+
+				 HeaterMeassage.payloadLen = strlen(cPayload1);
+				 rc = aws_iot_mqtt_publish(&client, topicDevRegis, topicDevRegis_Len, &HeaterMeassage);
+				// rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage); // topicDeviceID_event
+#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+					printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+					 continue;
+					//luchDone = true;
+				}
+#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+			}
+
+			 if(commandReceived_SendAck == 1)
+			 {
+				memset(cPayload1,0,sizeof(cPayload1));
+				printf("commandReceived_SendAck \n");
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",%s \n}", "deviceId", uniqueDeviceID, replybuff); //  Testing Unique
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				switch(CommandAck)
+				{
+				    case SET_TEMP_ACK :
+					                     rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage);CommandAck = 0;
+					                     break;
+				    case GET_TEMP_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+				    case HEATER_ON_OFF_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+
+				    			     	// not active
+//				    case HEATER_OFF_ACK :
+//				    			     	 rc = aws_iot_mqtt_publish(&client, topicHeaterOffResponse, topicHeaterOffResponse_Len, &HeaterMeassage);
+//				    			     	 break;
+//
+//				    case SET_RGB_ACK :
+//				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, &HeaterMeassage); CommandAck = 0;
+//				    			     	 break;
+				    case EN_NIGHT_LIGHT_MODE_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+
+				    			     	 // not active
+//				    case ACTIVATE_CHILD_LOCK_ACK :
+//				    			     	 rc = aws_iot_mqtt_publish(&client, topic_activate_child_lock_Response, topic_activate_child_lock_Response_Len, &HeaterMeassage);
+//				    			     	 break;
+
+				    case EN_ANTI_FREEZE_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+//				    case RGB_LED_STATE_ACK :
+//				    			     	 rc = aws_iot_mqtt_publish(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, &HeaterMeassage); CommandAck = 0;
+//				    			     	 break;
+				    case DAY_LIGHT_TIME_STATE_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+				    case SET_THRESHOLD_OFFSET_TIME_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+
+				    case SET_TEMP_UNIT_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+				    case HEATER_CONFIG_SYNCH_ACK :
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+				    case PING_DEVICE_ACK :  printf("\n PING_DEVICE_ACK \n ");
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg,topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+				    case AUTO_SCREEN_OFF_EN_ACK :  printf("\n AUTO_SCREEN_OFF_EN_ACK \n ");
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 break;
+				    case DELETE_HEATER_ACK : printf("\n delete heater deleted \n ");
+				    			     	 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	deleteHeaterAckSendToServer = 1 ;
+				    			     	break;
+				    case AUTO_DIM_PILOT_EN_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg,topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
+				    case AUTO_DISPLAY_BRIGHTNESS_EN_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
+				    case MANUAL_CHANGE_DISPLAY_BRIGHTNESS_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
+				    case DELAY_AUTO_SCREEN_OFF_ACK :
+										 rc = aws_iot_mqtt_publish(&client, topicDeviceIDReg, topicDeviceIDReg_Len, &HeaterMeassage); CommandAck = 0;
+										 break;
+
+				    default:   break;
+				}
+
+#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+					printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+					 continue;
+					//luchDone = true;
+				}
+#endif
+				commandReceived_SendAck = 0;
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+		     }
+
+			 if(keepAliveFlag==1)
+			 {
+				int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+				if ((cur_ms - keepAlive_ms) >= KEEP_ALIVE_DATA__PACKET_DUR_MS) {
+					keepAlive_ms = cur_ms;
+					// keepAliveSendDataToAWS = 1;
+					keepAliveSendDataToAWS_OneMinuteOver = 1;
+				  }
+			 }
+
+			 if (keepAliveSendDataToAWS_OneMinuteOver == 1)
+			 {
+			    keepAliveSendDataToAWS_OneMinuteOver = 0;
+			    Count_Minutes_keepAlivePacket++;
+			    if (Count_Minutes_keepAlivePacket >= 5)
+			    {  Count_Minutes_keepAlivePacket = 0;
+			       keepAliveSendDataToAWS = 1; }
+    	     }
+
+			// if(keepAliveSendDataToAWS==1)
+			 if((keepAliveSendDataToAWS==1)&&( CommandAck == 0))
+			 {
+				printf("I am sendig Kepp Alive packet \n");
+				memset(cPayload1,0,sizeof(cPayload1));
+				//  sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\", \n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","deviceName", username,"ssid", password, "accounId", name, "locationId ",locID); // ONly for Testing  // Getting Restart on this
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","msg","EveryThingIsFine"); // WorkingOne..
+
+// Testing begin ..
+//#define Test_MALFUCTION_NOTIFICATION
+#ifdef Test_MALFUCTION_NOTIFICATION
+        switch(count){
+        case 0: device_health_status = DEVICE_HEALTH_OK;
+                                       count++;
+//                                       if(count_DEV == 1)
+//                                    	   count = 2;
+//                                       else if (count_DEV == 2)
+//                                    	   count = 3;
+//                                       else if (count_DEV == 3)
+//                                    	   count = 4;
+//                                       else if (count_DEV == 4)
+//                                    	   count = 5;
+//                                       else if (count_DEV == 5)
+//                                    	   count = 6;
+//                                       else if (count_DEV == 6)
+//                                    	   count = 7;
+//                                       else if (count_DEV == 7)
+//                                    	   count = 8;
+//                                       else if (count_DEV == 8)
+//                                    	   count = 0;
+//                                       else
+//                                           count++;
+
+                                       break;
+//        case 1: device_health_status = DEVICE_FREEZE_ALERT; count_DEV = 1; count = 0; break;
+//        case 2: device_health_status = DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY; count_DEV = 2; count = 0;  break;
+//        case 3: device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD; count_DEV = 3; count = 0; break;
+//        case 4: device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD; count_DEV = 4; count = 0;  break;
+//        case 5: device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR; count_DEV = 5; count = 0; break;
+//        case 6: device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR; count_DEV = 6; count = 0; break;
+//        case 7: device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED; count_DEV = 7; count = 0; break;
+//        case 8: device_health_status = DEVICE_HEATER_UNDER_REPAIR; count_DEV = 8; count = 0; break;
+//        default: count = 0;	}
+
+             case 1: device_health_status = DEVICE_FREEZE_ALERT;  count++; break;
+             case 2: device_health_status = DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY; count++;  break;
+             case 3: device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD; count++; break;
+             case 4: device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD; count++;  break;
+             case 5: device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR; count++;break;
+             case 6: device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR; count++; break;
+             case 7: device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED; count++; break;
+             case 8: device_health_status = DEVICE_HEATER_UNDER_REPAIR; count++; break;
+             default: count = 0; break;}
+
+           printf("device_health_status %d \n",device_health_status);
+
+#endif
+// Testing only..
+
+			//	sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceId", uniqueDeviceID,"type","everythingFineHere"); // WorkingOne..
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type",device_health_status); // Testing  - 			    unsigned char device_health_status;
+
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+			   rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);   // Original Line Commented on 05June2021
+#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+					printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+					 continue;
+					//luchDone = true;
+				}
+#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				keepAliveSendDataToAWS =0;
+			  }
+
+
+			 oneTimeRegistrationPacketToAWS= 0; // Added for Testing only other wise comment it 1503 line
+			if( oneTimeRegistrationPacketToAWS == 0){
+
+				 printf("manually trigger Event  \n ");
+			if(manaully_Set_Temp_change==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+                // Working One
+    		//	sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_celsius,"temp_unit",app_get_temp_unit());
+                // testing for synch f and c interchange
+    			sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit,"temp_unit",app_get_temp_unit());
+
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);  // commented on 05June
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				 continue;
+				//luchDone = true;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Set_Temp_change= 0;
+			} // end of if(manaully_Set_Temp_change==1){
+////topic_Manual_Child_Lock_change
+//			       // manaully_night_Light_State_change
+			if(manaully_night_Light_State_change==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_night_Light_change", "status","success",  "value", app_data->settings.is_night_light_auto_brightness_en );  // data->settings.is_night_light_auto_brightness_en // app_data
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+			   rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage); // commented on 05June
+			   printf("\n SET TEMP EVENT Trigger\n ");
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				 continue;
+				//luchDone = true;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_night_Light_State_change= 0;
+			} // end of if(manaully_night_Light_State_change==1){
+
+
+				// manaully_child_Lock_State_change
+				if(manaully_child_Lock_State_change==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+
+			//	sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_child_Lock_change", "status","success",  "value", app_data->settings.is_child_lock_en ); //app_data->is_child_lock_active// app_data->is_child_lock_active // app_data->settings.is_child_lock_en  // app_data->is_child_lock_active
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_child_Lock_change", "status","success",  "value", app_data->is_child_lock_active);
+
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+				 rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage); // // commented on 05June
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_child_Lock_State_change= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+				if(HeaterStateChangeDataToAWS ==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "heater_state_change", "status","success",  "value", app_data->lastHeaterState);   // app_get_mode
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "heater_state_change", "status","success",  "value", app_get_mode());   // app_get_mode
+
+				printf("\n \n heater state data sending to AWS : %d \n \n ", app_get_mode());
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+			     rc = aws_iot_mqtt_publish(&client, topicDeviceID_event,topicDeviceID_event_Len, &HeaterMeassage); // commented on 05June
+				// topic_Thermostat_State_Change
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				HeaterStateChangeDataToAWS= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
+				// ThermostatStateChangeDataToAWS
+				// topic_Thermostat_State_Change
+				if(ThermostatStateChangeDataToAWS ==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "thermostat_state_change", "status","success",  "value", app_data->lastHeaterState);
+				printf("\n \n Thermostat sending to AWS  app_data->lastHeaterState : %d \n \n ", app_data->lastHeaterState);
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+			   rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);  // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				ThermostatStateChangeDataToAWS= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+// ambient_temp_change_event
+				if(ambientTempChangeDataToAWS ==1){
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "ambient_temp_change", "status","success",  "value", app_get_ambient_temp(),"temp_unit",app_get_temp_unit());
+
+			    printf("\n \n Ambient Temp change");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				 rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);  // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				ambientTempChangeDataToAWS= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
+				// TempUnitChangeDataToAWS
+				if(manaully_Temp_unit_change ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_temp_unit_change", "status","success",  "value", app_data->settings.temperature_unit);
+				printf("\n \n TempUnitChangeDataToAWS app_data->settings.temperature_unit : %d \n \n ", app_data->settings.temperature_unit);
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+			   rc = aws_iot_mqtt_publish(&client, topicDeviceID_event,topicDeviceID_event_Len, &HeaterMeassage);  // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Temp_unit_change= 0;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
+				// printf("manually reset ssid_pass _enable\n ");
+
+				// manaully_reset_ssid_pass_enable
+				if(manaully_reset_ssid_pass_enable ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_reset_ssid_pass", "status","success",  "value", 1);//manually_reset_ssid_pass
+				printf("\n manaully_reset_ssid_pass_enable \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				 rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_reset_ssid_pass_enable= 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+				// manually_day_light_on_off_change_enable
+				if(manually_day_light_on_off_change_enable ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_day_light_on_off_change_enable", "status","success",  "value", app_data->daylightSaving);//manually_reset_ssid_pass
+				printf("\n manaully_reset_ssid_pass_enable \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);  // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_day_light_on_off_change_enable = 0;
+				} // end of if(manually_day_light_on_off_change_enable==1){
+
+				// manually_put_heater_under_repair_enable
+				if(manually_put_heater_under_repair_enable ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_put_heater_under_repair", "status","success",  "value", get_heater_under_repair_status());//manually_reset_ssid_pass
+				printf("\n manually_put_heater_under_repair_enable \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+			   rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);  // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_put_heater_under_repair_enable = 0;
+				} // end of if(manually_day_light_on_off_change_enable==1){
+
+
+				// New Functionality  for event
+				// RGB ON OFF AUTO
+
+				// unsigned char manaully_RGB_Mode_Changed;
+				if(manaully_RGB_Mode_Changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_reset_ssid_pass", "status","success",  "value", 1);//manually_reset_ssid_pass
+				printf("\n manaully_RGB_Mode_Changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_RGB_Mode_Changed= 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+                // Manually Dim Pilot Light
+				// unsigned char manaully_Dim_Pilot_Light_changed;
+				if(manaully_Dim_Pilot_Light_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manaully_Dim_Pilot_Light_changed", "status","success",  "value", app_data->settings.is_dim_pilot_light_en);//manually_reset_ssid_pass
+				printf("\n manaully_Dim_Pilot_Light_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				 rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Dim_Pilot_Light_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+				// unsigned char manaully_Dim_Screen_Brightness_changed;
+				if(manaully_Dim_Screen_Brightness_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manaully_Dim_Screen_Brightness_changed", "status","success",  "value", app_data->display_settings.is_auto_display_brightness_en);//manually_reset_ssid_pass
+				printf("\n manaully_Dim_Screen_Brightness_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				 rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Dim_Screen_Brightness_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
+				// unsigned char manaully_Auto_Screen_Off_changed;
+				if(manaully_Auto_Screen_Off_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manaully_Auto_Screen_Off_changed", "status","success",  "value", app_data->display_settings.is_auto_screen_off_en);//manually_reset_ssid_pass
+				printf("\n manaully_Auto_Screen_Off_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Auto_Screen_Off_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+				// unsigned char manaully_Delay_Auto_Screen_Off_changed;
+				if(manaully_Delay_Auto_Screen_Off_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manaully_Delay_Auto_Screen_Off_changed", "status","success",  "value", app_data->display_settings.auto_screen_off_delay_sec);//manually_reset_ssid_pass
+				printf("\n manaully_Delay_Auto_Screen_Off_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Delay_Auto_Screen_Off_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
+				// unsigned char manaully_Set_Brightness_changed;
+				if(manaully_Set_Brightness_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manaully_Set_Brightness_changed", "status","success",  "value", app_data->display_settings.display_brightness);//manually_reset_ssid_pass
+				printf("\n manaully_Set_Brightness_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				 rc = aws_iot_mqtt_publish(&client, topicDeviceID_event, topicDeviceID_event_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manaully_Set_Brightness_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
+			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
+
+			 oneTimeRegistrationPacketToAWS= 1;   //Added only for Testing only ...otherwise comment this line 1735
+#endif
+		//  printf("After publish HeaterParameterSendingToAWS\n ");
+          if (rc == MQTT_REQUEST_TIMEOUT_ERROR) {
+              ESP_LOGW(TAG, "QOS1 publish ack not received.");
+              rc = SUCCESS;
+          }
+      }
+
+	 aws_iot_mqtt_disconnect(&client);
+	 aws_iot_mqtt_free(&client);
+
+      ESP_LOGE(TAG, "An error occurred in the main loop.");
+     // abort();  // Commented Abort for Tesing
+
+    } // end of while(1)
+ }
+
+
+#else
+
+
+void aws_iot_task(void *param) {
 
      int count = 0 , count_DEV = 0;
 	//  while(1){
@@ -1266,26 +2111,26 @@ static void http_get_task(void *pvParameters)
 				 // abort();  // Commneted for testing
 				}
 
-//				const char *topic_Set_RGB = "aws/device/command/set_rgb_led";  // testing for param key..
-//
-//				const int topic_Set_RGB_Len = strlen(topic_Set_RGB);
-//				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB..");
-//				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB, topic_Set_RGB_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-//				if(SUCCESS != rc) {
-//				ESP_LOGE(TAG, "Error topic_Set_RGB subscribing : %d ", rc);
-//				// abort();  // Commneted for testing
-//				}
-//
-//				// const char *topic_Set_RGB_Response = "aws/device/command/set_rgb/response";  // testing for param key..
-//				const char *topic_Set_RGB_Response = "aws/device/command/set_rgb_led/response";  // testing for param key..
-//
-//				const int topic_Set_RGB_Response_Len = strlen(topic_Set_RGB_Response);
-//				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB_Response..");
-//				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-//				if(SUCCESS != rc) {
-//				 ESP_LOGE(TAG, "Error topic_Set_RGB_Response subscribing : %d ", rc);
-//				 // abort();  // Commneted for testing
-//				}
+				const char *topic_Set_RGB = "aws/device/command/set_rgb_led";  // testing for param key..
+
+				const int topic_Set_RGB_Len = strlen(topic_Set_RGB);
+				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB, topic_Set_RGB_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				ESP_LOGE(TAG, "Error topic_Set_RGB subscribing : %d ", rc);
+				// abort();  // Commneted for testing
+				}
+
+				// const char *topic_Set_RGB_Response = "aws/device/command/set_rgb/response";  // testing for param key..
+				const char *topic_Set_RGB_Response = "aws/device/command/set_rgb_led/response";  // testing for param key..
+
+				const int topic_Set_RGB_Response_Len = strlen(topic_Set_RGB_Response);
+				ESP_LOGI(TAG, "Subscribing.topic_Set_RGB_Response..");
+				rc = aws_iot_mqtt_subscribe(&client, topic_Set_RGB_Response, topic_Set_RGB_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+				if(SUCCESS != rc) {
+				 ESP_LOGE(TAG, "Error topic_Set_RGB_Response subscribing : %d ", rc);
+				 // abort();  // Commneted for testing
+				}
 
 				const char *topic_Enable_Night_Light_Mode = "aws/device/command/night_light";  // testing for param key..
 				const int topic_Enable_Night_Light_Mode_Len = strlen(topic_Enable_Night_Light_Mode);
@@ -1529,6 +2374,70 @@ static void http_get_task(void *pvParameters)
 			ESP_LOGE(TAG, "Error topic_manually_put_heater_under_repair_Len subscribing : %d ", rc);
 			// abort();  // Commneted for testing
 			}
+
+			// New Functionality events.
+			const char *topic_manually_RGB_Mode_Changed= "aws/device/event/manually_rgb_mode_changed";  // testing for param key..// heater ON_OFF
+			const int topic_manually_RGB_Mode_Changed_Len = strlen(topic_manually_RGB_Mode_Changed);
+			ESP_LOGI(TAG, "Subscribing.topic_manually_RGB_Mode_Changed_Len..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_RGB_Mode_Changed, topic_manually_RGB_Mode_Changed_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_manually_RGB_Mode_Changed_Len subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
+			const char *topic_manually_Dim_Pilot_Light_changed = "aws/device/event/manually_dim_pilot_light_changed";  // testing for param key..// heater ON_OFF
+			const int topic_manually_Dim_Pilot_Light_changed_Len = strlen(topic_manually_Dim_Pilot_Light_changed);
+			ESP_LOGI(TAG, "Subscribing.topic_manually_Dim_Pilot_Light_changed..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_Dim_Pilot_Light_changed, topic_manually_Dim_Pilot_Light_changed_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_manually_Dim_Pilot_Light_changed subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
+			const char *topic_manually_auto_screen_brightness_changed = "aws/device/event/manually_auto_screen_brightness_changed";  // testing for param key..// heater ON_OFF
+			const int topic_manually_auto_screen_brightness_changed_Len = strlen(topic_manually_auto_screen_brightness_changed);
+			ESP_LOGI(TAG, "Subscribing.topic_manually_auto_screen_brightness_changed..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_auto_screen_brightness_changed,topic_manually_auto_screen_brightness_changed_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_manually_auto_screen_brightness_changed subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
+			const char *topic_manually_Auto_Screen_Off_Enable_changed= "aws/device/event/manually_auto_screen_off_enable_changed";  // testing for param key..// heater ON_OFF
+			const int topic_manually_Auto_Screen_Off_Enable_changed_Len = strlen(topic_manually_Auto_Screen_Off_Enable_changed);
+			ESP_LOGI(TAG, "Subscribing.topic_manually_Auto_Screen_Off_Enable_changed..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_Auto_Screen_Off_Enable_changed, topic_manually_Auto_Screen_Off_Enable_changed_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_manually_Auto_Screen_Off_Enable_changed subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
+			const char *topic_manually_Auto_Screen_Off_Delay_changed= "aws/device/event/manually_auto_screen_off_delay_changed";  // testing for param key..// heater ON_OFF
+			const int topic_manually_Auto_Screen_Off_Delay_changed_Len = strlen(topic_manually_Auto_Screen_Off_Delay_changed);
+			ESP_LOGI(TAG, "Subscribing.topic_manually_Auto_Screen_Off_Delay_changed..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_Auto_Screen_Off_Delay_changed, topic_manually_Auto_Screen_Off_Delay_changed_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_manually_Auto_Screen_Off_Delay_changed subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
+			const char *topic_manually_Set_Display_Brightness= "aws/device/event/manually_set_display_brightness";  // testing for param key..// heater ON_OFF
+			const int topic_manually_Set_Display_Brightness_Len = strlen(topic_manually_Set_Display_Brightness);
+			ESP_LOGI(TAG, "Subscribing.topic_manually_Set_Display_Brightness..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_Set_Display_Brightness, topic_manually_Set_Display_Brightness_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_manually_Set_Display_Brightness subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
+			const char *topic_manually_day_light_on_off_change= "aws/device/event/manually_day_light_on_off_change";  // testing for param key..// heater ON_OFF
+			const int topic_manually_day_light_on_off_change_Len = strlen(topic_manually_day_light_on_off_change);
+			ESP_LOGI(TAG, "Subscribing.topic_manually_Set_Display_Brightness..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_day_light_on_off_change, topic_manually_day_light_on_off_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "Error topic_manually_Set_Display_Brightness subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+}
 
 // 2 new topic added.
 		                	//Ping Device ..
@@ -1928,7 +2837,7 @@ static void http_get_task(void *pvParameters)
 			if( oneTimeRegistrationPacketToAWS == 0){
 
 				// printf("manually trigger Event  \n ");
-			if(manaully_Set_Temp_change==1){
+			if(manually_Set_Temp_change==1){
 				memset(cPayload1,0,sizeof(cPayload1));
                 // Working One
     		//	sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_celsius,"temp_unit",app_get_temp_unit());
@@ -1947,11 +2856,11 @@ static void http_get_task(void *pvParameters)
 				#endif
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
-				manaully_Set_Temp_change= 0;
+				manually_Set_Temp_change= 0;
 			} // end of if(manaully_Set_Temp_change==1){
 ////topic_Manual_Child_Lock_change
 //			       // manaully_night_Light_State_change
-			if(manaully_night_Light_State_change==1){
+			if(manually_night_Light_State_change==1){
 				memset(cPayload1,0,sizeof(cPayload1));
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_night_Light_change", "status","success",  "value", app_data->settings.is_night_light_auto_brightness_en );  // data->settings.is_night_light_auto_brightness_en // app_data
 				HeaterMeassage.payloadLen = strlen(cPayload1);
@@ -1966,12 +2875,12 @@ static void http_get_task(void *pvParameters)
 				#endif
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
-				manaully_night_Light_State_change= 0;
+				manually_night_Light_State_change= 0;
 			} // end of if(manaully_night_Light_State_change==1){
 
 
 				// manaully_child_Lock_State_change
-				if(manaully_child_Lock_State_change==1){
+				if(manually_child_Lock_State_change==1){
 				memset(cPayload1,0,sizeof(cPayload1));
 
 			//	sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_child_Lock_change", "status","success",  "value", app_data->settings.is_child_lock_en ); //app_data->is_child_lock_active// app_data->is_child_lock_active // app_data->settings.is_child_lock_en  // app_data->is_child_lock_active
@@ -1988,7 +2897,7 @@ static void http_get_task(void *pvParameters)
 				#endif
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
-				manaully_child_Lock_State_change= 0;
+				manually_child_Lock_State_change= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
 
 				if(HeaterStateChangeDataToAWS ==1){
@@ -2061,7 +2970,7 @@ static void http_get_task(void *pvParameters)
 
 
 				// TempUnitChangeDataToAWS
-				if(manaully_Temp_unit_change ==1){
+				if(manually_Temp_unit_change ==1){
 
 				memset(cPayload1,0,sizeof(cPayload1));
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_temp_unit_change", "status","success",  "value", app_data->settings.temperature_unit);
@@ -2077,14 +2986,14 @@ static void http_get_task(void *pvParameters)
 				#endif
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
-				manaully_Temp_unit_change= 0;
+				manually_Temp_unit_change= 0;
 				} // end of if(manaully_child_Lock_State_change==1){
 
 
 				// printf("manually reset ssid_pass _enable\n ");
 
 				// manaully_reset_ssid_pass_enable
-				if(manaully_reset_ssid_pass_enable ==1){
+				if(manually_reset_ssid_pass_enable ==1){
 
 				memset(cPayload1,0,sizeof(cPayload1));
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_reset_ssid_pass", "status","success",  "value", 1);//manually_reset_ssid_pass
@@ -2100,7 +3009,7 @@ static void http_get_task(void *pvParameters)
 				#endif
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
-				manaully_reset_ssid_pass_enable= 0;
+				manually_reset_ssid_pass_enable= 0;
 				// deleteHeaterAckSendToServer = 1 ;
 				} // end of if(manaully_child_Lock_State_change==1){
 
@@ -2108,10 +3017,10 @@ static void http_get_task(void *pvParameters)
 				if(manually_day_light_on_off_change_enable ==1){
 
 				memset(cPayload1,0,sizeof(cPayload1));
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_day_light_on_off_change_enable", "status","success",  "value", app_data->daylightSaving);//manually_reset_ssid_pass
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_day_light_on_off_change", "status","success",  "value", app_data->daylightSaving);//manually_reset_ssid_pass
 				printf("\n manaully_reset_ssid_pass_enable \n ");
 				HeaterMeassage.payloadLen = strlen(cPayload1);
-				rc = aws_iot_mqtt_publish(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, &HeaterMeassage);
+				rc = aws_iot_mqtt_publish(&client, topic_manually_day_light_on_off_change, topic_manually_day_light_on_off_change_Len, &HeaterMeassage);
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
 				{
@@ -2144,6 +3053,153 @@ static void http_get_task(void *pvParameters)
 				manually_put_heater_under_repair_enable = 0;
 				} // end of if(manually_day_light_on_off_change_enable==1){
 
+
+
+				// New Functionality  for event
+				// RGB ON OFF AUTO
+
+				// unsigned char manaully_RGB_Mode_Changed;
+				if(manually_RGB_Mode_Changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_rgb_mode_changed", "status","success",  "value", app_is_night_light_auto_brightness_enabled()  );//
+				printf("\n manaully_RGB_Mode_Changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topic_manually_RGB_Mode_Changed, topic_manually_RGB_Mode_Changed_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_RGB_Mode_Changed= 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+                // Manually Dim Pilot Light
+				// unsigned char manaully_Dim_Pilot_Light_changed;
+				if(manually_Dim_Pilot_Light_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_dim_pilot_light_changed", "status","success",  "value", app_data->settings.is_dim_pilot_light_en);//manually_reset_ssid_pass
+				printf("\n manaully_Dim_Pilot_Light_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+			    rc = aws_iot_mqtt_publish(&client, topic_manually_Dim_Pilot_Light_changed, topic_manually_Dim_Pilot_Light_changed_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_Dim_Pilot_Light_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+				// unsigned char manaully_Dim_Screen_Brightness_changed;
+				if(manually_Auto_Screen_Brightness_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_auto_screen_brightness_changed", "status","success",  "value", app_data->display_settings.is_auto_display_brightness_en);//manually_reset_ssid_pass
+				printf("\n manaully_Dim_Screen_Brightness_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topic_manually_auto_screen_brightness_changed , topic_manually_auto_screen_brightness_changed_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_Auto_Screen_Brightness_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
+				// unsigned char manaully_Auto_Screen_Off_changed;
+				if(manually_Auto_Screen_Off_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_auto_screen_off_changed", "status","success",  "value", app_data->display_settings.is_auto_screen_off_en);//manually_reset_ssid_pass
+				printf("\n manaully_Auto_Screen_Off_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topic_manually_Auto_Screen_Off_Enable_changed, topic_manually_Auto_Screen_Off_Enable_changed_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_Auto_Screen_Off_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+				// unsigned char manaully_Delay_Auto_Screen_Off_changed;
+				if(manually_Delay_Auto_Screen_Off_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_delay_auto_screen_off_changed", "status","success",  "value", app_data->display_settings.auto_screen_off_delay_sec);//manually_reset_ssid_pass
+				printf("\n manaully_Delay_Auto_Screen_Off_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topic_manually_Auto_Screen_Off_Delay_changed, topic_manually_Auto_Screen_Off_Delay_changed_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_Delay_Auto_Screen_Off_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
+				// unsigned char manaully_Set_Brightness_changed;
+				if(manually_Set_Brightness_changed ==1){
+
+				memset(cPayload1,0,sizeof(cPayload1));
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_brightness_changed", "status","success",  "value", app_data->display_settings.display_brightness);//manually_reset_ssid_pass
+				printf("\n manaully_Set_Brightness_changed \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+				rc = aws_iot_mqtt_publish(&client, topic_manually_Set_Display_Brightness, topic_manually_Set_Display_Brightness_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+				manually_Set_Brightness_changed = 0;
+				// deleteHeaterAckSendToServer = 1 ;
+				} // end of if(manaully_child_Lock_State_change==1){
+
+
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 #endif
 		//  printf("After publish HeaterParameterSendingToAWS\n ");
@@ -2163,6 +3219,8 @@ static void http_get_task(void *pvParameters)
  }
 
 #endif
+
+#endif // end of AWS Task Multiple Logic #define #define DEVICE_ID_ONE_TOPIC
 
 
 void heater_state_change_task(void *param)
@@ -3357,7 +4415,7 @@ void writeEEPROM()
 
 	// display_menu_pair_Heater("Connected",DISPLAY_COLOR, "successfully !!", DISPLAY_COLOR);
 	// display_menu_pair_Heater("Device pairing",DISPLAY_COLOR, "in process !!", DISPLAY_COLOR);
-	 display_menu_pair_Heater("Connecting... ",DISPLAY_COLOR, "please wait", DISPLAY_COLOR);
+	 display_menu_small_font("Connecting... ",DISPLAY_COLOR, "please wait", DISPLAY_COLOR);
 
 	 vTaskDelay(5000);
 

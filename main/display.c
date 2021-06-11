@@ -402,8 +402,9 @@ esp_err_t display_menu(char *str1, int str1_color, char *str2, int str2_color) {
 }
 
 // Added for decrease in the font size ..
-esp_err_t display_menu_pair_Heater(char *str1, int str1_color, char *str2, int str2_color) {
-    sh1106_ret_t ret = SH1106_OK;
+// esp_err_t display_menu_pair_Heater(char *str1, int str1_color, char *str2, int str2_color) {
+esp_err_t display_menu_small_font(char *str1, int str1_color, char *str2, int str2_color) {
+	sh1106_ret_t ret = SH1106_OK;
 
     DISPLAY_MUTEX_LOCK(mutex_lock);
 

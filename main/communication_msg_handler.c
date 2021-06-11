@@ -77,6 +77,9 @@ extern unsigned char CommandAck;
 extern char uniqueDeviceID[12];
 #include "heater.h"  // new Added fot Heater OnOff functions..
 
+
+extern unsigned char updateDisplayAfterAppCommand;
+
 unsigned char en_anti_freeze;
 int hexadecimalToDecimal(char hexVal[]);
 void decToHexa(int n);
@@ -516,8 +519,14 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
        // sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\"", "type", "set","cmd", "set_temp", "status","success", "value", value);
         // Testing one ..
         sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%d\"", "type", "set","cmd", "set_temp", "status","success", "value", value,"temp_unit", app_get_temp_unit());
-
     	CommandAck = SET_TEMP_ACK;
+
+    	// Added for testing only_begin
+    	display_on();
+    	display_clear_screen();
+    	display_menu_small_font("set temp", DISPLAY_COLOR, value, DISPLAY_COLOR);
+    	updateDisplayAfterAppCommand = 1;
+        // Testing End
 
     } else if (strcmp(label, REMOTE_CMD_GET_TARGET_TEMP) == 0) {
         printf("REMOTE_CMD_GET_TARGET_TEMP %s\r\n", value);
@@ -564,11 +573,17 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
         sprintf(reply_buff, "%d", app_is_autoset_time_date_enabled());
     } else if (strcmp(label, REMOTE_CMD_SET_TEMP_UNIT) == 0) {
         printf("REMOTE_CMD_SET_TEMP_UNIT %s\r\n", value);
-
         CommandAck = SET_TEMP_UNIT_ACK;  //
 	    sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_temp_unit", "status","success",  "value",value);
-
         app_set_temp_unit(atoi(value));
+    	display_on();
+    	display_clear_screen();
+        if(atoi(value) == 0)
+        	display_menu_small_font("temp unit", DISPLAY_COLOR, "calcius", DISPLAY_COLOR);
+        else
+        	display_menu_small_font("temp unit", DISPLAY_COLOR, "fahren", DISPLAY_COLOR);
+    	updateDisplayAfterAppCommand = 1;
+
     } else if (strcmp(label, REMOTE_CMD_GET_TEMP_UNIT) == 0) {
         printf("REMOTE_CMD_GET_TEMP_UNIT %s\r\n", value);
         sprintf(reply_buff, "%d", app_get_temp_unit());
@@ -590,24 +605,30 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 //    		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "dis_night_light_mode", "status","success",  "value",value);
 
         // app_enable_night_light_auto_brightness(atoi(value));  // original code line commented for Auo,OFF, ON mode
+    	display_on();
+    	display_clear_screen();
 
 #define RGB_AUTO_ON_OFF_MODE
 #ifdef  RGB_AUTO_ON_OFF_MODE
 			if (strcmp(value, "01") == 0)
 			{
 			  app_enable_night_light_auto_brightness(atoi(value));
+			  display_menu_small_font("RGB set", DISPLAY_COLOR, "Auto", DISPLAY_COLOR);
 			}
 			if (strcmp(value, "00") == 0)
-			{  rgb_led_state = 0;
+			{  // rgb_led_state = 0;
 			   app_enable_night_light_auto_brightness(atoi(value));  // here value passed is Zero only, so passed value in that fucntion.
 			   printf(" rgb_led_state OFF \n  ");
+			   display_menu_small_font("RGB set", DISPLAY_COLOR, "Off", DISPLAY_COLOR);
 			}
 			if (strcmp(value, "02") == 0)
-			{  rgb_led_state = 1;
-			   app_enable_night_light_auto_brightness(0); // Zero is passed to disable the night light --
+			{  // rgb_led_state = 1;
+			   app_enable_night_light_auto_brightness(atoi(value)); // Zero is passed to disable the night light --
 			   printf("rgb_led_state ON \n ");
-			}
 
+			   display_menu_small_font("RGB set", DISPLAY_COLOR, "On", DISPLAY_COLOR);
+			}
+			updateDisplayAfterAppCommand = 1;
 #else
        	app_enable_night_light_auto_brightness(atoi(value));
 #endif
@@ -626,6 +647,12 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
        // app_set_night_light_config(atoi(value));  // Original
 
 		sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "set_rgb_led", "status","success",  "value",value);
+
+    	display_on();
+    	display_clear_screen();
+    	display_menu_small_font("RGB Colour", DISPLAY_COLOR, "change", DISPLAY_COLOR);
+    	updateDisplayAfterAppCommand = 1;
+
     } else if (strcmp(label, REMOTE_CMD_GET_NIGHT_LIGHT_CONFIG) == 0) {
         printf("REMOTE_CMD_GET_NIGHT_LIGHT_CONFIG %s\r\n", value);
         sprintf(reply_buff, "%d", app_get_night_light_config());
@@ -670,14 +697,27 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 		oneTimeRegistrationPacketToAWS= 0;
 		keepAliveFlag = 1;
 
+    	display_on();
+    	display_clear_screen();
+    	display_menu_small_font("Device", DISPLAY_COLOR, "registered", DISPLAY_COLOR);
+    	updateDisplayAfterAppCommand = 1;
+
 	}
 	 else if (strcmp(label, REMOTE_CMD_HEATER_ON_OFF) == 0) {
 		  printf("REMOTE_CMD_HEATER_ON OFF \n");
 		  CommandAck = HEATER_ON_OFF_ACK;
 		  app_set_heater_state(atoi(value));
-
 	      sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_on_off", "status","success",  "value",value);
-		}
+
+	    	display_on();
+	    	display_clear_screen();
+	    	if(atoi(value) == 1)
+	    		display_menu_small_font("Manual", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+	    	else
+	    		display_menu_small_font("Standby", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+	    	updateDisplayAfterAppCommand = 1;
+
+	 }
 	 else if (strcmp(label, REMOTE_CMD_EN_ANTI_FREEZE) == 0) {
 		   printf("REMOTE_CMD_EN_ANTI_FREEZE \n");
 		   CommandAck = EN_ANTI_FREEZE_ACK;
@@ -691,7 +731,19 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 			 printf(" en_anti_freeze disable \n  ");
 			}
 			 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "en_anti_freeze", "status","success",  "value",value);
-			}
+
+			 // app_data->display_settings.is_auto_screen_off_en;
+
+			// app_data->display_settings.is_auto_screen_off_en = false;
+		    display_on();
+		    display_clear_screen();
+			if(atoi(value))
+				display_menu_small_font("anti_freeze", DISPLAY_COLOR, "enable", DISPLAY_COLOR);
+			else
+				display_menu_small_font("anti_freeze", DISPLAY_COLOR, "disable", DISPLAY_COLOR);
+			updateDisplayAfterAppCommand = 1;
+
+	      }
 	 else if (strcmp(label, REMOTE_CMD_RGB_LED_STATE) == 0) {
 			   printf("REMOTE_CMD_RGB_LED_STATE \n");
 			   CommandAck = RGB_LED_STATE_ACK;
@@ -721,7 +773,16 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 				 set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
 
 	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "day_light_time_on", "status","success",  "value",value);
-	 				}
+
+					display_on();
+					display_clear_screen();
+					if(atoi(value))
+						display_menu_small_font("dst", DISPLAY_COLOR, "on", DISPLAY_COLOR);
+					else
+						display_menu_small_font("dst", DISPLAY_COLOR, "off", DISPLAY_COLOR);
+					updateDisplayAfterAppCommand = 1;
+
+	                }
 	 else if (strcmp(label, REMOTE_CMD_SET_THRESHOLD_OFFSET_TIME) == 0) {
 		 			 CommandAck = SET_THRESHOLD_OFFSET_TIME_ACK;
                       //Put this value in the variable for threshold offset value
@@ -741,15 +802,15 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 				 // sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs",app_get_heater_state() );
 
 #ifdef RGB_AUTO_ON_OFF_MODE
-				if(app_is_night_light_auto_brightness_enabled() == 1)
-				{	luchRGB_MODE = 1; }
-				else
-				{ 	if (rgb_led_state == 1)
-						luchRGB_MODE = 2;
-					else
-						luchRGB_MODE = 0; }
+//				if(app_is_night_light_auto_brightness_enabled() == 1)
+//				{	luchRGB_MODE = 1; }
+//				else
+//				{ 	if (rgb_led_state == 1)
+//						luchRGB_MODE = 2;
+//					else
+//						luchRGB_MODE = 0; }
 
-			    sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",luchRGB_MODE, "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
+			    sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
 
 #else
 				 // Working line for app get mode
@@ -766,7 +827,12 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 					 pingDeviceOnFlag = 1;
 					 printf("REMOTE_CMD_PING_DEVICE \r\n");
 	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "ping_device", "status","success",  "value",value);
-		 }
+
+					display_on();
+					display_clear_screen();
+					display_menu_small_font("ping device", DISPLAY_COLOR, "active", DISPLAY_COLOR);
+					updateDisplayAfterAppCommand = 1;
+	 }
 	 else if (strcmp(label, REMOTE_CMD_AUTO_SCREEN_OFF) == 0) {
 					 CommandAck = AUTO_SCREEN_OFF_EN_ACK;
 					 //Put this value in the variable for threshold offset value
@@ -775,14 +841,23 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 
 					 printf("REMOTE_CMD_AUTO_SCREEN_OFF \r\n");
 	 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "auto_screen_off_en", "status","success",  "value",value);
-		 }
+
+					display_on();
+					display_clear_screen();
+					if(atoi(value))
+						display_menu_small_font("auto screen off", DISPLAY_COLOR, "on", DISPLAY_COLOR);
+					else
+						display_menu_small_font("auto screen off", DISPLAY_COLOR, "off", DISPLAY_COLOR);
+					updateDisplayAfterAppCommand = 1;
+
+	     }
 	 else if (strcmp(label, REMOTE_CMD_DELETE_HEATER) == 0) {
 		     if (strcmp(value, "01") == 0){
 		         CommandAck = DELETE_HEATER_ACK;
 				 //Put this value in the variable for threshold offset value
 				 printf("REMOTE_CMD_DELETE_HEATER \r\n");
 	 			 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "delete_heater", "status","success",  "value",value);
-	 			 // app_delete_heater(atoi(value));
+	 			// app_delete_heater(atoi(value));
 	 		 }
 	 }
 	 else if (strcmp(label, REMOTE_CMD_AUTO_DIM_PILOT_LIGHT_EN) == 0) {
@@ -791,6 +866,15 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 						 printf("REMOTE_CMD_AUTO_DIM_PILOT_LIGHT_EN \r\n");
 		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "dim_pilot_light_en", "status","success",  "value",value);
 		 				app_enable_autodim_pilot_light(atoi(value));
+
+						display_on();
+						display_clear_screen();
+						if(atoi(value))
+							display_menu_small_font("dim pilot led", DISPLAY_COLOR, "on", DISPLAY_COLOR);
+						else
+							display_menu_small_font("dim pilot led", DISPLAY_COLOR, "off", DISPLAY_COLOR);
+						updateDisplayAfterAppCommand = 1;
+
 		 }
 	 else if (strcmp(label, REMOTE_CMD_AUTO_DISPLAY_BRIGHTNESS_EN) == 0) {
 						 CommandAck = AUTO_DISPLAY_BRIGHTNESS_EN_ACK;
@@ -798,6 +882,15 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 						 printf("REMOTE_CMD_AUTO_DISPLAY_BRIGHTNESS_EN \r\n");
 		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "auto_display_brightness_en", "status","success",  "value",value);
 		 				app_enable_autodim_display(atoi(value));
+
+						display_on();
+						display_clear_screen();
+						if(atoi(value))
+							display_menu_small_font("auto display brightness", DISPLAY_COLOR, "on", DISPLAY_COLOR);
+						else
+							display_menu_small_font("auto display brightness", DISPLAY_COLOR, "off", DISPLAY_COLOR);
+						updateDisplayAfterAppCommand = 1;
+
 		 }
 
 	 else if (strcmp(label, REMOTE_CMD_MANUAL_CHANGE_DISPLAY_BRIGHTNESS) == 0) {
@@ -806,6 +899,11 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 						 printf("REMOTE_CMD_MANUAL_CHANGE_DISPLAY_BRIGHTNESS  Value %s\r\n", value);
 	 		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "manual_change_display_brightness", "status","success",  "value",value);
 	 		 				 app_set_screen_brightness(atoi(value));
+							display_on();
+							display_clear_screen();
+							display_menu_small_font("manual change display brightness", DISPLAY_COLOR, value, DISPLAY_COLOR);
+							updateDisplayAfterAppCommand = 1;
+
 	 		 }
 
 	 else if (strcmp(label, REMOTE_CMD_DELAY_AUTO_SCREEN_OFF) == 0) {
@@ -814,15 +912,33 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	 						 printf("REMOTE_CMD_DELAY_AUTO_SCREEN_OFF  Value %s\r\n", value);
 	 		 				 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "delay_for_auto_screen_off", "status","success",  "value",value);
 	 		 				app_set_auto_screen_off_delay(atoi(value));
+							display_on();
+							display_clear_screen();
+							display_menu_small_font("delay auto scree off", DISPLAY_COLOR, value, DISPLAY_COLOR);
+							updateDisplayAfterAppCommand = 1;
 	 		 }
-
 	 else
 	 {
         printf("unhandled label %s %s\r\n", label, value);
      }
 
+    // CommandResponseOnDisplay();
+
     return SUCCESS;
 }
+
+//void CommandResponseOnDisplay(void)
+//{
+//	if(CommandAck){
+//		display_on();
+//		display_clear_screen();
+//	    switch(CommandAck)
+//		{
+//		   case SET_TEMP_ACK:   	display_menu("set", DISPLAY_COLOR, "temp", DISPLAY_COLOR); break ;
+//                    default : break;
+//                }
+//        }
+//}
 
 
 

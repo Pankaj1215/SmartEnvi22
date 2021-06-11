@@ -26,6 +26,8 @@
 #ifndef __COMMUNICATION_MSG_HANDLER_H__
 #define __COMMUNICATION_MSG_HANDLER_H__
 
+void CommandResponseOnDisplay(void);
+
 /** 
  * mainflux message type
  *

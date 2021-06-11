@@ -162,12 +162,22 @@ unsigned char pingDeviceEnablePilotLed = 0;
 
 extern unsigned char en_anti_freeze;
 extern unsigned char heater_On_Off_state_by_command;
-extern unsigned char manaully_Set_Temp_change;
-extern unsigned char manaully_night_Light_State_change;
-extern unsigned char manaully_child_Lock_State_change;
-extern unsigned char manaully_Temp_unit_change;
-extern unsigned char manaully_reset_ssid_pass_enable;
+
+extern unsigned char manually_Set_Temp_change;
+extern unsigned char manually_night_Light_State_change;
+extern unsigned char manually_child_Lock_State_change;
+extern unsigned char manually_Temp_unit_change;
+extern unsigned char manually_reset_ssid_pass_enable;
 extern unsigned char manually_day_light_on_off_change_enable;
+
+
+extern unsigned char manually_Set_Brightness_changed;
+extern unsigned char manually_Delay_Auto_Screen_Off_changed;
+extern unsigned char manually_Auto_Screen_Off_changed;
+extern unsigned char manually_Auto_Screen_Brightness_changed;
+extern unsigned char manually_Dim_Pilot_Light_changed;
+extern unsigned char manually_RGB_Mode_Changed;
+// extern unsigned char manaully_DST_changed;
 
 extern unsigned char device_health_status;
 
@@ -185,6 +195,8 @@ extern bool PairDataRecievedFromAPP;
 
 unsigned char heater_On_Off_state_by_command_ExistFromStandByMode = 0;
 // Threshold_Offset 30Minute calculation ..
+
+unsigned char updateDisplayAfterAppCommand;
 
 //#define MalfunctionTaskIncludedInTempTask
 #ifdef MalfunctionTaskIncludedInTempTask
@@ -357,10 +369,10 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-    // display_menu("Firm_v1", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+    // display_menu("Firm_v2", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-   display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
@@ -642,7 +654,13 @@ static void app_task(void *param) {
     app_mode_t *mode = &(data->mode);
 
     // start at default mode
-     *mode = APP_MODE_ON_STARTUP;   // original ...// commented only for testing...
+    //  *mode = APP_MODE_ON_STARTUP;   // original ...// commented only for testing...
+
+    // Added for testing..
+   if( heater_On_Off_state_by_command == 0)
+     *mode = APP_MODE_ON_STARTUP;
+   else
+	   *mode = APP_MODE_MANUAL_TEMPERATURE;
 
     // start task that reads ambient temperature
      xTaskCreate(temp_sensor_task, "tsensor_task", 4096, (void *)app_data, 12, NULL);
@@ -737,6 +755,11 @@ static void standby_mode_task(app_data_t *data) {
 
      // Test end
 
+	display_on();
+	display_clear_screen();
+	display_menu_small_font("Standby", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+   	vTaskDelay(500);
+
     // wait until power button is released
     while (!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01)) vTaskDelay(1 / portTICK_RATE_MS);
 
@@ -775,6 +798,11 @@ static void standby_mode_task(app_data_t *data) {
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
 
+    	if(updateDisplayAfterAppCommand ==1){
+    		updateDisplayAfterAppCommand = 0; vTaskDelay(1000);
+    		update_display =1;
+    	}
+
 #ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
      menuModeKeypressedFlag = 0;
 #endif
@@ -804,7 +832,7 @@ static void standby_mode_task(app_data_t *data) {
 
                            //  Original Lines commented..Begin
                             data->is_child_lock_active = !data->is_child_lock_active;
-                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+                            manually_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
                            //  Original Ends
 
@@ -980,7 +1008,7 @@ static void standby_mode_task(app_data_t *data) {
                display_clear_screen();
                if(pairON_blinkWifi ==1)
                {  // uchdisplayOnDuringPairing = 1;
-            	   display_menu_pair_Heater("please wait..", DISPLAY_COLOR, "pairing heater", DISPLAY_COLOR);
+            	   display_menu_small_font("please wait..", DISPLAY_COLOR, "pairing heater", DISPLAY_COLOR);
             	 //  display_menu_pair_Heater("connecting....", DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
                }
                else
@@ -1041,7 +1069,7 @@ static void standby_mode_task(app_data_t *data) {
            		uchDeviceGotNetworkDisplayOnceFlag = 0;
 #endif
         	display_clear_screen();
-			display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully", DISPLAY_COLOR);
+        	display_menu_small_font("Connected...",DISPLAY_COLOR, "successfully", DISPLAY_COLOR);
 			printf("/n Connected Successfully /n ");
 			 vTaskDelay(2000);
 		    update_display = 1;
@@ -1052,7 +1080,7 @@ static void standby_mode_task(app_data_t *data) {
        	else{
            		uchDeviceGotNetworkDisplayOnceFlag = 0;
     			display_clear_screen();
-    			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect...", DISPLAY_COLOR);
+    			display_menu_small_font("Not able to ",DISPLAY_COLOR, "connect...", DISPLAY_COLOR);
     			printf("/n Not able to connect .. /n ");
     			vTaskDelay(2000);
     			update_display = 1;
@@ -1139,6 +1167,10 @@ static void manual_temperature_mode_task(app_data_t *data) {
 //	}
 
 
+	display_on();
+	display_clear_screen();
+	display_menu_small_font("Manual Temp", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+   	vTaskDelay(500);
 
     // wait until timer button is released so that it will prevent entering AUTO mode if this mode is entered from Timer mode
     while (!((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)) vTaskDelay(1 / portTICK_RATE_MS);
@@ -1177,6 +1209,11 @@ static void manual_temperature_mode_task(app_data_t *data) {
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
 
+    	if(updateDisplayAfterAppCommand ==1){
+    	    		updateDisplayAfterAppCommand = 0;
+    	    		vTaskDelay(500);
+    	    		update_display =1;
+    	    	}
     	// Added for testing ctof
     	// data->settings.temperature_unit =1;
     	// data->settings.temperature_unit =0;
@@ -1332,7 +1369,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                         && ((cur_ms - btn_down_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
-                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+                            manually_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
                             btn_up_press_ms = cur_ms;
@@ -1387,7 +1424,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                             if ((*temp + 1) <= temp_max) {
                                 is_target_temp_changed = true;
                                 *temp += 1;
-                                manaully_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
+                                manually_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
                             }
                         }
                     } else {
@@ -1399,7 +1436,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                             if ((*temp - 1) >= temp_min) {
                                 is_target_temp_changed = true;
                                 *temp -= 1;
-                                manaully_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
+                                manually_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
                             }
                         }
                     } else {
@@ -1544,7 +1581,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
 	    	           		uchDeviceGotNetworkDisplayOnceFlag = 0;
 	    	#endif
 	    	        	display_clear_screen();
-	    				display_menu_pair_Heater("Connected...",DISPLAY_COLOR, "successfully", DISPLAY_COLOR);
+	    	        	display_menu_small_font("Connected...",DISPLAY_COLOR, "successfully", DISPLAY_COLOR);
 	    				printf("/n Connected Successfully /n ");
 	    				 vTaskDelay(2000);
 	    			    update_display = 1;
@@ -1555,7 +1592,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
 	    	       	else{
 	    	           		uchDeviceGotNetworkDisplayOnceFlag = 0;
 	    	    			display_clear_screen();
-	    	    			display_menu_pair_Heater("Not able to ",DISPLAY_COLOR, "connect...", DISPLAY_COLOR);
+	    	    			display_menu_small_font("Not able to ",DISPLAY_COLOR, "connect...", DISPLAY_COLOR);
 	    	    			printf("/n Not able to connect .. /n ");
 	    	    			vTaskDelay(2000);
 	    	    			update_display = 1;
@@ -1575,7 +1612,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
 
             if(pairON_blinkWifi ==1)
             {
-            	display_menu_pair_Heater("please wait..", DISPLAY_COLOR, "pairing heater", DISPLAY_COLOR);
+            	display_menu_small_font("please wait..", DISPLAY_COLOR, "pairing heater", DISPLAY_COLOR);
             	// display_menu_pair_Heater("Please wait....", DISPLAY_COLOR, "connecting heater !!", DISPLAY_COLOR);
             //	display_menu_pair_Heater("connecting....", DISPLAY_COLOR, "please wait !!", DISPLAY_COLOR);
             }
@@ -1683,6 +1720,12 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
 
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
+
     	if (*ambient_temp_c != prev_ambient_temp_c) {
             prev_ambient_temp_c = *ambient_temp_c;
             update_display = true;
@@ -1718,7 +1761,7 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
 
-                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+                            manually_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
 
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
@@ -1850,6 +1893,12 @@ static void debug_mode_task(app_data_t *data) {
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
 
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
+
     	/* button
            - single press BACK button to go back to standby mode
            - long press POWER button to go to standby mode
@@ -1879,7 +1928,7 @@ static void debug_mode_task(app_data_t *data) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
 
-                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+                            manually_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
 
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
@@ -2001,6 +2050,8 @@ static void debug_mode_task(app_data_t *data) {
        display_on();
 }
 
+#define mode_Change_TimerTo_Manual   // As per new CR..
+
 static void timer_increment_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = *btn;
@@ -2064,10 +2115,21 @@ static void timer_increment_mode_task(app_data_t *data) {
 
 #endif
 
+   	display_on();
+   	display_clear_screen();
+   	display_menu_small_font("Timer", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+   	vTaskDelay(500);
+
     while(*mode == APP_MODE_TIMER_INCREMENT) {
 
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
+
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
 
     	if (*timer_min == 0)
         {
@@ -2195,7 +2257,7 @@ static void timer_increment_mode_task(app_data_t *data) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
 
-                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+                            manually_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
 
                             update_display = true;
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
@@ -2255,7 +2317,7 @@ static void timer_increment_mode_task(app_data_t *data) {
                                 if ((*temp + 1) <= temp_max) {
                                     is_target_temp_changed = true;
                                     *temp += 1;
-                                    manaully_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
+                                    manually_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
 
                                 }
                             }
@@ -2280,7 +2342,7 @@ static void timer_increment_mode_task(app_data_t *data) {
                                 if ((*temp - 1) >= temp_min) {
                                     is_target_temp_changed = true;
                                     *temp -= 1;
-                                    manaully_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
+                                    manually_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
                                 }
                             }
                         }
@@ -2433,6 +2495,7 @@ static void timer_increment_mode_task(app_data_t *data) {
                 display_timer_mode_changed(*timer_min, DISPLAY_COLOR);
             } else if (display_target_temp) {
                 display_temperature(*temp, DISPLAY_COLOR);
+
             } else {
 
             	// Original Line
@@ -2491,10 +2554,21 @@ static void auto_mode_task(app_data_t *data) {
 
     printf("In Auto Mode %d \n ", *mode);
 
+   	display_on();
+   	display_clear_screen();
+   	display_menu_small_font("Auto", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+   	vTaskDelay(500);
+
     while(*mode == APP_MODE_AUTO) {
 
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
+
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
 
     	int sched_past_idx = -1;
         int sched_next_idx = -1;
@@ -2531,6 +2605,9 @@ static void auto_mode_task(app_data_t *data) {
                 }
             }
         }
+
+
+
 
         // if past sched is not found on the current day, search for the first enabled sched from the previous days
         if (sched_past_idx == -1) {
@@ -2747,7 +2824,7 @@ static void auto_mode_task(app_data_t *data) {
                         if (data->settings.is_child_lock_en) {
                             data->is_child_lock_active = !data->is_child_lock_active;
 
-                            manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
+                            manually_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
 
                             printf("is_child_lock_active=%d\r\n", data->is_child_lock_active);
 
@@ -2888,6 +2965,12 @@ static void menu_mode_task(app_data_t *data) {
     while(*mode == APP_MODE_MENU) {
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
+
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
 
         /* button
            - single press BACK button to go back to previous screen if not on the first level
@@ -3128,6 +3211,12 @@ static app_mode_t menu_calendar(app_data_t *data) {
 
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
+
+		if(updateDisplayAfterAppCommand ==1){
+		updateDisplayAfterAppCommand = 0;
+		vTaskDelay(500);
+		update_display =1;
+		}
 
     	if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
@@ -3534,6 +3623,12 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
 
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
+
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
@@ -3655,6 +3750,7 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
 							// Save pending //
 							set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
 							manually_day_light_on_off_change_enable = 1;
+
 							break;
 #endif
 
@@ -4045,6 +4141,12 @@ static app_mode_t menu_communications(app_data_t *data) {
 
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
+
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
 
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
@@ -4585,7 +4687,7 @@ static app_mode_t menu_communications(app_data_t *data) {
 			case MENU_COMMUNICATIONS_RESET_CONFIRMED:
 				 printf("MENU_COMMUNICATIONS_RESET_CONFIRMED\r\n");
 				 display_menu("Reset", DISPLAY_COLOR, "confirmed!", DISPLAY_COLOR);
-				 manaully_reset_ssid_pass_enable = 1;
+				 manually_reset_ssid_pass_enable = 1;
 				//esp_wifi_start();
 				 vTaskDelay(5000);
 
@@ -4639,6 +4741,12 @@ static app_mode_t menu_settings(app_data_t *data) {
 
       if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
+
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
 
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
@@ -4726,7 +4834,6 @@ static app_mode_t menu_settings(app_data_t *data) {
                             break;
 #endif
 
-
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE_WARNING:
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             m_settings = MENU_SETTINGS_TEMPERATURE_HYSTERESIS;
@@ -4796,7 +4903,7 @@ static app_mode_t menu_settings(app_data_t *data) {
 #endif
                         case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
                             is_settings_changed = true;
-                            manaully_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
+                            manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
                             // Fahrenheit <--> Celsius
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
                                 data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
@@ -4839,16 +4946,20 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Enable <--> Disable
                             data->settings.is_dim_pilot_light_en = !data->settings.is_dim_pilot_light_en;
+                            manually_Dim_Pilot_Light_changed = 1;
                             break;
 
 #ifdef NIGHT_LIGHT_AUTO_ON_OFF
                         case MENU_SETTINGS_NIGHT_LIGHT_AUTO:
+                        	manually_RGB_Mode_Changed = 1;
                         	m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON;
                         	 break;
                         case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON:
+                        	manually_RGB_Mode_Changed = 1;
                         	  m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF;
                         	 break;
                         case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF:
+                        	 manually_RGB_Mode_Changed = 1;
                         	  m_settings = MENU_SETTINGS_NIGHT_LIGHT_AUTO;
                              break;
 
@@ -4860,7 +4971,6 @@ static app_mode_t menu_settings(app_data_t *data) {
                             manaully_night_Light_State_change= 1;  // New Added for manaully_night_Light_State_change notification to AWS
                             break;
 #endif
-
 
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS_CHANGE:
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS) {
@@ -4932,7 +5042,7 @@ static app_mode_t menu_settings(app_data_t *data) {
                             break;
                         case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
                             is_settings_changed = true;
-                            manaully_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
+                            manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
                             // Fahrenheit <--> Celsius
                             if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
                                 data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
@@ -4945,7 +5055,6 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Enable <--> Disable
                             data->settings.is_child_lock_en = !data->settings.is_child_lock_en;
-
                             printf("Child lock status: %d ", data->settings.is_child_lock_en);
 
                            // manaully_child_Lock_State_change = 1;  // New Added for manaully_child_Lock_State_change notification to AWS
@@ -4976,16 +5085,20 @@ static app_mode_t menu_settings(app_data_t *data) {
                             is_settings_changed = true;
                             // Enable <--> Disable
                             data->settings.is_dim_pilot_light_en = !data->settings.is_dim_pilot_light_en;
+                            manually_Dim_Pilot_Light_changed = 1;
                             break;
 
 #ifdef NIGHT_LIGHT_AUTO_ON_OFF
                         case MENU_SETTINGS_NIGHT_LIGHT_AUTO:
+                        	  manually_RGB_Mode_Changed = 1;
                         	   m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF;
                         	 break;
                         case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON:
+                        	manually_RGB_Mode_Changed = 1;
                         	   m_settings = MENU_SETTINGS_NIGHT_LIGHT_AUTO;
                         	 break;
                         case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF:
+                        	  manually_RGB_Mode_Changed = 1;
                         	   m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON;
                              break;
 #else
@@ -5049,17 +5162,27 @@ static app_mode_t menu_settings(app_data_t *data) {
                             break;
 
 #ifdef NIGHT_LIGHT_AUTO_ON_OFF
-						case MENU_SETTINGS_NIGHT_LIGHT:
-							if(data->settings.is_night_light_auto_brightness_en == 1)
-							  m_settings = MENU_SETTINGS_NIGHT_LIGHT_AUTO;
-							else
-							{
-								if (rgb_led_state == 1)
-									 m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON;
-								else
-									 m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF;
-							}
-						   break;
+//						case MENU_SETTINGS_NIGHT_LIGHT:
+//							if(data->settings.is_night_light_auto_brightness_en == 1)
+//							  m_settings = MENU_SETTINGS_NIGHT_LIGHT_AUTO;
+//							else
+//							{
+//								if (rgb_led_state == 1)
+//									 m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON;
+//								else
+//									 m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF;
+//							}
+//						   break;
+
+				case MENU_SETTINGS_NIGHT_LIGHT:
+											if(data->settings.is_night_light_auto_brightness_en == 1)
+											     m_settings = MENU_SETTINGS_NIGHT_LIGHT_AUTO;
+										    else if(data->settings.is_night_light_auto_brightness_en == 2)
+											 	 m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON;
+										    else if (data->settings.is_night_light_auto_brightness_en == 0)
+												 m_settings = MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF;
+
+										   break;
 #else
                         case MENU_SETTINGS_NIGHT_LIGHT:
                             m_settings = MENU_SETTINGS_NIGHT_LIGHT_CFG;
@@ -5167,23 +5290,26 @@ static app_mode_t menu_settings(app_data_t *data) {
 //                            display_menu((data->settings.is_night_light_auto_brightness_en) ? "Auto" : "Off", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
 				  is_settings_changed = true;
 				  data->settings.is_night_light_auto_brightness_en  = 1;
+				//  manually_RGB_Mode_Changed = 1;
 				  display_menu("Auto", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
 				break;
 
 		case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON:
 				printf("MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON\r\n");
 			   is_settings_changed = true;
-			   data->settings.is_night_light_auto_brightness_en  = 0;
-			   rgb_led_state = 1;
-			   display_menu("RGB LED", DISPLAY_COLOR, "ON", !DISPLAY_COLOR);
+			   data->settings.is_night_light_auto_brightness_en  = 2;
+			   // rgb_led_state = 1;
+			  // manually_RGB_Mode_Changed =1;
+			   display_menu_small_font("RGB LED", DISPLAY_COLOR, "ON", DISPLAY_COLOR);
 			   break;
 
 		case MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF:
 				printf("MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_OFF \r\n");
 			   is_settings_changed = true;
 			   data->settings.is_night_light_auto_brightness_en  = 0;
-			   rgb_led_state = 0;
-				display_menu("RGB LED", DISPLAY_COLOR, "OFF", !DISPLAY_COLOR);
+			   // rgb_led_state = 0;
+
+			   display_menu_small_font("RGB LED", DISPLAY_COLOR, "OFF", DISPLAY_COLOR);
 				break;
 #else
             case MENU_SETTINGS_NIGHT_LIGHT_CFG:
@@ -5244,6 +5370,13 @@ static app_mode_t menu_display_settings(app_data_t *data) {
     while (!exit) {
     	if(deleteHeaterAckSendToServer ==1)
     	   DeleteHeater();
+
+		if(updateDisplayAfterAppCommand ==1){
+			updateDisplayAfterAppCommand = 0;
+			vTaskDelay(500);
+			update_display =1;
+		}
+
        // printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",data->display_settings.auto_screen_off_delay_sec );
     	if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
@@ -5329,15 +5462,18 @@ static app_mode_t menu_display_settings(app_data_t *data) {
                         case MENU_DISPLAY_SETTINGS_AUTO_SCREEN_OFF_EN:
                             is_display_settings_changed = true;
                             data->display_settings.is_auto_screen_off_en = !data->display_settings.is_auto_screen_off_en;
+                            manually_Auto_Screen_Off_changed = 1;
                             t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                             break;
                         case MENU_DISPLAY_SETTINGS_AUTO_SCREEN_OFF_DELAY_CHANGE:
                             is_display_settings_changed = true;
+                            manually_Delay_Auto_Screen_Off_changed = 1;
                             if (data->display_settings.auto_screen_off_delay_sec < AUTO_SCREEN_OFF_DELAY_SEC_MAX)
                                 data->display_settings.auto_screen_off_delay_sec += AUTO_SCREEN_OFF_DELAY_SEC_INCREMENT;
                             break;
                         case MENU_DISPLAY_SETTINGS_BRIGHTNESS_MANUAL_CHANGE:
                             is_display_settings_changed = true;
+                            manually_Set_Brightness_changed = 1;
                             if (data->display_settings.display_brightness < DISPLAY_BRIGHTNESS_MAX) {
                                 data->display_settings.display_brightness += DISPLAY_BRIGHTNESS_INCREMENT;
                                 if (data->display_settings.display_brightness > DISPLAY_BRIGHTNESS_MAX) {
@@ -5347,6 +5483,7 @@ static app_mode_t menu_display_settings(app_data_t *data) {
                             break;
                         case MENU_DISPLAY_SETTINGS_BRIGHTNESS_AUTO_EN:
                             is_display_settings_changed = true;
+                            manually_Auto_Screen_Brightness_changed = 1;
                             data->display_settings.is_auto_display_brightness_en = !data->display_settings.is_auto_display_brightness_en;
                             if (data->display_settings.is_auto_display_brightness_en == false) {
                                 data->display_settings.display_brightness = DISPLAY_BRIGHTNESS_DEF;
@@ -5377,15 +5514,18 @@ static app_mode_t menu_display_settings(app_data_t *data) {
                         case MENU_DISPLAY_SETTINGS_AUTO_SCREEN_OFF_EN:
                             is_display_settings_changed = true;
                             data->display_settings.is_auto_screen_off_en = !data->display_settings.is_auto_screen_off_en;
+                            manually_Auto_Screen_Off_changed = 1;
                             t_screen_on_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                             break;
                         case MENU_DISPLAY_SETTINGS_AUTO_SCREEN_OFF_DELAY_CHANGE:
                             is_display_settings_changed = true;
+                            manually_Delay_Auto_Screen_Off_changed = 1;
                             if (data->display_settings.auto_screen_off_delay_sec > AUTO_SCREEN_OFF_DELAY_SEC_MIN)
                                 data->display_settings.auto_screen_off_delay_sec -= AUTO_SCREEN_OFF_DELAY_SEC_INCREMENT;
                             break;
                        case MENU_DISPLAY_SETTINGS_BRIGHTNESS_MANUAL_CHANGE:
                             is_display_settings_changed = true;
+                            manually_Set_Brightness_changed = 1;
                             if (data->display_settings.display_brightness > DISPLAY_BRIGHTNESS_MIN) {
                                 data->display_settings.display_brightness -= DISPLAY_BRIGHTNESS_INCREMENT;
                                 if (data->display_settings.display_brightness < DISPLAY_BRIGHTNESS_MIN) {
@@ -5395,6 +5535,7 @@ static app_mode_t menu_display_settings(app_data_t *data) {
                             break;
                         case MENU_DISPLAY_SETTINGS_BRIGHTNESS_AUTO_EN:
                             is_display_settings_changed = true;
+                            manually_Auto_Screen_Brightness_changed = 1;
                             data->display_settings.is_auto_display_brightness_en = !data->display_settings.is_auto_display_brightness_en;
                             if (data->display_settings.is_auto_display_brightness_en == false) {
                                 data->display_settings.display_brightness = DISPLAY_BRIGHTNESS_DEF;
@@ -5513,6 +5654,12 @@ static app_mode_t menu_update(app_data_t *data) {
 
         	if(deleteHeaterAckSendToServer ==1)
         	   DeleteHeater();
+
+			if(updateDisplayAfterAppCommand ==1){
+				updateDisplayAfterAppCommand = 0;
+				vTaskDelay(500);
+				update_display =1;
+			}
 
             if (data->display_settings.is_auto_screen_off_en) {
                 if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_screen_on_ms) >= (data->display_settings.auto_screen_off_delay_sec * 1000)) {
@@ -5807,12 +5954,16 @@ static void night_light_task(void *param) {
     app_data_t *data = (app_data_t *) param;
     int *ambient_light = &(data->ambient_light), prev_ambient_light = -1;
     int *nlight_cfg = &(data->night_light_cfg);
-    bool *nlight_auto_en = &(data->settings.is_night_light_auto_brightness_en);
+
+   // bool *nlight_auto_en = &(data->settings.is_night_light_auto_brightness_en);
+    int *nlight_auto_en = &(data->settings.is_night_light_auto_brightness_en);
+
     bool prev_nlight_auto_en = !(*nlight_auto_en);
     time_t t_set_brightness_ms = 0;
 
     while (1) {
-        if (*nlight_auto_en) {
+       // if (*nlight_auto_en) {  // old firmware
+    	if (*nlight_auto_en == 1) {  // new Logic on 10June
             // update only by interval
             if (!prev_nlight_auto_en || ((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_set_brightness_ms) >= NIGHT_LIGHT_UPDATE_INTERVAL_MS) {
                 // set brightness based on ambient light
@@ -5856,28 +6007,22 @@ static void night_light_task(void *param) {
             }
             prev_nlight_auto_en = true;
         }// end of if (*nlight_auto_en) {
-        else {
-
-#define MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
-#ifdef MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
-        	// *nlight_cfg = 255255255;
-
+    	else if(*nlight_auto_en == 2)
+    	{
             float r_br_NL_disable = 100 *(GET_LED_R_VAL(*nlight_cfg)/2.6) / 100;  // Exsiting logic
             float g_br_NL_disable = 100 * (GET_LED_G_VAL(*nlight_cfg)/2.6) / 100;
             float b_br_NL_disable = 100 * (GET_LED_B_VAL(*nlight_cfg)/2.6) / 100;
-
-            if(rgb_led_state == 1)
-			   {   // night_light_set_br(r_br, g_br, b_br);  // Original Line..
-				   night_light_set_br((int)r_br_NL_disable, (int)g_br_NL_disable, (int)b_br_NL_disable);  // Original Line..
-		         // printf("\n night light disable led on  %d %d  %d %d %d %d\r", *ambient_light, *nlight_auto_en,*nlight_cfg, (int)r_br_NL_disable,(int) g_br_NL_disable, (int)b_br_NL_disable);
-			   }
-        //    else(rgb_led_state == 0)
-             else
-			   {     night_light_off();
-				   //  printf("Led OFF in night light disable \n ");
-			   }
-
-              prev_nlight_auto_en = false;
+			night_light_set_br((int)r_br_NL_disable, (int)g_br_NL_disable, (int)b_br_NL_disable);  // Original Line..
+			prev_nlight_auto_en = false;
+    	}
+        else
+        {
+#define MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
+#ifdef MODIFIED_LOGIC_RGB_DURING_DISABLE_NIGHT_LIGHT
+        	// *nlight_cfg = 255255255;
+            night_light_off();
+		   // printf("Led OFF in night light disable \n ");
+			prev_nlight_auto_en = false;
         	 // printf("Night Light mode is disable \n");
 #else
             if (prev_nlight_auto_en) {
@@ -6244,7 +6389,7 @@ bool app_get_rgb_state(void) {
 void app_delete_heater(bool value)
 {
 	if(value == 1){
-	  manaully_reset_ssid_pass_enable = 1;
+	  manually_reset_ssid_pass_enable = 1;
 	  printf("Command for delete heater received before delay \n");
 	}
 }
@@ -6282,17 +6427,22 @@ int app_enable_autodim_pilot_light(bool en) {
 }
 bool app_is_autodim_pilot_light_enabled(void) {
     if (app_data) {        return app_data->settings.is_dim_pilot_light_en;    }    return false;}
-int app_enable_night_light_auto_brightness(bool en) {
+
+// int app_enable_night_light_auto_brightness(bool en) {
+int app_enable_night_light_auto_brightness(int en) {
+
     if (app_data) {
-        bool *is_nlight_auto_br_en = &(app_data->settings.is_night_light_auto_brightness_en);
-        if (en != *is_nlight_auto_br_en) {
+ //       bool *is_nlight_auto_br_en = &(app_data->settings.is_night_light_auto_brightness_en);
+       int *is_nlight_auto_br_en = &(app_data->settings.is_night_light_auto_brightness_en);
+       if (en != *is_nlight_auto_br_en) {
             *is_nlight_auto_br_en = en;
             set_data_to_storage(STORAGE_KEY_SETTINGS, (void *) &app_data->settings, sizeof(settings_t));
             printf("is_nlight_auto_br_en :  %d", *is_nlight_auto_br_en );
         }        return 0;    }    return -1;
 }
-bool app_is_night_light_auto_brightness_enabled(void) {
-    if (app_data) {        return app_data->settings.is_night_light_auto_brightness_en;    }    return false;}   // data->settings.is_night_light_auto_brightness_en
+// bool app_is_night_light_auto_brightness_enabled(void)
+int app_is_night_light_auto_brightness_enabled(void)
+{    if (app_data) {        return app_data->settings.is_night_light_auto_brightness_en;    }    return false;}   // data->settings.is_night_light_auto_brightness_en
 bool app_get_heater_state(void) {
     if (app_data) {        return app_data->lastHeaterState;    }    return false;}
 void app_set_heater_state(int heater_state)
@@ -6372,13 +6522,16 @@ int app_enable_child_lock(bool en) {
 bool app_is_child_lock_enabled(void) {
     if (app_data) {        return app_data->settings.is_child_lock_en;    }    return false;}
 int app_enable_autodim_display(bool en) {
+
     if (app_data) {
         bool *is_auto_display_brightness_en = &(app_data->display_settings.is_auto_display_brightness_en);
         if (en != *is_auto_display_brightness_en) {
             *is_auto_display_brightness_en = en;
             printf(" Auto Command display_brightness: %d  app_data->display_settings.is_auto_display_brightness_ene %d\n",  app_data->display_settings.display_brightness, app_data->display_settings.is_auto_display_brightness_en);
             set_data_to_storage(STORAGE_KEY_DISPLAY_SETTINGS, (void *) &app_data->display_settings, sizeof(display_settings_t));
-        }        return 0;    }    return -1;
+        }        return 0;    }
+
+    return -1;
 }
 bool app_is_autodim_display_enabled(void) {
     if (app_data) {        return app_data->display_settings.is_auto_display_brightness_en;    }    return false;}

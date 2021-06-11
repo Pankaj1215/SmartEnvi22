@@ -334,7 +334,7 @@ enum menu_settings {
 	MENU_SETTINGS_HEATER_UNDER_REPAIR_EN,
 #endif
 
-//#define NIGHT_LIGHT_AUTO_ON_OFF
+#define NIGHT_LIGHT_AUTO_ON_OFF
 #ifdef NIGHT_LIGHT_AUTO_ON_OFF
 	MENU_SETTINGS_NIGHT_LIGHT_AUTO,
 	MENU_SETTINGS_NIGHT_LIGHT_RGB_LED_ON,
@@ -406,7 +406,10 @@ typedef struct {
     temp_unit_t temperature_unit;
     bool is_child_lock_en;
     bool is_dim_pilot_light_en;
-    bool is_night_light_auto_brightness_en;
+
+   // bool is_night_light_auto_brightness_en;  // old firmware logic
+    int is_night_light_auto_brightness_en;  // Changed logic on 10 June 2021
+
     int temperature_hysteresis_celsius;
     int temperature_hysteresis_fahrenheit;
 } settings_t;
@@ -635,14 +638,16 @@ bool app_is_autodim_pilot_light_enabled(void);
  * \param en enabled auto brightness
  * \return return success if ok
  */
-int app_enable_night_light_auto_brightness(bool en);
+// int app_enable_night_light_auto_brightness(bool en);
+int app_enable_night_light_auto_brightness(int en);
 
 /*!
  * \fn bool app_is_night_light_auto_brightness_enabled(void)
  * \brief application get if auto brightness is enabled or disabled
  * \return return true if enabled
  */
-bool app_is_night_light_auto_brightness_enabled(void);
+// bool app_is_night_light_auto_brightness_enabled(void);
+int app_is_night_light_auto_brightness_enabled(void);
 
 /*!
  * \fn int app_set_night_light_config(int cfg)
@@ -761,6 +766,8 @@ int app_get_light_LDR_parm(void);
 
 int valueRoundOff(int pvalue, int ptemp_Conversion_unit);
 void DeleteHeater(void);
+
+// int app_enable_night_light_auto_brightness(int en);
 
 
 #define CONVERT_C_TO_F  0

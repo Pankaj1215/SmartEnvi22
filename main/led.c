@@ -107,7 +107,9 @@ static void set_night_light_init_config(void)
     settings.is_night_light_auto_brightness_en = false;
     nvs_flash_init();
     get_data_from_storage(STORAGE_KEY_SETTINGS, &settings);
-    if (settings.is_night_light_auto_brightness_en == true) {
+  //  if (settings.is_night_light_auto_brightness_en == true)  // old Firmware
+    if ((settings.is_night_light_auto_brightness_en == true) ||(settings.is_night_light_auto_brightness_en == 2))  // New Firmware
+    {
     	printf("Inside settings.is_night_light_auto_brightness_en == true \n ");
 
         int config;
