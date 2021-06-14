@@ -80,6 +80,7 @@ unsigned char manually_RGB_Mode_Changed;
 // unsigned char manaully_DST_changed;
 
 unsigned char manually_Timer_Mode_min_changed;
+unsigned char updateDisplayAfterAppCommand;
 
 unsigned char daylightSaving;
 
@@ -2723,7 +2724,7 @@ void aws_iot_task(void *param) {
 //				    case SET_THRESHOLD_OFFSET_TIME_ACK :
 //				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, &HeaterMeassage); CommandAck = 0;
 //				    			     	 break;
-//
+
 
 				    case SET_TIMER_MODE_MIN_ACK :
 										 rc = aws_iot_mqtt_publish(&client, topic_timer_mode_set_min_Response, topic_timer_mode_set_min_Response_Len, &HeaterMeassage); CommandAck = 0;
@@ -2874,6 +2875,133 @@ void aws_iot_task(void *param) {
 
 			if( oneTimeRegistrationPacketToAWS == 0){
 
+//#define EVENT_TRIGGER_COUNT
+#ifdef EVENT_TRIGGER_COUNT
+				memset(cPayload1,0,sizeof(cPayload1));
+				unsigned char EventTriggerCount ;
+				switch(EventTriggerCount)
+				{
+				case  MANUAL_SET_TEMP_CHANGE:  // 1
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit,"temp_unit",app_get_temp_unit());
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, &HeaterMeassage);
+												EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_NIGHT_LIGHT_STATE_CHANGE:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit,"temp_unit",app_get_temp_unit());
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, &HeaterMeassage);
+												EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_TEMP_UNIT_CHANGE:
+				                            	sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_temp_unit_change", "status","success",  "value", app_data->settings.temperature_unit);
+							                 	printf("\n \n TempUnitChangeDataToAWS app_data->settings.temperature_unit : %d \n \n ", app_data->settings.temperature_unit);
+							                	HeaterMeassage.payloadLen = strlen(cPayload1);
+						                 		rc = aws_iot_mqtt_publish(&client, topic_Manual_temp_unit_change, topic_Manual_temp_unit_change_Len, &HeaterMeassage);
+					                            EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_RESET_SSID_PASS_ENABLE:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_reset_ssid_pass", "status","success",  "value", 1);//manually_reset_ssid_pass
+												printf("\n manaully_reset_ssid_pass_enable \n ");
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, &HeaterMeassage);
+												EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_DAY_LIGHT_ON_OFF_CHANGE_ENABLE:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit,"temp_unit",app_get_temp_unit());
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, &HeaterMeassage);
+												EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_PUT_HEATER_UNDER_REPAIR_ENABLE:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_temp_change", "status","success",  "value", app_data->manual_temperature_fahrenheit,"temp_unit",app_get_temp_unit());
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, &HeaterMeassage);
+												EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_RGB_MODE_CHANGED:
+					                           sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_rgb_mode_changed", "status","success",  "value", app_is_night_light_auto_brightness_enabled()  );//
+								            	printf("\n manaully_RGB_Mode_Changed \n ");
+								            	HeaterMeassage.payloadLen = strlen(cPayload1);
+
+								            	rc = aws_iot_mqtt_publish(&client, topic_manually_RGB_Mode_Changed, topic_manually_RGB_Mode_Changed_Len, &HeaterMeassage);   // commented on 05June
+
+					                            EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_DIM_PILOT_LIGHT_CHANGED:
+					                            sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_dim_pilot_light_changed", "status","success",  "value", app_data->settings.is_dim_pilot_light_en);//manually_reset_ssid_pass
+							                	printf("\n manaully_Dim_Pilot_Light_changed \n ");
+								                HeaterMeassage.payloadLen = strlen(cPayload1);
+
+							                   rc = aws_iot_mqtt_publish(&client, topic_manually_Dim_Pilot_Light_changed, topic_manually_Dim_Pilot_Light_changed_Len, &HeaterMeassage);   // commented on 05June
+
+					                            EventTriggerCount = 0;
+												break;
+
+
+				case  MANUALLY_AUTO_SCREEN_BRIGHTNESS_CHANGED:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_auto_screen_brightness_changed", "status","success",  "value", app_data->display_settings.is_auto_display_brightness_en);//manually_reset_ssid_pass
+												printf("\n MANUALLY_AUTO_SCREEN_BRIGHTNESS_CHANGED \n ");
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+
+												rc = aws_iot_mqtt_publish(&client, topic_manually_auto_screen_brightness_changed , topic_manually_auto_screen_brightness_changed_Len, &HeaterMeassage);   // commented on 05June
+												EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_AUTO_SCREEN_OFF_CHANGED:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_auto_screen_off_changed", "status","success",  "value", app_data->display_settings.is_auto_screen_off_en);//manually_reset_ssid_pass
+												printf("\n manaully_Auto_Screen_Off_changed \n ");
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_manually_Auto_Screen_Off_Enable_changed, topic_manually_Auto_Screen_Off_Enable_changed_Len, &HeaterMeassage);   // commented on 05June
+												EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_DELAY_AUTO_SCREEN_OFF_CHANGED:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_delay_auto_screen_off_changed", "status","success",  "value", app_data->display_settings.auto_screen_off_delay_sec);//manually_reset_ssid_pass
+												printf("\n manaully_Delay_Auto_Screen_Off_changed \n ");
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_manually_Auto_Screen_Off_Delay_changed, topic_manually_Auto_Screen_Off_Delay_changed_Len, &HeaterMeassage);   // commented on 05June
+												EventTriggerCount = 0;
+												break;
+
+
+				case  MANUALLY_SET_BRIGHTNESS_CHANGED:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_set_brightness_changed", "status","success",  "value", app_data->display_settings.display_brightness);//manually_reset_ssid_pass
+												printf("\n manaully_Set_Brightness_changed \n ");
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_manually_Set_Display_Brightness, topic_manually_Set_Display_Brightness_Len, &HeaterMeassage);   // commented on 05June
+												EventTriggerCount = 0;
+												break;
+
+				case  MANUALLY_TIMER_MODE_MIN_CHANGED:
+												sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_timer_mode_min_changed", "status","success",  "value",app_get_timer());//
+												printf("\n manually_Timer_Mode_min_changed \n ");
+												HeaterMeassage.payloadLen = strlen(cPayload1);
+												rc = aws_iot_mqtt_publish(&client, topic_manually_timer_mode_min_changed, topic_manually_timer_mode_min_changed_Len, &HeaterMeassage);   // commented on 05June
+												EventTriggerCount = 0;
+												break;
+				default: break;
+				}// end of switch
+
+#ifdef TEST_WIFI_STUCK_PROB
+			if(rc!=0)
+			{
+			printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+			 continue;
+			//luchDone = true;
+			}
+			#endif
+			memset(replybuff,0,sizeof(replybuff));
+			memset(cPayload1,0,sizeof(cPayload1));
+
+#else
 				// printf("manually trigger Event  \n ");
 			if(manually_Set_Temp_change==1){
 				memset(cPayload1,0,sizeof(cPayload1));
@@ -3259,7 +3387,7 @@ void aws_iot_task(void *param) {
 				// deleteHeaterAckSendToServer = 1 ;
 				} // end of if(manaully_child_Lock_State_change==1){
 
-
+#endif
 
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 #endif
@@ -3398,6 +3526,8 @@ void Temp_MalfunctionTask(void *param)
     int f_amb_Temp_three_Degree_logic_Prev = 0;
     int set_Temp_three_Degree_logic;
 
+    unsigned char malFunOccured = 0;
+    unsigned char prev_malFunOccured = 0;
     while(1){
 
 //   	  	*amb_temp_c = app_get_ambient_temp();
@@ -3792,6 +3922,28 @@ else { // Temperature in Fahranniete
       {
     	  printf("Heater malfunction disable from manual mode \n ");
       }
+
+
+// #define DisplayForMalFunction
+#ifdef DisplayForMalFunction
+
+      if((device_health_status != 0) && (device_health_status != 8))
+      {
+    	display_on();
+    	display_clear_screen();
+    	display_menu_small_font("malfun code", DISPLAY_COLOR, (char)device_health_status, DISPLAY_COLOR);
+    	malFunOccured = 1;
+  	   // updateDisplayAfterAppCommand = 1;
+      }
+      else
+      {  malFunOccured = 0;}
+
+     if( prev_malFunOccured !=malFunOccured)
+     {
+    	 updateDisplayAfterAppCommand = 1;
+    	 prev_malFunOccured = malFunOccured;
+     }
+#endif
 
        // vTaskDelay(TEMP_SENSOR_READ_INTERVAL_MS / portTICK_RATE_MS);
        vTaskDelay(1000 / portTICK_RATE_MS);

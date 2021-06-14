@@ -2053,7 +2053,8 @@ static void debug_mode_task(app_data_t *data) {
 }
 
 #define mode_Change_TimerTo_Manual   // As per new CR..
-
+#define ControlMessageInTimerMode
+unsigned char SetTempChangedInTimerMode = 0;
 static void timer_increment_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = *btn;
@@ -2121,6 +2122,7 @@ static void timer_increment_mode_task(app_data_t *data) {
    	display_clear_screen();
    	display_menu_small_font("Timer", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
    	vTaskDelay(500);
+   	SetTempChangedInTimerMode = 0;
 
     while(*mode == APP_MODE_TIMER_INCREMENT) {
 
@@ -2246,12 +2248,15 @@ static void timer_increment_mode_task(app_data_t *data) {
             if (!screen_off) {
                 if (!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01)) { // power button is pressed
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
                        heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
+
+
                 } else if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up AND down are pressed
                     int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     if (((cur_ms - btn_up_press_ms) >= CHILD_LOCK_LONG_PRESS_DUR_MS)
@@ -2303,12 +2308,26 @@ static void timer_increment_mode_task(app_data_t *data) {
             } else {
                 if ((*btn & (1 << BUTTON_POWER_BACK_STAT)) != (prev_btn & (1 << BUTTON_POWER_BACK_STAT))) { // power button toggles
                     if (!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01)) { // pressed
-                        btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+
+//#ifdef ControlMessageInTimerMode
+//                    if(SetTempChangedInTimerMode == 1)
+//                    {
+//                    	*mode = APP_MODE_TIMER_INCREMENT;
+//                    	SetTempChangedInTimerMode = 0;
+//                    	update_display = true;
+//                    }
+//                    else
+//                    	btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+//#else
+                    	btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+// #endif
+
                     }
                 } else if ((*btn & (1 << BUTTON_UP_STAT)) != (prev_btn & (1 << BUTTON_UP_STAT))) { // up button toggles
                     if ((*btn >> BUTTON_UP_STAT) & 0x01) { // unpressed
                         if (!data->is_child_lock_active) {
-                            if (is_timer_change_en) {
+
+                        	if (is_timer_change_en) {
                                 is_timer_changed = true;
 
                                 manually_Timer_Mode_min_changed = 1;
@@ -2319,12 +2338,25 @@ static void timer_increment_mode_task(app_data_t *data) {
                                 else
                                     *timer_min = TIMER_MAX_VALUE_MINUTES;
                             } else {
-                                if ((*temp + 1) <= temp_max) {
+
+#ifdef ControlMessageInTimerMode
+            					display_on();
+            					display_clear_screen();
+            					display_DejaVu_Sans_8_font("Changing temp. will change", DISPLAY_COLOR, "timer mode to manual", DISPLAY_COLOR);
+                                vTaskDelay(2000);    update_display = true;
+                                update_display = true;
+                                // display_target_temp = 1;
+                                SetTempChangedInTimerMode = 1;
+
+#else
+                            	// Up button dipsplay indicates  // original code as per the eheat.
+                            	if ((*temp + 1) <= temp_max) {
                                     is_target_temp_changed = true;
                                     *temp += 1;
                                     manually_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
-
                                 }
+#endif
+
                             }
                         }
                     } else { // pressed
@@ -2333,7 +2365,16 @@ static void timer_increment_mode_task(app_data_t *data) {
                 } else if ((*btn & (1 << BUTTON_DOWN_STAT)) != (prev_btn & (1 << BUTTON_DOWN_STAT))) { // down button toggles
                     if ((*btn >> BUTTON_DOWN_STAT) & 0x01) { // unpressed
                         if (!data->is_child_lock_active) {
-                            if (is_timer_change_en) {
+
+                        	if(SetTempChangedInTimerMode == 1)
+                        	{
+								// *mode = APP_MODE_TIMER_INCREMENT;
+								SetTempChangedInTimerMode = 0;
+								update_display = true;
+                         	}
+                        	else{
+
+                        	if (is_timer_change_en) {
                                 if (*timer_min > TIMER_MIN_VALUE_MINUTES) {
                                     is_timer_changed = true;
 
@@ -2347,21 +2388,51 @@ static void timer_increment_mode_task(app_data_t *data) {
                                         *timer_min = TIMER_MIN_VALUE_MINUTES;
                                 }
                             } else {
-                                if ((*temp - 1) >= temp_min) {
+
+#ifdef ControlMessageInTimerMode
+									display_on();
+									display_clear_screen();
+									display_DejaVu_Sans_8_font("Changing temp. will change", DISPLAY_COLOR, "timer mode to manual", DISPLAY_COLOR);
+									vTaskDelay(2000);
+								    update_display = true;
+
+								    // display_target_temp = 1;
+								    SetTempChangedInTimerMode = 1;
+
+#else
+                                     // Last code section for eheat .
+                            	if ((*temp - 1) >= temp_min) {
                                     is_target_temp_changed = true;
                                     *temp -= 1;
                                     manually_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
                                 }
+#endif
+
                             }
-                        }
+                          }// end of (SetTempChangedInTimerMode ==1)
+
+                        } // end of
+
                     } else { // pressed
                         btn_down_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
                     }
                 } else if ((*btn & (1 << BUTTON_TIMER_FORWARD_STAT)) != (prev_btn & (1 << BUTTON_TIMER_FORWARD_STAT))) { // timer button toggles
                     if ((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01) { // unpressed
                         if (!data->is_child_lock_active) {
+#ifdef ControlMessageInTimerMode
+                            if(SetTempChangedInTimerMode == 1){
+								*timer_min = 0;
+								*mode = APP_MODE_MANUAL_TEMPERATURE;
+                            }
+                            else{
                             is_timer_change_en = true;
                             is_timer_changed = true; // to update display only
+                            }
+#else
+						is_timer_change_en = true;
+						is_timer_changed = true; // to update display only
+#endif
+
                         }
                     } else { // pressed
                         btn_timer_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -2502,8 +2573,7 @@ static void timer_increment_mode_task(app_data_t *data) {
             if (display_timer) {
                 display_timer_mode_changed(*timer_min, DISPLAY_COLOR);
             } else if (display_target_temp) {
-                display_temperature(*temp, DISPLAY_COLOR);
-
+            	display_temperature(*temp, DISPLAY_COLOR);  // original line
             } else {
 
             	// Original Line
@@ -2519,7 +2589,29 @@ static void timer_increment_mode_task(app_data_t *data) {
     			int ambient_temp_f = 0;
     			ambient_temp_f  = valueRoundOff(*ambient_temp_c, CONVERT_C_TO_F);
 
+#ifdef ControlMessageInTimerMode
+
+    			if( SetTempChangedInTimerMode == 1 ){
+
+    			printf(" Timer Mode message control \n ");
+				display_on();
+				display_clear_screen();
+				// . Do you want to continue Y/N
+				display_DejaVu_Sans_8_font("Do you want to continue?", DISPLAY_COLOR, "<-No            Yes->",DISPLAY_COLOR);  // Do you want to continue Y/N
+    			}
+				else{
                 display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
+				}
+
+#else
+                display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
+#endif
+
+
+             //   display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
+
+
+
             }
 
             // display connection status indication if connected

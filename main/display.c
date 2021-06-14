@@ -436,6 +436,41 @@ esp_err_t display_menu_small_font(char *str1, int str1_color, char *str2, int st
 }
 
 
+esp_err_t display_DejaVu_Sans_8_font(char *str1, int str1_color, char *str2, int str2_color) {
+	sh1106_ret_t ret = SH1106_OK;
+
+    DISPLAY_MUTEX_LOCK(mutex_lock);
+
+    int str_width = 0;
+    const char *font = DejaVu_Sans_10;
+    ret |= sh1106_set_font(sh1106, font);
+    str_width = sh1106_get_string_width(sh1106, str1);
+
+    if (str2 == NULL) {
+        ret |= sh1106_set_xy(sh1106, (str_width < OLED_WIDTH) ? (OLED_WIDTH - str_width) / 2 : 0, (OLED_HEIGHT - font[FONT_HEIGHT_POS]) / 2);
+        ret |= sh1106_draw_string(sh1106, str1, str1_color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    } else {
+        ret |= sh1106_set_xy(sh1106, (str_width < OLED_WIDTH) ? (OLED_WIDTH - str_width) / 2 : 0, OLED_HEIGHT / 2 - font[FONT_HEIGHT_POS]);
+        ret |= sh1106_draw_string(sh1106, str1, str1_color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+        str_width = sh1106_get_string_width(sh1106, str2);
+        ret |= sh1106_set_xy(sh1106, (str_width < OLED_WIDTH) ? (OLED_WIDTH - str_width) / 2 : 0, OLED_HEIGHT / 2);
+        ret |= sh1106_draw_string(sh1106, str2, str2_color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    }
+
+    ret |= sh1106_update_display(sh1106);
+
+    DISPLAY_MUTEX_UNLOCK(mutex_lock);
+
+    if (ret != SH1106_OK)
+        return ESP_FAIL;
+
+    return ESP_OK;
+}
+
+
+
+
 esp_err_t display_temperature(int val, int color) {
     char temp_str[10];
     int str_width;

@@ -81,6 +81,30 @@ void getIP_address(void);
 
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 
+#define  MANUALLY_SET_TEMP_CHANGE                1
+#define  MANUALLY_NIGHT_LIGHT_STATE_CHANGE       2
+#define  MANUALLY_TEMP_UNIT_CHANGE               3
+#define  MANUALLY_RESET_SSID_PASS_ENABLE         4
+#define  MANUALLY_DAY_LIGHT_ON_OFF_CHANGE_ENABLE 5
+#define  MANUALLY_PUT_HEATER_UNDER_REPAIR_ENABLE 6
+#define  MANUALLY_RGB_MODE_CHANGED               7
+#define  MANUALLY_DIM_PILOT_LIGHT_CHANGED        8
+#define  MANUALLY_AUTO_SCREEN_BRIGHTNESS_CHANGED 9
+#define  MANUALLY_AUTO_SCREEN_OFF_CHANGED        10
+#define  MANUALLY_DELAY_AUTO_SCREEN_OFF_CHANGED  11
+#define  MANUALLY_SET_BRIGHTNESS_CHANGED         12
+#define  MANUALLY_TIMER_MODE_MIN_CHANGED         13
+
+#define  HEATER_STATE_CHANGE_DATA_TO_AWS         14
+#define  THERMOSTAT_STATE_CHANGE_DATA_TO_AWS     15
+#define  AMBIENT_TEMP_CHANGE_DATA_TO_AWS         16
+
+
+
+
+
+
+
 int  getSubString(char *source, char *target,int from, int to);
 void heater_state_change_task(void *param);
 
