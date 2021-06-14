@@ -184,6 +184,8 @@ extern unsigned char manually_Timer_Mode_min_changed;
 extern unsigned char device_health_status;
 
 extern unsigned char FlashEraseEnableAPMode; // Added for direct AP mode enable After Flash erased.
+unsigned char AutoMode_scheduleFromServer =0;  // Flag is set from Server end only
+
 
 #ifdef HeaterUnderReapir
 unsigned char heater_underControl_status = 0;
@@ -2342,7 +2344,7 @@ static void timer_increment_mode_task(app_data_t *data) {
 #ifdef ControlMessageInTimerMode
             					display_on();
             					display_clear_screen();
-            					display_DejaVu_Sans_8_font("Changing temp. will change", DISPLAY_COLOR, "timer mode to manual", DISPLAY_COLOR);
+            					display_DejaVu_Sans_10_font("Changing temp. will change", DISPLAY_COLOR, "timer mode to manual", DISPLAY_COLOR);
                                 vTaskDelay(2000);    update_display = true;
                                 update_display = true;
                                 // display_target_temp = 1;
@@ -2392,7 +2394,7 @@ static void timer_increment_mode_task(app_data_t *data) {
 #ifdef ControlMessageInTimerMode
 									display_on();
 									display_clear_screen();
-									display_DejaVu_Sans_8_font("Changing temp. will change", DISPLAY_COLOR, "timer mode to manual", DISPLAY_COLOR);
+									display_DejaVu_Sans_10_font("Changing temp. will change", DISPLAY_COLOR, "timer mode to manual", DISPLAY_COLOR);
 									vTaskDelay(2000);
 								    update_display = true;
 
@@ -2597,7 +2599,7 @@ static void timer_increment_mode_task(app_data_t *data) {
 				display_on();
 				display_clear_screen();
 				// . Do you want to continue Y/N
-				display_DejaVu_Sans_8_font("Do you want to continue?", DISPLAY_COLOR, "<-No            Yes->",DISPLAY_COLOR);  // Do you want to continue Y/N
+				display_DejaVu_Sans_10_font("Do you want to continue?", DISPLAY_COLOR, "<-No            Yes->",DISPLAY_COLOR);  // Do you want to continue Y/N
     			}
 				else{
                 display_timer_mode_normal(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f, data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *target_temp_c : *target_temp_f, *timer_min, DISPLAY_COLOR);
@@ -3269,6 +3271,7 @@ static void button_timer_forward_cb(int level) {
     }
 }
 
+
 static app_mode_t menu_calendar(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = *btn;
@@ -3276,6 +3279,14 @@ static app_mode_t menu_calendar(app_data_t *data) {
     // when changing mode, this task should be completed before starting the next mode
     bool exit = false;
     app_mode_t next_mode = data->mode;
+
+   if( AutoMode_scheduleFromServer == 1)
+   {
+	   display_clear_screen();
+	   display_menu_small_font("Schedule set", DISPLAY_COLOR, " from Server",DISPLAY_COLOR);
+	   vTaskDelay(4000);
+	   next_mode = APP_MODE_MENU;
+	   exit = true;   }
 
 #if 1 
 
@@ -6555,7 +6566,7 @@ void app_set_heater_state(int heater_state)
 	else if(heater_On_Off_state_by_command ==2 )
 		app_data->mode  = APP_MODE_TIMER_INCREMENT;
 	else if(heater_On_Off_state_by_command == 3 )
-		app_data->mode  = APP_MODE_AUTO;
+		{app_data->mode  = APP_MODE_AUTO; AutoMode_scheduleFromServer = 1;}
 #endif
 	else
 	{ heater_On_Off_state_by_command_ExistFromStandByMode = 0;}// heater_off(); }

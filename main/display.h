@@ -105,6 +105,6 @@ esp_err_t display_menu_small_font(char *str1, int str1_color, char *str2, int st
 
 esp_err_t display_wifi_icon_pairing_blinking(int color);
 
-esp_err_t display_DejaVu_Sans_8_font(char *str1, int str1_color, char *str2, int str2_color);
+esp_err_t display_DejaVu_Sans_10_font(char *str1, int str1_color, char *str2, int str2_color);
 
 #endif /* MAIN_DISPLAY_H */
