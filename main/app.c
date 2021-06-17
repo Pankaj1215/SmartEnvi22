@@ -161,7 +161,7 @@ unsigned char pingDeviceEnablePilotLed = 0;
 #define NTP_Testing_dayLightSaving  // New testing Added ..on 15_51pm
 
 extern unsigned char en_anti_freeze;
-extern unsigned char heater_On_Off_state_by_command;
+// extern unsigned char heater_On_Off_state_by_command;
 
 extern unsigned char manually_Set_Temp_change;
 extern unsigned char manually_night_Light_State_change;
@@ -185,7 +185,6 @@ extern unsigned char device_health_status;
 
 extern unsigned char FlashEraseEnableAPMode; // Added for direct AP mode enable After Flash erased.
 unsigned char AutoMode_scheduleFromServer =0;  // Flag is set from Server end only
-
 
 #ifdef HeaterUnderReapir
 unsigned char heater_underControl_status = 0;
@@ -293,17 +292,17 @@ unsigned char uchDeviceGotNetworkDisplayOnceFlag = 1;
 void init_Variables(void);
 
 void init_Variables(void){
-en_anti_freeze = 1;  // It is used to enable anti freeze logic defualt ON.
-rgb_led_state = 1;
+ en_anti_freeze = 1;  // It is used to enable anti freeze logic defualt ON.
+ rgb_led_state = 1;
 
-manually_put_heater_under_repair_status_for_malfunctionMonitor = 1;
+ manually_put_heater_under_repair_status_for_malfunctionMonitor = 1;
 
 // app_data->mode
- heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
+
+ // heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
 
  heater_off();//initially heater will be off ..added on 02Dec2020
-
-printf("init variables heater_On_Off_state_by_command %d app_data->lastHeaterState %d",heater_On_Off_state_by_command,app_data->lastHeaterState);
+ printf("init variables app_data->lastHeaterState %d",app_data->lastHeaterState);
 }
 
 void testFunctionFoFToC(void);
@@ -373,10 +372,10 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-    // display_menu("Firm_v2", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+     display_menu("Firm_v2", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+    // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
@@ -659,9 +658,9 @@ static void app_task(void *param) {
 
     // start at default mode
     //  *mode = APP_MODE_ON_STARTUP;   // original ...// commented only for testing...
-
     // Added for testing..
-   if( heater_On_Off_state_by_command == 0)
+ //  if( heater_On_Off_state_by_command == 0)
+   if( app_data->lastHeaterState == 0)
      *mode = APP_MODE_ON_STARTUP;
    else
 	   *mode = APP_MODE_MANUAL_TEMPERATURE;
@@ -811,10 +810,16 @@ static void standby_mode_task(app_data_t *data) {
      menuModeKeypressedFlag = 0;
 #endif
 
-     // printf(" before out of stand by mode by Heater ON commmand \n");
-     if(heater_On_Off_state_by_command_ExistFromStandByMode ==1  || heater_On_Off_state_by_command == 1 ){ // New Added for Coming out of stand by mode  //
-    	 *mode = APP_MODE_MANUAL_TEMPERATURE; printf(" Out of stand by mode by Heater ON commmand \n"); heater_On_Off_state_by_command =0; heater_On_Off_state_by_command_ExistFromStandByMode =0;}
-     //    printf(" After Out of stand by mode by Heater ON commmand \n");
+
+
+
+//     // printf(" before out of stand by mode by Heater ON commmand \n");
+//     if(heater_On_Off_state_by_command_ExistFromStandByMode ==1  || heater_On_Off_state_by_command == 1 ){ // New Added for Coming out of stand by mode  //
+//    	 *mode = APP_MODE_MANUAL_TEMPERATURE; printf(" Out of stand by mode by Heater ON commmand \n"); heater_On_Off_state_by_command =0; heater_On_Off_state_by_command_ExistFromStandByMode =0;}
+//     //    printf(" After Out of stand by mode by Heater ON commmand \n");
+
+
+
 
         if (*btn == prev_btn) {
             if (data->display_settings.is_auto_screen_off_en) {
@@ -1417,7 +1422,8 @@ static void manual_temperature_mode_task(app_data_t *data) {
                         if (!data->is_child_lock_active) {
                             *mode = APP_MODE_STANDBY;
                             // new added for stand by mode by manually _30NOv2020
-                            heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0;
+                         //   heater_On_Off_state_by_command = 0;
+                         //   heater_On_Off_state_by_command_ExistFromStandByMode = 0;
                         }
                     } else {
                         btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -1755,7 +1761,7 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                      // heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 } else if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up AND down are pressed
@@ -1794,7 +1800,7 @@ static void temperature_offset_set_mode_task(app_data_t *data) {
                         if (!data->is_child_lock_active) {
                             *mode = APP_MODE_STANDBY;
                             // new added for stand by mode by manually _30Nov2020
-                           heater_On_Off_state_by_command = 0; 	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                          // heater_On_Off_state_by_command = 0; 	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         }
                     } else {
                         btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -1922,7 +1928,7 @@ static void debug_mode_task(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                     //  heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 } else if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up AND down are pressed
@@ -1961,7 +1967,7 @@ static void debug_mode_task(app_data_t *data) {
                         if (!data->is_child_lock_active) {
                             *mode = APP_MODE_STANDBY;
                             // new added for stand by mode by manually _30Nov2020
-                           heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                         //  heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         }
                     } else {
                         btn_power_press_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -2144,7 +2150,7 @@ static void timer_increment_mode_task(app_data_t *data) {
 					if (((xTaskGetTickCount() * portTICK_PERIOD_MS) - t_timer_expire_ms) >= (TIMER_EXPIRE_WAIT_FOR_INCREMENT_MS)) {
 						*mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                    //   heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
 					}
 				} else {
 					is_timer_expired = true;
@@ -2254,7 +2260,7 @@ static void timer_increment_mode_task(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                      // heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
 
@@ -2767,6 +2773,11 @@ static void auto_mode_task(app_data_t *data) {
 //            printf("\r\nsched_next_idx %d wday %d\r\n", sched_next_idx, sched_next_idx / AUTO_MODE_SCHED_NUM);
         }
 
+#define Schedule_setFromAPP_LOGIC
+#ifdef Schedule_setFromAPP_LOGIC
+      if(AutoMode_scheduleFromServer == 0)   // this flag added on 17June2021
+      {
+#endif
         if ((sched_past_idx != -1) && (sched_next_idx != -1)) { // at least 1 schedule / period is set
             auto_mode_sched_t *sched_past = NULL;
             auto_mode_sched_t *sched_next = NULL;
@@ -2827,10 +2838,25 @@ static void auto_mode_task(app_data_t *data) {
                 }
             }
 #endif
-        } else { // no schedule / period is set, use set manual temperature
+        }
+        else { // no schedule / period is set, use set manual temperature
             auto_temp_c = data->manual_temperature_celsius;  
             auto_temp_f = data->manual_temperature_fahrenheit; 
         }
+
+#ifdef Schedule_setFromAPP_LOGIC
+      }  // end of if(AutoMode_scheduleFromServer == 0)
+      else
+      { // no schedule / period is set, use set manual temperature
+                  auto_temp_c = data->manual_temperature_celsius;
+                  auto_temp_f = data->manual_temperature_fahrenheit;
+       }
+#endif
+
+
+
+
+
 
 //        printf("\r\nAUTO: auto_temp_c=%d auto_temp_f=%d\r\n", auto_temp_c, auto_temp_f);
 
@@ -2916,7 +2942,7 @@ static void auto_mode_task(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                     //  heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 } else if ((!((*btn >> BUTTON_UP_STAT) & 0x01)) && (!((*btn >> BUTTON_DOWN_STAT) & 0x01))) { // both button up or down is pressed
@@ -3095,7 +3121,7 @@ static void menu_mode_task(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         *mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                    //   heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         btn_power_press_ms = cur_ms;
                     }
                 }
@@ -3283,7 +3309,7 @@ static app_mode_t menu_calendar(app_data_t *data) {
    if( AutoMode_scheduleFromServer == 1)
    {
 	   display_clear_screen();
-	   display_menu_small_font("Schedule set", DISPLAY_COLOR, " from Server",DISPLAY_COLOR);
+	   display_menu_small_font("Schedule set", DISPLAY_COLOR, " from APP",DISPLAY_COLOR);
 	   vTaskDelay(4000);
 	   next_mode = APP_MODE_MENU;
 	   exit = true;   }
@@ -3343,7 +3369,7 @@ static app_mode_t menu_calendar(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                     //  heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -3754,7 +3780,7 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                    //   heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -4273,7 +4299,7 @@ static app_mode_t menu_communications(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                     //  heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -4873,7 +4899,7 @@ static app_mode_t menu_settings(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                    //   heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -5503,7 +5529,7 @@ static app_mode_t menu_display_settings(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                    //   heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -5785,7 +5811,7 @@ static app_mode_t menu_update(app_data_t *data) {
                     if ((cur_ms - btn_power_press_ms) >= HEATER_OFF_LONG_PRESS_DUR_MS) {
                         next_mode = APP_MODE_STANDBY;
                         // new added for stand by mode by manually _30Nov2020
-                       heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
+                    //   heater_On_Off_state_by_command = 0;    	heater_On_Off_state_by_command_ExistFromStandByMode = 0; // Till here
                         exit = true;
                         btn_power_press_ms = cur_ms;
                     }
@@ -6240,6 +6266,7 @@ int app_set_mode(int mode) {
         }
         return 0;}    return -1;
 }
+
 // working one
 //int app_get_mode(void) {
 //    if (app_data) {
@@ -6253,7 +6280,7 @@ int app_set_mode(int mode) {
 //    return -1;
 //}
 
-// #define FOUR_MODES_DEVICE
+#define FOUR_MODES_DEVICE
 int app_get_mode(void) {
     if (app_data) {
    // printf("app_get_mode app_data->mode %d",app_data->mode);
@@ -6273,34 +6300,11 @@ int app_get_mode(void) {
 }
 
 int app_get_ambient_temp(void) {
-//   int temperatureInFehrannite;
-//	if (app_data) {
-//    	// printf("From app_get_ambient_temp: %d\n", app_data->ambient_temperature_celsius);
-////    	 if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-//          	 return app_data->ambient_temperature_celsius;
-////    	 else  //     			app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT
-////    	 {
-////    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
-////    	     return temperatureInFehrannite;
-////    	 }
-//    }
 	   int temperatureInFehrannite = 0;
 		if (app_data) {
-//		    		 temperatureInFehrannite = celsius_to_fahr(app_data->ambient_temperature_celsius);
-//	    	 printf("From app_get_ambient_temp: %d temperatureInFehrannite %d\n", app_data->ambient_temperature_celsius, temperatureInFehrannite);
-//	         return temperatureInFehrannite;	    }
-
-//	    float lf_temp =0;
-//		float lf_temp_roundOff =0;
-//		int new_intTemp =0;
-//		lf_temp = celsius_to_fahr(app_data->ambient_temperature_celsius);
-//		lf_temp_roundOff = round(lf_temp);
-//		new_intTemp = lf_temp_roundOff;
 		int new_intTemp =0;
 		new_intTemp = valueRoundOff(app_data->ambient_temperature_celsius, CONVERT_C_TO_F );
-
         printf("From app_get_ambient_temp: %d temperatureInFehrannite %d\n", app_data->ambient_temperature_celsius, new_intTemp);
-
 	    return new_intTemp;}
     return 0x80000000;
 }
@@ -6310,26 +6314,9 @@ int app_get_ambient_temp(void) {
 int app_set_target_temp(int temp) {
    int temp_c = 0;
    int temp_f = 0 ; float ftemp_f =0;
-//   temp_c = temp; printf("temp_c %d\n",temp_c);
-//   temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
    temp_f = temp; printf("temp_f %d\n",temp_f);
-   // original
-   // temp_c = fahr_to_celsius(temp_f); printf("temp_c %d\n",temp_c);
-   // testing
-
-//   float lf_temp =0;
-//   float lf_temp_roundOff =0;
-//   int n_new_SetTemp =0;
-//
-//   lf_temp = fahr_to_celsius(temp_f);
-//   lf_temp_roundOff = round(lf_temp);
-//   n_new_SetTemp = lf_temp_roundOff;
-//   temp_c = n_new_SetTemp;
 
    temp_c = valueRoundOff(temp_f , CONVERT_F_TO_C );
-
-  // temp_c = temp; printf("temp_c %d\n",temp_c);
-  // temp_f = celsius_to_fahr(temp_c); printf("temp_f %d\n",temp_f ); ftemp_f = (float)celsius_to_fahr(temp_c);printf("ftemp_f %f\n",ftemp_f );
 
    if (app_data)
     {
@@ -6408,15 +6395,7 @@ int app_set_target_temp(int temp) {
 #endif
 int app_get_target_temp(void) {
     if (app_data) { // Original Lines
-    //	if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
-       // printf("From app_get_target_temp in calcius: %d\n", app_data->manual_temperature_celsius);
-      //  return app_data->manual_temperature_celsius; }  // Last working one Change on 23Dec2020
        return  app_data->manual_temperature_fahrenheit;} // Only for testing .. Added on 23Dec2020
-      //  else{
-      //      printf("From app_get_target_temp in fahreneite: %d\n", app_data->manual_temperature_fahrenheit);
-      //      return app_data->manual_temperature_fahrenheit;}
-    //}
-    // printf("From  app_dat not found app_get_target_temp: %d\n", app_data->manual_temperature_celsius);
 	 return 0x80000000;  // Original Line
 }
 int app_set_timer(int timer) {
@@ -6556,52 +6535,85 @@ int app_is_night_light_auto_brightness_enabled(void)
 {    if (app_data) {        return app_data->settings.is_night_light_auto_brightness_en;    }    return false;}   // data->settings.is_night_light_auto_brightness_en
 bool app_get_heater_state(void) {
     if (app_data) {        return app_data->lastHeaterState;    }    return false;}
-void app_set_heater_state(int heater_state)
-{ int heaterSaveState =0;
-	heater_On_Off_state_by_command = heater_state ;
-	if(heater_On_Off_state_by_command ==1)
-	 { heater_On_Off_state_by_command_ExistFromStandByMode = 1;}// heater_on(); }
 
-#ifdef FOUR_MODES_DEVICE
-	else if(heater_On_Off_state_by_command ==2 )
-		app_data->mode  = APP_MODE_TIMER_INCREMENT;
-	else if(heater_On_Off_state_by_command == 3 )
-		{app_data->mode  = APP_MODE_AUTO; AutoMode_scheduleFromServer = 1;}
-#endif
-	else
-	{ heater_On_Off_state_by_command_ExistFromStandByMode = 0;}// heater_off(); }
-
-    if(heater_On_Off_state_by_command_ExistFromStandByMode == 0){ // New Added for Coming out of stand by mode
-    	app_data->mode  = APP_MODE_STANDBY;   } // printf(" Come to stand by mode by Heater OFF commmand \n");
-// Original Lines
+// old Working logic..Commented on 17June2021
+//void app_set_heater_state(int heater_state)
+//{ int heaterSaveState =0;
+//	heater_On_Off_state_by_command = heater_state ;
+//	if(heater_On_Off_state_by_command ==1)
+//	 { heater_On_Off_state_by_command_ExistFromStandByMode = 1;}// heater_on(); }
+//
+//#ifdef FOUR_MODES_DEVICE
+//	else if(heater_On_Off_state_by_command ==2 )
+//		{app_data->mode  = APP_MODE_TIMER_INCREMENT; AutoMode_scheduleFromServer = 0;}
+//	else if(heater_On_Off_state_by_command == 3 )
+//		{app_data->mode  = APP_MODE_AUTO; AutoMode_scheduleFromServer = 1;}
+//#endif
+//	else
+//	{ heater_On_Off_state_by_command_ExistFromStandByMode = 0;}// heater_off(); }
+//
+//    if(heater_On_Off_state_by_command_ExistFromStandByMode == 0){ // New Added for Coming out of stand by mode
+//    	app_data->mode  = APP_MODE_STANDBY;
+//    	AutoMode_scheduleFromServer = 0;
+//    } // printf(" Come to stand by mode by Heater OFF commmand \n");
+//
+//
+//// Original Lines
+////    if(heater_On_Off_state_by_command_ExistFromStandByMode == 1){ // New Added for Coming out of stand by mode
+////    	app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; }  // printf(" Come to stand by mode by Heater OFF commmand \n");
+//
+//// Testing Lines
 //    if(heater_On_Off_state_by_command_ExistFromStandByMode == 1){ // New Added for Coming out of stand by mode
-//    	app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; }  // printf(" Come to stand by mode by Heater OFF commmand \n");
+//
+//#ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
+//    if( menuModeKeypressedFlag ==0)
+//    	{  app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;
+//    	  AutoMode_scheduleFromServer = 0;
+//    	}
+//#else
+//     app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;
+//#endif
+//
+//    }  // printf(" Come to stand by mode by Heater OFF commmand \n");
+//
+//#ifdef FOUR_MODES_DEVICE
+//      if(heater_state !=0) {heaterSaveState = 1;} else{heaterSaveState = 0;}
+//	  app_data->lastHeaterState = heaterSaveState;
+//#else
+//	  app_data->lastHeaterState = heater_state;  // original Line
+//#endif
+////	  	if(app_data->lastHeaterState == 1)
+////	       printf("Heater ON from app  \n ");
+////	  	else
+////          printf("Heater OFF from app \n ");
+//	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+//	 // printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+//}
+//
 
-// Testing Lines
-    if(heater_On_Off_state_by_command_ExistFromStandByMode == 1){ // New Added for Coming out of stand by mode
+void app_set_heater_state(int heater_state)
+{	int heaterSaveState =0;
+  if(app_data){
+    switch(heater_state)
+    {
+       case 0: app_data->mode  = APP_MODE_STANDBY; AutoMode_scheduleFromServer = 0; break;
+       case 1 : app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; AutoMode_scheduleFromServer = 0; break;
+       case 2: app_data->mode  = APP_MODE_TIMER_INCREMENT; AutoMode_scheduleFromServer = 0; break;
+       case 3 : app_data->mode  = APP_MODE_AUTO; AutoMode_scheduleFromServer = 1;
+                break;
+       default : break;
 
-#ifdef TEST_ELECTRONIC_ON_AUTOMATIC_CONTROL
-    if( menuModeKeypressedFlag ==0)
-    	{app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;}
-#else
-     app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;
-#endif
+    } // end of switch()
 
-    }  // printf(" Come to stand by mode by Heater OFF commmand \n");
+   if(( menuModeKeypressedFlag ==0) && (device_health_status == DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY))
+   	{  app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;
+  	   AutoMode_scheduleFromServer = 0;
+  	}
 
-
-#ifdef FOUR_MODES_DEVICE
-      if(heater_state !=0) {heaterSaveState = 1;} else{heaterSaveState = 0;}
+    if(heater_state !=0) {heaterSaveState = 1;} else{heaterSaveState = 0;}
 	  app_data->lastHeaterState = heaterSaveState;
-#else
-	  app_data->lastHeaterState = heater_state;  // original Line
-#endif
-//	  	if(app_data->lastHeaterState == 1)
-//	       printf("Heater ON from app  \n ");
-//	  	else
-//          printf("Heater OFF from app \n ");
 	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
-	 // printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+  }// end of if(app_data)
 }
 
 

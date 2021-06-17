@@ -1924,7 +1924,7 @@ static void http_get_task(void *pvParameters)
 
 void aws_iot_task(void *param) {
 
-     int count = 0 , count_DEV = 0;
+     int count = 0, count_DEV = 0;
 	//  while(1){
 	//  unsigned char luchDone = false;
       IoT_Error_t rc = FAILURE;
@@ -2096,6 +2096,11 @@ void aws_iot_task(void *param) {
 
       			// new after get set Temp..Firmware- HeaterON and OFF
 				const char *topicHeaterOnOff = "aws/device/command/heater_on_off";  // Heater On command from AWS Server
+
+
+	   			// new after get set Temp..Firmware- HeaterON and OFF
+				const char *topicHeaterOnOff = "aws/device/command/heater_on_off";  // Heater On command from AWS Server
+
 				const int topicHeaterOnOff_Len = strlen(topicHeaterOnOff);
 				ESP_LOGI(TAG, "Subscribing.topicHeaterOn..");
 				rc = aws_iot_mqtt_subscribe(&client, topicHeaterOnOff, topicHeaterOnOff_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
@@ -2223,7 +2228,6 @@ void aws_iot_task(void *param) {
 //				ESP_LOGE(TAG, "Error topic_Set_Threshold_Offset_Time_Response subscribing : %d ", rc);
 //				// abort();  // Commneted for testing
 //				}
-
 
 				//       Set Timer Time
 				const char *topic_timer_mode_set_min = "aws/device/command/timer_mode_set_min";  // testing for param key..
@@ -2804,7 +2808,7 @@ void aws_iot_task(void *param) {
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\"}", "deviceID", "Heater2","msg","EveryThingIsFine"); // WorkingOne..
 
 // Testing begin ..
-//#define Test_MALFUCTION_NOTIFICATION
+// #define Test_MALFUCTION_NOTIFICATION
 #ifdef Test_MALFUCTION_NOTIFICATION
         switch(count){
         case 0: device_health_status = DEVICE_HEALTH_OK;
@@ -3383,7 +3387,7 @@ void aws_iot_task(void *param) {
 				#endif
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
-				manually_Set_Brightness_changed = 0;
+				manually_Timer_Mode_min_changed = 0;
 				// deleteHeaterAckSendToServer = 1 ;
 				} // end of if(manaully_child_Lock_State_change==1){
 
@@ -3467,7 +3471,8 @@ while(1){
 #ifdef MalfunctionTaskExcludedFromTempTask
 #define fahr_to_celsius(f) ((f - 32) * 5 / 9)
 #define celsius_to_fahr(c) (c * 9 / 5 + 32)
-unsigned char heater_On_Off_state_by_command;
+
+// unsigned char heater_On_Off_state_by_command;
 
 int ThirtySec_overForAmb_temp_monitor = 0;
 time_t amb_temp_trigger_ms ;

@@ -84,7 +84,7 @@ unsigned char en_anti_freeze;
 int hexadecimalToDecimal(char hexVal[]);
 void decToHexa(int n);
 unsigned char rgb_led_state;
-unsigned char heater_On_Off_state_by_command;
+// unsigned char heater_On_Off_state_by_command;
 unsigned char TimerIntervalThresholdOffset;
 #endif
 
@@ -701,7 +701,6 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     	display_clear_screen();
     	display_menu_small_font("Device", DISPLAY_COLOR, "registered", DISPLAY_COLOR);
     	updateDisplayAfterAppCommand = 1;
-
 	}
 	 else if (strcmp(label, REMOTE_CMD_HEATER_ON_OFF) == 0) {
 		  printf("REMOTE_CMD_HEATER_ON OFF \n");
@@ -713,6 +712,10 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	    	display_clear_screen();
 	    	if(atoi(value) == 1)
 	    		display_menu_small_font("Manual", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+	    	else if(atoi(value) == 2)
+	    		display_menu_small_font("Timer", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+	    	else if(atoi(value) == 3)
+	    		display_menu_small_font("Auto", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
 	    	else
 	    		display_menu_small_font("Standby", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
 	    	updateDisplayAfterAppCommand = 1;
@@ -929,7 +932,6 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 								display_menu_small_font("timer mode min", DISPLAY_COLOR, value, DISPLAY_COLOR);
 								updateDisplayAfterAppCommand = 1;
 		 		 }
-
 
 
 	 else
