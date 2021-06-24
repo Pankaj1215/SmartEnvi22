@@ -105,8 +105,10 @@ void CommandResponseOnDisplay(void);
 #define REMOTE_CMD_OTA                           "ota"
 
 #define REMOTE_CMD_DEV_REGIS     "dev_regis"
-#define REMOTE_CMD_HEATER_ON_OFF     "heater_on_off"
-// #define REMOTE_CMD_HEATER_OFF     "heater_off"
+
+// #define REMOTE_CMD_HEATER_ON_OFF     "heater_on_off"
+#define REMOTE_CMD_HEATER_STATE     "heater_mode"
+
 #define REMOTE_CMD_EN_ANTI_FREEZE     "en_anti_freeze"
 #define REMOTE_CMD_RGB_LED_STATE   "rgb_led_state"
 

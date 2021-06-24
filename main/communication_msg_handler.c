@@ -702,11 +702,11 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     	display_menu_small_font("Device", DISPLAY_COLOR, "registered", DISPLAY_COLOR);
     	updateDisplayAfterAppCommand = 1;
 	}
-	 else if (strcmp(label, REMOTE_CMD_HEATER_ON_OFF) == 0) {
-		  printf("REMOTE_CMD_HEATER_ON OFF \n");
+	 else if (strcmp(label, REMOTE_CMD_HEATER_STATE) == 0) {
+		  printf("REMOTE_CMD_HEATER_STATE OFF \n");
 		  CommandAck = HEATER_ON_OFF_ACK;
 		  app_set_heater_state(atoi(value));
-	      sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_on_off", "status","success",  "value",value);
+	      sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "heater_mode", "status","success",  "value",value);
 
 	    	display_on();
 	    	display_clear_screen();
@@ -813,7 +813,24 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 //					else
 //						luchRGB_MODE = 0; }
 
-			    sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
+
+				// working // commented on 22 June 2021.. for new heater synch packet.
+			 //   sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","lds",app_get_rgb_state(), "nls",app_is_night_light_auto_brightness_enabled(), "cs",app_get_night_light_config(),"afs",app_get_anti_freeze_status(),"dls",app_get_day_light_Saving_status(),"at",app_get_ambient_temp(),"st",app_get_target_temp(), "tu",app_get_temp_unit(),"hs", app_get_mode());
+
+				 // worked new packet excluding Colour change.
+			//	 sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","ht",app_get_mode(),"st",app_get_target_temp(),"at",app_get_ambient_temp(), "tu",app_get_temp_unit(),"af",app_get_anti_freeze_status(),"rg",app_is_night_light_auto_brightness_enabled(),"ab",app_is_autodim_display_enabled(),"sb",app_get_screen_brightness(),"as",  app_is_auto_screen_off_enabled(), "da", app_get_auto_screen_off_delay(), "dp",app_is_autodim_pilot_light_enabled());
+
+				 // did not work..including color change
+			//	 sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "status","suc","ht",app_get_mode(),"st",app_get_target_temp(),"at",app_get_ambient_temp(), "tu",app_get_temp_unit(),"af",app_get_anti_freeze_status(),"rg",app_is_night_light_auto_brightness_enabled(),"ab",app_is_autodim_display_enabled(),"sb",app_get_screen_brightness(),"as",  app_is_auto_screen_off_enabled(), "da", app_get_auto_screen_off_delay(), "dp",app_is_autodim_pilot_light_enabled(), "cs",app_get_night_light_config());
+
+				 // It worked with small keywords..
+				// sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","c","hcs","t","g", "s","s","ht",app_get_mode(),"st",app_get_target_temp(),"at",app_get_ambient_temp(), "tu",app_get_temp_unit(),"af",app_get_anti_freeze_status(),"rg",app_is_night_light_auto_brightness_enabled(),"ab",app_is_autodim_display_enabled(),"sb",app_get_screen_brightness(),"as",  app_is_auto_screen_off_enabled(), "da", app_get_auto_screen_off_delay(), "dp",app_is_autodim_pilot_light_enabled(), "cs",app_get_night_light_config());
+
+				 // It Worked with small and less character Keyword. // commneted on 23JUne2021
+				// sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "s","s","h",app_get_mode(),"s",app_get_target_temp(),"a",app_get_ambient_temp(), "u",app_get_temp_unit(),"f",app_get_anti_freeze_status(),"r",app_is_night_light_auto_brightness_enabled(),"b",app_is_autodim_display_enabled(),"s",app_get_screen_brightness(),"o",  app_is_auto_screen_off_enabled(), "d", app_get_auto_screen_off_delay(), "l",app_is_autodim_pilot_light_enabled(), "c",app_get_night_light_config());
+
+				 sprintf(reply_buff,"\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"","cmd","hcs","type","get", "s","s","h",app_get_mode(),"t",app_get_target_temp(),"a",app_get_ambient_temp(), "u",app_get_temp_unit(),"f",app_get_anti_freeze_status(),"r",app_is_night_light_auto_brightness_enabled(),"b",app_is_autodim_display_enabled(),"q",app_get_screen_brightness(),"o",  app_is_auto_screen_off_enabled(), "d", app_get_auto_screen_off_delay(), "l",app_is_autodim_pilot_light_enabled(), "c",app_get_night_light_config());
+
 
 #else
 				 // Working line for app get mode
