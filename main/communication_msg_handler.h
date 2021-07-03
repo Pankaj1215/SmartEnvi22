@@ -131,6 +131,10 @@ void CommandResponseOnDisplay(void);
 
 #define REMOTE_CMD_TIMER_MODE_COUNTER_MIN     "timer_mode_set_min"
 
+#define REMOTE_CMD_SCHEDULE_SET_FROM_APP     "schedule_set_from_app"
+
+#define REMOTE_CMD_GET_DST_STATUS      "get_dst_status"
+
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)
  * \brief format before calling the msg handler
@@ -148,6 +152,7 @@ int mainflux_msg_handler(char* msg, char* response);
  * \return returns success
  */
 int aurora_msg_handler(char* msg, char* response);
+// void send_schedule_packet_from_heater(void);
 
 
 #endif //__COMMUNICATION_MSG_HANDLER_H__

@@ -766,9 +766,12 @@ int app_get_light_LDR_parm(void);
 
 int valueRoundOff(int pvalue, int ptemp_Conversion_unit);
 void DeleteHeater(void);
-
+void forAuto_mode_Schedule_set_from_app(bool en);
 // int app_enable_night_light_auto_brightness(int en);
 
+void send_schedule_packet_from_heater(void);
+
+//extern unsigned char manually_schedule_set_from_heater;
 
 #define CONVERT_C_TO_F  0
 #define CONVERT_F_TO_C  1

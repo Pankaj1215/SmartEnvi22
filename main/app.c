@@ -181,6 +181,8 @@ extern unsigned char manually_RGB_Mode_Changed;
 
 extern unsigned char manually_Timer_Mode_min_changed;
 
+extern unsigned char manually_schedule_set_from_heater;
+
 extern unsigned char device_health_status;
 
 extern unsigned char FlashEraseEnableAPMode; // Added for direct AP mode enable After Flash erased.
@@ -360,6 +362,99 @@ void testFunctionFoFToC(void){
 }
 #endif
 
+
+
+void send_schedule_packet_from_heater(void)
+{
+  #define WEEK_END 0
+  #define WEEK_DAY 1
+
+	bool wake_sch_en_dis;   uint8_t wake_sch_time_hour, wake_sch_time_min, wake_sch_set_temp;
+	bool leave_sch_en_dis;  uint8_t leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp;
+	bool return_sch_en_dis; uint8_t return_sch_time_hour, return_sch_time_min, return_sch_set_temp;
+	bool sleep_sch_en_dis;  uint8_t sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp;
+	uint8_t schdule_num = 0;
+	uint8_t wday = clock_get_day_of_week();
+    printf("clock_get_day_of_week: %d",wday);
+
+    if((wday == 1) || (wday == 2) ||(wday == 3) || (wday ==4)||(wday == 5))
+    	{wday = WEEK_DAY;}
+    else
+    	{wday = WEEK_END;}
+
+	for (schdule_num = 0; schdule_num < 4; schdule_num++)
+	{
+	  if(wday == WEEK_DAY)
+	   {
+	    switch(schdule_num)
+	    {
+	     case 0 :
+		       wake_sch_en_dis= sched_weekday[schdule_num].en ;
+		       wake_sch_time_hour = sched_weekday[schdule_num].hour ;
+		       wake_sch_time_min = sched_weekday[schdule_num].minute;
+		       wake_sch_set_temp = sched_weekday[schdule_num].temp_f;
+		       break;
+	     case 1:
+			   leave_sch_en_dis= sched_weekday[schdule_num].en ;
+			   leave_sch_time_hour = sched_weekday[schdule_num].hour ;
+			   leave_sch_time_min = sched_weekday[schdule_num].minute;
+			   leave_sch_set_temp = sched_weekday[schdule_num].temp_f;
+			   break;
+	    case 2:
+			   return_sch_en_dis= sched_weekday[schdule_num].en ;
+			   return_sch_time_hour = sched_weekday[schdule_num].hour ;
+			   return_sch_time_min = sched_weekday[schdule_num].minute;
+			   return_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
+	    case 3:
+			   sleep_sch_en_dis= sched_weekday[schdule_num].en ;
+			   sleep_sch_time_hour = sched_weekday[schdule_num].hour ;
+			   sleep_sch_time_min = sched_weekday[schdule_num].minute;
+			   sleep_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
+	    default: break;
+	    } // end of switch
+	   }// if(day == WEEKDAY){
+	   else
+	   {
+	      switch(schdule_num)
+			{
+			 case 0 :
+				   wake_sch_en_dis= sched_weekend[schdule_num].en ;
+				   wake_sch_time_hour = sched_weekend[schdule_num].hour ;
+				   wake_sch_time_min = sched_weekend[schdule_num].minute;
+				   wake_sch_set_temp = sched_weekend[schdule_num].temp_f;
+				   break;
+			 case 1:
+				   leave_sch_en_dis= sched_weekend[schdule_num].en ;
+				   leave_sch_time_hour = sched_weekend[schdule_num].hour ;
+				   leave_sch_time_min = sched_weekend[schdule_num].minute;
+				   leave_sch_set_temp = sched_weekend[schdule_num].temp_f;
+				   break;
+			case 2:
+				   return_sch_en_dis= sched_weekend[schdule_num].en ;
+				   return_sch_time_hour = sched_weekend[schdule_num].hour ;
+				   return_sch_time_min = sched_weekend[schdule_num].minute;
+				   return_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+			case 3:
+				   sleep_sch_en_dis= sched_weekend[schdule_num].en ;
+				   sleep_sch_time_hour = sched_weekend[schdule_num].hour ;
+				   sleep_sch_time_min = sched_weekend[schdule_num].minute;
+				   sleep_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+			default: break;
+			} // end of switch
+		} // end of else
+	}// end for (schdule_num = 0; schdule_num > 4; schdule_num++)
+
+	  printf("\n wday %d",wday);
+      printf("\n wake_sch_en_dis: %d wake_sch_time_hour :%d wake_sch_time_min : %d, wake_sch_set_temp : %d",wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp );
+      printf("\n leave_sch_en_dis: %d leave_sch_time_hour :%d  leave_sch_time_min : %d,  leave_sch_set_temp: %d",leave_sch_en_dis,  leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp );
+      printf("\n return_sch_en_dis: %d return_sch_time_hour :%d  return_sch_time_min : %d,  return_sch_set_temp : %d",return_sch_en_dis,  return_sch_time_hour, return_sch_time_min, return_sch_set_temp );
+      printf("\n sleep_sch_en_dis: %d sleep_sch_time_hour :%d  sleep_sch_time_min : %d,  sleep_sch_set_temp: %d",sleep_sch_en_dis,  sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
+      printf("\n wd:%d, w1:%d ,w2:%d, w3:%d ,w4:%d ,l1:%d,l2:%d,l3:%d,l4:%d,r1:%d r2:%d,r3:%d,r4:%d, s1:%d s2:%d s3:%d s4:%d",wday,wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp, leave_sch_en_dis,leave_sch_time_hour,leave_sch_time_min,leave_sch_set_temp,
+    		  return_sch_en_dis, return_sch_time_hour, return_sch_time_min, return_sch_set_temp, sleep_sch_en_dis, sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
+}
+
+
+
 // #define Test_Storage
 static void print_fw_version(void)
 {
@@ -372,10 +467,10 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-    // display_menu("Firm_v2", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+     display_menu("Firm_v7", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+   // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
@@ -658,6 +753,7 @@ static void app_task(void *param) {
 
     // start at default mode
     //  *mode = APP_MODE_ON_STARTUP;   // original ...// commented only for testing...
+
     // Added for testing..
  //  if( heater_On_Off_state_by_command == 0)
    if( app_data->lastHeaterState == 0)
@@ -1223,6 +1319,9 @@ static void manual_temperature_mode_task(app_data_t *data) {
     	    		vTaskDelay(500);
     	    		update_display =1;
     	    	}
+
+    	// send_schedule_packet_from_heater();
+
     	// Added for testing ctof
     	// data->settings.temperature_unit =1;
     	// data->settings.temperature_unit =0;
@@ -1435,6 +1534,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                                 is_target_temp_changed = true;
                                 *temp += 1;
                                 manually_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
+                                send_schedule_packet_from_heater();
                             }
                         }
                     } else {
@@ -3061,7 +3161,6 @@ static void auto_mode_task(app_data_t *data) {
 }
 
 
-
 static void menu_mode_task(app_data_t *data) {
     int *btn = &(data->button_status);
     int prev_btn = -1;
@@ -3609,7 +3708,7 @@ static app_mode_t menu_calendar(app_data_t *data) {
                             m_cal = MENU_CALENDAR_SCHED_EN;
                             break;
                         case MENU_CALENDAR_SCHED_EN:
-                            m_cal = MENU_CALENDAR_SCHED_EN_STAT;
+                            m_cal = MENU_CALENDAR_SCHED_EN_STAT; manually_schedule_set_from_heater =1;
                             break;
                         case MENU_CALENDAR_SCHED_TIME:
                             m_cal = MENU_CALENDAR_SCHED_TIME_HOUR;
@@ -3717,6 +3816,86 @@ static app_mode_t menu_calendar(app_data_t *data) {
     return next_mode;
 }
 
+//
+//void send_schedule_packet_from_heater(void)
+//{
+//#define WEEK_END 0
+//#define WEEK_DAY 1
+//
+//	bool wake_sch_en_dis;   uint8_t wake_sch_time_hour, wake_sch_time_min, wake_sch_set_temp;
+//	bool leave_sch_en_dis;  uint8_t leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp;
+//	bool return_sch_en_dis; uint8_t return_sch_time_hour, return_sch_time_min, return_sch_set_temp;
+//	bool sleep_sch_en_dis;  uint8_t sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp;
+//	uint8_t schdule_num = 0;
+//    bool wday = clock_get_day_of_week();
+//
+//    if((wday == 1) || (wday == 2) ||(wday == 3) || (wday ==4)||(wday == 5))
+//    	wday = WEEK_DAY;
+//    else
+//    	wday = WEEK_END;
+//
+//	for (schdule_num = 0; schdule_num > 4; schdule_num++)
+//	{
+//	  if(wday == WEEK_DAY)
+//	   {
+//	    switch(schdule_num)
+//	    {
+//	     case 0 :
+//		       wake_sch_en_dis= sched_weekday[schdule_num].en ;
+//		       wake_sch_time_hour = sched_weekday[schdule_num].hour ;
+//		       wake_sch_time_min = sched_weekday[schdule_num].minute;
+//		       wake_sch_set_temp = sched_weekday[schdule_num].temp_f;
+//		       break;
+//	     case 1:
+//			   leave_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   leave_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   leave_sch_time_min = sched_weekday[schdule_num].minute;
+//			   leave_sch_set_temp = sched_weekday[schdule_num].temp_f;
+//			   break;
+//	    case 2:
+//			   return_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   return_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   return_sch_time_min = sched_weekday[schdule_num].minute;
+//			   return_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
+//	    case 3:
+//			   sleep_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   sleep_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   sleep_sch_time_min = sched_weekday[schdule_num].minute;
+//			   sleep_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
+//	    default: break;
+//	    } // end of switch
+//	   }// if(day == WEEKDAY){
+//	   else
+//	   {
+//	      switch(schdule_num)
+//			{
+//			 case 0 :
+//				   wake_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   wake_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   wake_sch_time_min = sched_weekend[schdule_num].minute;
+//				   wake_sch_set_temp = sched_weekend[schdule_num].temp_f;
+//				   break;
+//			 case 1:
+//				   leave_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   leave_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   leave_sch_time_min = sched_weekend[schdule_num].minute;
+//				   leave_sch_set_temp = sched_weekend[schdule_num].temp_f;
+//				   break;
+//			case 2:
+//				   return_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   return_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   return_sch_time_min = sched_weekend[schdule_num].minute;
+//				   return_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+//			case 3:
+//				   sleep_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   sleep_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   sleep_sch_time_min = sched_weekend[schdule_num].minute;
+//				   sleep_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+//			default: break;
+//			} // end of switch
+//		} // end of else
+//	}// end for (schdule_num = 0; schdule_num > 4; schdule_num++)
+//}
 
 static app_mode_t menu_time_and_date(app_data_t *data) {
     int *btn = &(data->button_status);
@@ -3881,14 +4060,17 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
                         case MENU_TIME_AND_DATE_DST:
                         	 m_timedate = MENU_TIME_AND_DATE_AUTO;
                         	 break;
-                    	case MENU_TIME_AND_DATE_DST_ON_OFF_CHANGE_EN:
-							// m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
-							  data->daylightSaving = !data->daylightSaving;
-							// Save pending //
-							set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
-							manually_day_light_on_off_change_enable = 1;
 
-							break;
+//// Below lines commented as per manav sir suggestion for hiding DST control at Heater level.
+//                    	case MENU_TIME_AND_DATE_DST_ON_OFF_CHANGE_EN:
+//							// m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
+//							  data->daylightSaving = !data->daylightSaving;
+//							// Save pending //
+//							set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
+//							manually_day_light_on_off_change_enable = 1;
+//							break;
+
+
 #endif
 
                         case MENU_TIME_AND_DATE_AUTO_EN:
@@ -3968,13 +4150,18 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
                         case MENU_TIME_AND_DATE_DST:
                         	 m_timedate = MENU_TIME_AND_DATE_TIMEZONE_OFFSET;
                         	break;
-                    	case MENU_TIME_AND_DATE_DST_ON_OFF_CHANGE_EN:
-							// m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
-							  data->daylightSaving = !data->daylightSaving;
-							// Save pending //
-							set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
-							manually_day_light_on_off_change_enable = 1;
-							break;
+
+// // Below lines commented as per manav sir suggestion for hiding DST control at Heater level.
+//                    	case MENU_TIME_AND_DATE_DST_ON_OFF_CHANGE_EN:
+//
+//							// m_settings = MENU_SETTINGS_DAY_LIGHT_ON_OFF_CHANGE_EN;
+//							  data->daylightSaving = !data->daylightSaving;
+//							// Save pending //
+//							set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
+//
+//							manually_day_light_on_off_change_enable = 1;
+//							break;
+
 #endif
 
                         case MENU_TIME_AND_DATE_AUTO_EN:
@@ -4048,11 +4235,13 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
                         case MENU_TIME_AND_DATE_TIMEZONE_OFFSET:
                             m_timedate = MENU_TIME_AND_DATE_TIMEZONE_OFFSET_SET;
                             break;
+
 #ifdef	menuDateTime_DST
     					case MENU_TIME_AND_DATE_DST:
     						m_timedate = MENU_TIME_AND_DATE_DST_ON_OFF_CHANGE_EN;
     						break;
 #endif
+
                         case MENU_TIME_AND_DATE_MANUAL_DATE:
                             m_timedate = MENU_TIME_AND_DATE_MANUAL_DATE_YEAR;
                             break;
@@ -5038,15 +5227,19 @@ static app_mode_t menu_settings(app_data_t *data) {
 #endif
                         	  break;
 #endif
-                        case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
-                            is_settings_changed = true;
-                            manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
-                            // Fahrenheit <--> Celsius
-                            if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-                                data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
-                            else
-                                data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
-                            break;
+
+
+  // // Below lines commented as per manav sir suggestion for hiding Temperature unit control at Heater level.
+//                        case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
+//                            is_settings_changed = true;
+//                            manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
+//                            // Fahrenheit <--> Celsius
+//                            if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+//                                data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
+//                            else
+//                                data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
+//                            break;
+
 
                             // It was commented for earlier-- uncommented on 16MArch 2021 again..
                         case MENU_SETTINGS_CHILD_LOCK_EN:
@@ -5177,15 +5370,20 @@ static app_mode_t menu_settings(app_data_t *data) {
                         case MENU_SETTINGS_TEMPERATURE_HYSTERESIS:
                             m_settings = MENU_SETTINGS_NIGHT_LIGHT;
                             break;
-                        case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
-                            is_settings_changed = true;
-                            manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
-                            // Fahrenheit <--> Celsius
-                            if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-                                data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
-                            else
-                                data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
-                            break;
+
+
+//  // Below lines commented as per manav sir suggestion for hiding Temperature unit change control at Heater level.
+
+//                        case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
+//                            is_settings_changed = true;
+//                            manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
+//                            // Fahrenheit <--> Celsius
+//                            if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+//                                data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
+//                            else
+//                                data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
+//                            break;
+
 
                             // It was commented for earlier-- uncommented on 16MArch 2021 again..
                         case MENU_SETTINGS_CHILD_LOCK_EN:
@@ -6591,16 +6789,21 @@ bool app_get_heater_state(void) {
 //	 // printf("app_set_heater_state by App app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 //}
 //
+void forAuto_mode_Schedule_set_from_app(bool en)
+{
+	AutoMode_scheduleFromServer = en;
+}
 
 void app_set_heater_state(int heater_state)
 {	int heaterSaveState =0;
   if(app_data){
     switch(heater_state)
     {
-       case 0: app_data->mode  = APP_MODE_STANDBY; AutoMode_scheduleFromServer = 0; break;
-       case 1 : app_data->mode  = APP_MODE_MANUAL_TEMPERATURE; AutoMode_scheduleFromServer = 0; break;
-       case 2: app_data->mode  = APP_MODE_TIMER_INCREMENT; AutoMode_scheduleFromServer = 0; break;
-       case 3 : app_data->mode  = APP_MODE_AUTO; AutoMode_scheduleFromServer = 1;
+       case 0: app_data->mode  = APP_MODE_STANDBY;   break;
+       case 1 : app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;  break;
+       case 2: app_data->mode  = APP_MODE_TIMER_INCREMENT;  break;
+       case 3 : app_data->mode  = APP_MODE_AUTO;
+       //AutoMode_scheduleFromServer = 1;
                 break;
        default : break;
 

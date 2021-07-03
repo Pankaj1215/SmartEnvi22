@@ -579,7 +579,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
     	display_on();
     	display_clear_screen();
         if(atoi(value) == 0)
-        	display_menu_small_font("temp unit", DISPLAY_COLOR, "calcius", DISPLAY_COLOR);
+        	display_menu_small_font("temp unit", DISPLAY_COLOR, "celcius", DISPLAY_COLOR);
         else
         	display_menu_small_font("temp unit", DISPLAY_COLOR, "fahren", DISPLAY_COLOR);
     	updateDisplayAfterAppCommand = 1;
@@ -950,16 +950,141 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 								updateDisplayAfterAppCommand = 1;
 		 		 }
 
+	 else if (strcmp(label, REMOTE_CMD_SCHEDULE_SET_FROM_APP) == 0) {
+					 CommandAck = SET_TIMER_MODE_MIN_ACK;
+					 //Put this value in the variable for threshold offset value
+					 printf("REMOTE_CMD_SCHEDULE_SET_FROM_APP  Value %s\r\n", value);
+					 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\" ", "type", "set","cmd", "schedule_set_from_app", "status","success",  "value",value);
+					forAuto_mode_Schedule_set_from_app(atoi(value));
+					display_on();
+					display_clear_screen();
+					display_menu_small_font("schedule_set_from_app", DISPLAY_COLOR, value, DISPLAY_COLOR);
+					updateDisplayAfterAppCommand = 1;
+	  }
+
+	 else if (strcmp(label, REMOTE_CMD_GET_DST_STATUS) == 0) {
+					 CommandAck = SET_TIMER_MODE_MIN_ACK;
+					 //Put this value in the variable for threshold offset value
+					 printf("REMOTE_CMD_GET_DST_STATUS  Value %s\r\n", value);
+					 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "type", "get","cmd", "get_dst_status", "status","success",  "value", app_get_day_light_Saving_status());
+					//forAuto_mode_Schedule_set_from_app(atoi(value));
+					display_on();
+					display_clear_screen();
+					display_menu_small_font("get_dst_status", DISPLAY_COLOR, value, DISPLAY_COLOR);
+					updateDisplayAfterAppCommand = 1;
+	  }
 
 	 else
 	 {
         printf("unhandled label %s %s\r\n", label, value);
      }
 
+    // send_schedule_packet_from_heater();
     // CommandResponseOnDisplay();
 
     return SUCCESS;
 }
+
+
+
+
+
+
+//#include "clock/clock.h"
+//
+//extern auto_mode_sched_t sched_weekday[AUTO_MODE_SCHED_NUM];
+//extern auto_mode_sched_t sched_weekend[AUTO_MODE_SCHED_NUM];
+//
+//void send_schedule_packet_from_heater(void)
+//{
+//  #define WEEK_END 0
+//  #define WEEK_DAY 1
+//
+//	bool wake_sch_en_dis;   uint8_t wake_sch_time_hour, wake_sch_time_min, wake_sch_set_temp;
+//	bool leave_sch_en_dis;  uint8_t leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp;
+//	bool return_sch_en_dis; uint8_t return_sch_time_hour, return_sch_time_min, return_sch_set_temp;
+//	bool sleep_sch_en_dis;  uint8_t sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp;
+//	uint8_t schdule_num = 0;
+//	uint8_t wday = clock_get_day_of_week();
+//
+//    if((wday == 1) || (wday == 2) ||(wday == 3) || (wday ==4)||(wday == 5))
+//    	{wday = WEEK_DAY;}
+//    else
+//    	{wday = WEEK_END;}
+//
+//	for (schdule_num = 0; schdule_num > 4; schdule_num++)
+//	{
+//	  if(wday == WEEK_DAY)
+//	   {
+//	    switch(schdule_num)
+//	    {
+//	     case 0 :
+//		       wake_sch_en_dis= sched_weekday[schdule_num].en ;
+//		       wake_sch_time_hour = sched_weekday[schdule_num].hour ;
+//		       wake_sch_time_min = sched_weekday[schdule_num].minute;
+//		       wake_sch_set_temp = sched_weekday[schdule_num].temp_f;
+//		       break;
+//	     case 1:
+//			   leave_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   leave_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   leave_sch_time_min = sched_weekday[schdule_num].minute;
+//			   leave_sch_set_temp = sched_weekday[schdule_num].temp_f;
+//			   break;
+//	    case 2:
+//			   return_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   return_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   return_sch_time_min = sched_weekday[schdule_num].minute;
+//			   return_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
+//	    case 3:
+//			   sleep_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   sleep_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   sleep_sch_time_min = sched_weekday[schdule_num].minute;
+//			   sleep_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
+//	    default: break;
+//	    } // end of switch
+//	   }// if(day == WEEKDAY){
+//	   else
+//	   {
+//	      switch(schdule_num)
+//			{
+//			 case 0 :
+//				   wake_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   wake_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   wake_sch_time_min = sched_weekend[schdule_num].minute;
+//				   wake_sch_set_temp = sched_weekend[schdule_num].temp_f;
+//				   break;
+//			 case 1:
+//				   leave_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   leave_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   leave_sch_time_min = sched_weekend[schdule_num].minute;
+//				   leave_sch_set_temp = sched_weekend[schdule_num].temp_f;
+//				   break;
+//			case 2:
+//				   return_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   return_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   return_sch_time_min = sched_weekend[schdule_num].minute;
+//				   return_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+//			case 3:
+//				   sleep_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   sleep_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   sleep_sch_time_min = sched_weekend[schdule_num].minute;
+//				   sleep_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+//			default: break;
+//			} // end of switch
+//		} // end of else
+//	}// end for (schdule_num = 0; schdule_num > 4; schdule_num++)
+//
+//	  printf("wday %d",wday);
+//      printf("wake_sch_en_dis: %d wake_sch_time_hour :%d wake_sch_time_min : %d, wake_sch_set_temp : %d  ",wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp );
+//      printf("leave_sch_en_dis: %d  leave_sch_time_hour :%d  leave_sch_time_min : %d,  leave_sch_set_temp: %d   ",leave_sch_en_dis,  leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp );
+//      printf("return_sch_en_dis: %d  return_sch_time_hour :%d  return_sch_time_min : %d,  return_sch_set_temp : %d ",return_sch_en_dis,  return_sch_time_hour, return_sch_time_min, return_sch_set_temp );
+//      printf("sleep_sch_en_dis: %d  sleep_sch_time_hour :%d  sleep_sch_time_min : %d,  sleep_sch_set_temp: %d ",sleep_sch_en_dis,  sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
+//}
+//
+
+
+
+
 
 //void CommandResponseOnDisplay(void)
 //{

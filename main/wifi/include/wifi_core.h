@@ -79,6 +79,10 @@ void getIP_address(void);
 
 #define SET_TIMER_MODE_MIN_ACK  20
 
+#define SECHEDULE_SET_FROM_APP_ACK  21
+#define GET_DST_STATUS_ACK          22
+
+
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 
 #define  MANUALLY_SET_TEMP_CHANGE                1
