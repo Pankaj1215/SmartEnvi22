@@ -371,6 +371,7 @@ enum menu_calendar {
     MENU_CALENDAR_SCHED_TEMP_CHANGE,
     MENU_CALENDAR_SCHED_TIME_HOUR_CHANGE,
     MENU_CALENDAR_SCHED_TIME_MINUTE_CHANGE,
+	MENU_CALENDAR_CONFIRM_EXIT   // New Added to confirm schedule_06July2021
 };
 
 enum menu_update {

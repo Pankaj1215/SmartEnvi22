@@ -362,97 +362,97 @@ void testFunctionFoFToC(void){
 }
 #endif
 
-
-
-void send_schedule_packet_from_heater(void)
-{
-  #define WEEK_END 0
-  #define WEEK_DAY 1
-
-	bool wake_sch_en_dis;   uint8_t wake_sch_time_hour, wake_sch_time_min, wake_sch_set_temp;
-	bool leave_sch_en_dis;  uint8_t leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp;
-	bool return_sch_en_dis; uint8_t return_sch_time_hour, return_sch_time_min, return_sch_set_temp;
-	bool sleep_sch_en_dis;  uint8_t sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp;
-	uint8_t schdule_num = 0;
-	uint8_t wday = clock_get_day_of_week();
-    printf("clock_get_day_of_week: %d",wday);
-
-    if((wday == 1) || (wday == 2) ||(wday == 3) || (wday ==4)||(wday == 5))
-    	{wday = WEEK_DAY;}
-    else
-    	{wday = WEEK_END;}
-
-	for (schdule_num = 0; schdule_num < 4; schdule_num++)
-	{
-	  if(wday == WEEK_DAY)
-	   {
-	    switch(schdule_num)
-	    {
-	     case 0 :
-		       wake_sch_en_dis= sched_weekday[schdule_num].en ;
-		       wake_sch_time_hour = sched_weekday[schdule_num].hour ;
-		       wake_sch_time_min = sched_weekday[schdule_num].minute;
-		       wake_sch_set_temp = sched_weekday[schdule_num].temp_f;
-		       break;
-	     case 1:
-			   leave_sch_en_dis= sched_weekday[schdule_num].en ;
-			   leave_sch_time_hour = sched_weekday[schdule_num].hour ;
-			   leave_sch_time_min = sched_weekday[schdule_num].minute;
-			   leave_sch_set_temp = sched_weekday[schdule_num].temp_f;
-			   break;
-	    case 2:
-			   return_sch_en_dis= sched_weekday[schdule_num].en ;
-			   return_sch_time_hour = sched_weekday[schdule_num].hour ;
-			   return_sch_time_min = sched_weekday[schdule_num].minute;
-			   return_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
-	    case 3:
-			   sleep_sch_en_dis= sched_weekday[schdule_num].en ;
-			   sleep_sch_time_hour = sched_weekday[schdule_num].hour ;
-			   sleep_sch_time_min = sched_weekday[schdule_num].minute;
-			   sleep_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
-	    default: break;
-	    } // end of switch
-	   }// if(day == WEEKDAY){
-	   else
-	   {
-	      switch(schdule_num)
-			{
-			 case 0 :
-				   wake_sch_en_dis= sched_weekend[schdule_num].en ;
-				   wake_sch_time_hour = sched_weekend[schdule_num].hour ;
-				   wake_sch_time_min = sched_weekend[schdule_num].minute;
-				   wake_sch_set_temp = sched_weekend[schdule_num].temp_f;
-				   break;
-			 case 1:
-				   leave_sch_en_dis= sched_weekend[schdule_num].en ;
-				   leave_sch_time_hour = sched_weekend[schdule_num].hour ;
-				   leave_sch_time_min = sched_weekend[schdule_num].minute;
-				   leave_sch_set_temp = sched_weekend[schdule_num].temp_f;
-				   break;
-			case 2:
-				   return_sch_en_dis= sched_weekend[schdule_num].en ;
-				   return_sch_time_hour = sched_weekend[schdule_num].hour ;
-				   return_sch_time_min = sched_weekend[schdule_num].minute;
-				   return_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
-			case 3:
-				   sleep_sch_en_dis= sched_weekend[schdule_num].en ;
-				   sleep_sch_time_hour = sched_weekend[schdule_num].hour ;
-				   sleep_sch_time_min = sched_weekend[schdule_num].minute;
-				   sleep_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
-			default: break;
-			} // end of switch
-		} // end of else
-	}// end for (schdule_num = 0; schdule_num > 4; schdule_num++)
-
-	  printf("\n wday %d",wday);
-      printf("\n wake_sch_en_dis: %d wake_sch_time_hour :%d wake_sch_time_min : %d, wake_sch_set_temp : %d",wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp );
-      printf("\n leave_sch_en_dis: %d leave_sch_time_hour :%d  leave_sch_time_min : %d,  leave_sch_set_temp: %d",leave_sch_en_dis,  leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp );
-      printf("\n return_sch_en_dis: %d return_sch_time_hour :%d  return_sch_time_min : %d,  return_sch_set_temp : %d",return_sch_en_dis,  return_sch_time_hour, return_sch_time_min, return_sch_set_temp );
-      printf("\n sleep_sch_en_dis: %d sleep_sch_time_hour :%d  sleep_sch_time_min : %d,  sleep_sch_set_temp: %d",sleep_sch_en_dis,  sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
-      printf("\n wd:%d, w1:%d ,w2:%d, w3:%d ,w4:%d ,l1:%d,l2:%d,l3:%d,l4:%d,r1:%d r2:%d,r3:%d,r4:%d, s1:%d s2:%d s3:%d s4:%d",wday,wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp, leave_sch_en_dis,leave_sch_time_hour,leave_sch_time_min,leave_sch_set_temp,
-    		  return_sch_en_dis, return_sch_time_hour, return_sch_time_min, return_sch_set_temp, sleep_sch_en_dis, sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
-}
-
+//
+//
+//void send_schedule_packet_from_heater(void)
+//{
+//  #define WEEK_END 0
+//  #define WEEK_DAY 1
+//
+//	bool wake_sch_en_dis;   uint8_t wake_sch_time_hour, wake_sch_time_min, wake_sch_set_temp;
+//	bool leave_sch_en_dis;  uint8_t leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp;
+//	bool return_sch_en_dis; uint8_t return_sch_time_hour, return_sch_time_min, return_sch_set_temp;
+//	bool sleep_sch_en_dis;  uint8_t sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp;
+//	uint8_t schdule_num = 0;
+//	uint8_t wday = clock_get_day_of_week();
+//    printf("clock_get_day_of_week: %d",wday);
+//
+//    if((wday == 1) || (wday == 2) ||(wday == 3) || (wday ==4)||(wday == 5))
+//    	{wday = WEEK_DAY;}
+//    else
+//    	{wday = WEEK_END;}
+//
+//	for (schdule_num = 0; schdule_num < 4; schdule_num++)
+//	{
+//	  if(wday == WEEK_DAY)
+//	   {
+//	    switch(schdule_num)
+//	    {
+//	     case 0 :
+//		       wake_sch_en_dis= sched_weekday[schdule_num].en ;
+//		       wake_sch_time_hour = sched_weekday[schdule_num].hour ;
+//		       wake_sch_time_min = sched_weekday[schdule_num].minute;
+//		       wake_sch_set_temp = sched_weekday[schdule_num].temp_f;
+//		       break;
+//	     case 1:
+//			   leave_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   leave_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   leave_sch_time_min = sched_weekday[schdule_num].minute;
+//			   leave_sch_set_temp = sched_weekday[schdule_num].temp_f;
+//			   break;
+//	    case 2:
+//			   return_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   return_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   return_sch_time_min = sched_weekday[schdule_num].minute;
+//			   return_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
+//	    case 3:
+//			   sleep_sch_en_dis= sched_weekday[schdule_num].en ;
+//			   sleep_sch_time_hour = sched_weekday[schdule_num].hour ;
+//			   sleep_sch_time_min = sched_weekday[schdule_num].minute;
+//			   sleep_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
+//	    default: break;
+//	    } // end of switch
+//	   }// if(day == WEEKDAY){
+//	   else
+//	   {
+//	      switch(schdule_num)
+//			{
+//			 case 0 :
+//				   wake_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   wake_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   wake_sch_time_min = sched_weekend[schdule_num].minute;
+//				   wake_sch_set_temp = sched_weekend[schdule_num].temp_f;
+//				   break;
+//			 case 1:
+//				   leave_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   leave_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   leave_sch_time_min = sched_weekend[schdule_num].minute;
+//				   leave_sch_set_temp = sched_weekend[schdule_num].temp_f;
+//				   break;
+//			case 2:
+//				   return_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   return_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   return_sch_time_min = sched_weekend[schdule_num].minute;
+//				   return_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+//			case 3:
+//				   sleep_sch_en_dis= sched_weekend[schdule_num].en ;
+//				   sleep_sch_time_hour = sched_weekend[schdule_num].hour ;
+//				   sleep_sch_time_min = sched_weekend[schdule_num].minute;
+//				   sleep_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+//			default: break;
+//			} // end of switch
+//		} // end of else
+//	}// end for (schdule_num = 0; schdule_num > 4; schdule_num++)
+//
+//	  printf("\n wday %d",wday);
+//      printf("\n wake_sch_en_dis: %d wake_sch_time_hour :%d wake_sch_time_min : %d, wake_sch_set_temp : %d",wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp );
+//      printf("\n leave_sch_en_dis: %d leave_sch_time_hour :%d  leave_sch_time_min : %d,  leave_sch_set_temp: %d",leave_sch_en_dis,  leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp );
+//      printf("\n return_sch_en_dis: %d return_sch_time_hour :%d  return_sch_time_min : %d,  return_sch_set_temp : %d",return_sch_en_dis,  return_sch_time_hour, return_sch_time_min, return_sch_set_temp );
+//      printf("\n sleep_sch_en_dis: %d sleep_sch_time_hour :%d  sleep_sch_time_min : %d,  sleep_sch_set_temp: %d",sleep_sch_en_dis,  sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
+//      printf("\n wd:%d, w1:%d ,w2:%d, w3:%d ,w4:%d ,l1:%d,l2:%d,l3:%d,l4:%d,r1:%d r2:%d,r3:%d,r4:%d, s1:%d s2:%d s3:%d s4:%d",wday,wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp, leave_sch_en_dis,leave_sch_time_hour,leave_sch_time_min,leave_sch_set_temp,
+//    		  return_sch_en_dis, return_sch_time_hour, return_sch_time_min, return_sch_set_temp, sleep_sch_en_dis, sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
+//}
+//
 
 
 // #define Test_Storage
@@ -3490,9 +3490,11 @@ static app_mode_t menu_calendar(app_data_t *data) {
                 if ((*btn & (1 << BUTTON_POWER_BACK_STAT)) != (prev_btn & (1 << BUTTON_POWER_BACK_STAT))) { // power button toggles
                     if ((*btn >> BUTTON_POWER_BACK_STAT) & 0x01) { // unpressed
                         switch (m_cal) {
+
                         case MENU_CALENDAR_WEEKTYPE:
-                            exit = true;
-                            break;
+                        	//     exit = true;
+                        	   m_cal =  MENU_CALENDAR_CONFIRM_EXIT;
+                                    break;
                         case MENU_CALENDAR_SCHED:
                             m_cal = MENU_CALENDAR_WEEKTYPE;
                             break;
@@ -3607,6 +3609,9 @@ static app_mode_t menu_calendar(app_data_t *data) {
                 } else if ((*btn & (1 << BUTTON_DOWN_STAT)) != (prev_btn & (1 << BUTTON_DOWN_STAT))) { // down button toggles
                     if ((*btn >> BUTTON_DOWN_STAT) & 0x01) { // unpressed
                         switch (m_cal) {
+                        case MENU_CALENDAR_CONFIRM_EXIT:
+                        	m_cal = MENU_CALENDAR_WEEKTYPE;
+                                       break;
                         case MENU_CALENDAR_WEEKTYPE:
                             weekend = !weekend;
                             break;
@@ -3689,6 +3694,10 @@ static app_mode_t menu_calendar(app_data_t *data) {
                 } else if ((*btn & (1 << BUTTON_TIMER_FORWARD_STAT)) != (prev_btn & (1 << BUTTON_TIMER_FORWARD_STAT))) { // timer button toggles
                     if ((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01) { // unpressed
                         switch (m_cal) {
+                        case MENU_CALENDAR_CONFIRM_EXIT:
+                        	 manually_schedule_set_from_heater =1;
+                        	 exit = true;
+                             break;
                         case MENU_CALENDAR_WEEKTYPE:
                             sched_num = 0;
 
@@ -3708,7 +3717,7 @@ static app_mode_t menu_calendar(app_data_t *data) {
                             m_cal = MENU_CALENDAR_SCHED_EN;
                             break;
                         case MENU_CALENDAR_SCHED_EN:
-                            m_cal = MENU_CALENDAR_SCHED_EN_STAT; manually_schedule_set_from_heater =1;
+                            m_cal = MENU_CALENDAR_SCHED_EN_STAT;
                             break;
                         case MENU_CALENDAR_SCHED_TIME:
                             m_cal = MENU_CALENDAR_SCHED_TIME_HOUR;
@@ -3752,6 +3761,9 @@ static app_mode_t menu_calendar(app_data_t *data) {
             if (data->is_connected)
                 display_wifi_icon(DISPLAY_COLOR);
             switch (m_cal) {
+            case MENU_CALENDAR_CONFIRM_EXIT:
+            	display_DejaVu_Sans_10_font("Do you want to exit?", DISPLAY_COLOR, "<-No            Yes->",DISPLAY_COLOR);  // Do you want to continue Y/N
+            	break;
             case MENU_CALENDAR_WEEKTYPE:
                 display_menu(weekend ? "Weekend" : "Weekday", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
                 break;
