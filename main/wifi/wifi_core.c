@@ -2586,6 +2586,16 @@ void aws_iot_task(void *param) {
 							// abort();  // Commneted for testing
 							}
 
+							const char *topic_manually_schedule_trigger_from_heater = "aws/device/event/manually_schedule_trigger_from_heater";  // 56 // testing for param key..// heater ON_OFF
+							const int topic_manually_schedule_trigger_from_heater_Len = strlen(topic_manually_schedule_trigger_from_heater);
+							ESP_LOGI(TAG, "46_Subscribing.topic_manually_schedule_trigger_from_heater..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_manually_schedule_trigger_from_heater, topic_manually_schedule_trigger_from_heater_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "46_Error topic_manually_schedule_trigger_from_heater subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+		unsigned char count =1;
 
 		//  char cPayload1[100];
 		char cPayload1[300];  // Original Working
@@ -3448,6 +3458,36 @@ void aws_iot_task(void *param) {
 				manually_schedule_set_from_heater = 0;
 				} // end of if(manaully_child_Lock_State_change==1){
 
+				// schedule trigger
+				unsigned char manually_schedule_trigger_from_heater =1;
+				if(manually_schedule_trigger_from_heater == 1){
+				memset(cPayload1,0,sizeof(cPayload1));
+
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_schedule_trigger_from_heater", "status","success",  "value", count);//
+
+				printf("\n manually_schedule_trigger_from_heater  \n ");
+				HeaterMeassage.payloadLen = strlen(cPayload1);
+
+			    rc = aws_iot_mqtt_publish(&client, topic_manually_schedule_trigger_from_heater, topic_manually_schedule_trigger_from_heater_Len, &HeaterMeassage);   // commented on 05June
+
+				#ifdef TEST_WIFI_STUCK_PROB
+				if(rc!=0)
+				{
+				printf("\n\nMQTT PUBLISH ERROR: %d\n",rc);
+				continue;
+				}
+				#endif
+				memset(replybuff,0,sizeof(replybuff));
+				memset(cPayload1,0,sizeof(cPayload1));
+
+//				if(count <5)
+//				{
+//					count++;
+//				}
+//				else
+//					manually_schedule_trigger_from_heater = 0;
+				   manually_schedule_trigger_from_heater = 0;
+				} // end of if(manaully_child_Lock_State_change==1){
 
 
 #endif
