@@ -144,6 +144,17 @@ unsigned char manually_Temp_unit_change;
 unsigned char manually_reset_ssid_pass_enable;
 unsigned char manually_day_light_on_off_change_enable;
 
+#include "clock/clock.h"
+extern auto_mode_sched_t sched_weekday[AUTO_MODE_SCHED_NUM];
+extern auto_mode_sched_t sched_weekend[AUTO_MODE_SCHED_NUM];
+
+bool wake_sch_en_dis;   uint8_t wake_sch_time_hour, wake_sch_time_min, wake_sch_set_temp;
+bool leave_sch_en_dis;  uint8_t leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp;
+bool return_sch_en_dis; uint8_t return_sch_time_hour, return_sch_time_min, return_sch_set_temp;
+bool sleep_sch_en_dis;  uint8_t sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp;
+uint8_t wday;
+
+
 //#define DEVICE_ID_ONE_TOPIC
 
 #define TimeZoneAdded
@@ -3378,12 +3389,17 @@ void aws_iot_task(void *param) {
 				} // end of if(manaully_child_Lock_State_change==1){
 
 
+
 				// manually_schedule_Set // topic_manually_schedule_set_from_heater
 				if(manually_schedule_set_from_heater ==1){
 				memset(cPayload1,0,sizeof(cPayload1));
 				//sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_schedule_set_from_heater", "status","success",  "value",manually_schedule_set_from_heater);//
 
-				sprintf(cPayload1, "{\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n \t\"%s\":\"%s\",\n\t\"%s\":{\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t},\n\t\"%s\":{\n\t\t \"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t}\n}", "deviceId", uniqueDeviceID,"cmd","m_s_c","type","event","pack","p1","wd","1","w","a","0","w2","1","w3","30","w4","70","l","a","0","l2","1","l3","30","l4","50");
+				// Working one..
+			  //	sprintf(cPayload1, "{\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n \t\"%s\":\"%s\",\n\t\"%s\":{\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t},\n\t\"%s\":{\n\t\t \"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t}\n}", "deviceId", uniqueDeviceID,"cmd","m_s_c","type","event","pack","p1","wd","1","w","a","0","w2","1","w3","30","w4","70","l","a","0","l2","1","l3","30","l4","50");
+
+				// Testing For actual reading ...
+				sprintf(cPayload1, "{\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n \t\"%s\":\"%d\",\n\t\"%s\":{\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\"\n\t},\n\t\"%s\":{\n\t\t \"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\"\n\t}\n}", "deviceId", uniqueDeviceID,"cmd","m_s_c","type","event","pack","p1","wd",wday,"w","a",wake_sch_en_dis,"w2",wake_sch_time_hour,"w3",wake_sch_time_min,"w4",wake_sch_set_temp,"l","a",leave_sch_en_dis,"l2",leave_sch_time_hour,"l3",leave_sch_time_min,"l4",leave_sch_set_temp);
 
 				printf("\n manually_schedule_set_from_heater changed \n ");
 				HeaterMeassage.payloadLen = strlen(cPayload1);
@@ -3407,7 +3423,13 @@ void aws_iot_task(void *param) {
 				if(manually_schedule_set_from_heater == 2){
 				memset(cPayload1,0,sizeof(cPayload1));
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_schedule_set_from_heater", "status","success",  "value",manually_schedule_set_from_heater);//
-				sprintf(cPayload1, "{\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":{\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t},\n\t\"%s\":{\n\t\t \"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t}\n}", "deviceId", uniqueDeviceID,"cmd","m_s_c","type","event","pack","p2","r","a","0","r2","1","r3","30","r4","70","s","a","0","s2","1","s3","30","s4","50");
+
+				// working one
+				// sprintf(cPayload1, "{\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":{\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t},\n\t\"%s\":{\n\t\t \"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t}\n}", "deviceId", uniqueDeviceID,"cmd","m_s_c","type","event","pack","p2","r","a","0","r2","1","r3","30","r4","70","s","a","0","s2","1","s3","30","s4","50");
+
+				// Testing for actual values
+
+				sprintf(cPayload1, "{\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":{\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\"\n\t},\n\t\"%s\":{\n\t\t \"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\"\n\t}\n}", "deviceId", uniqueDeviceID,"cmd","m_s_c","type","event","pack","p2","r","a",return_sch_en_dis,"r2",return_sch_time_hour,"r3",return_sch_time_min,"r4",return_sch_set_temp,"s","a",sleep_sch_en_dis,"s2",sleep_sch_time_hour,"s3",sleep_sch_time_min,"s4",sleep_sch_set_temp);
 
 				printf("\n manually_schedule_set_from_heater changed \n ");
 				HeaterMeassage.payloadLen = strlen(cPayload1);
@@ -3453,21 +3475,14 @@ void aws_iot_task(void *param) {
 #endif // end of AWS Task Multiple Logic #define #define DEVICE_ID_ONE_TOPIC
 
 
-#include "clock/clock.h"
-extern auto_mode_sched_t sched_weekday[AUTO_MODE_SCHED_NUM];
-extern auto_mode_sched_t sched_weekend[AUTO_MODE_SCHED_NUM];
 
 void send_schedule_packet_from_heater(void)
 {
 #define WEEK_END 0
 #define WEEK_DAY 1
 
-bool wake_sch_en_dis;   uint8_t wake_sch_time_hour, wake_sch_time_min, wake_sch_set_temp;
-bool leave_sch_en_dis;  uint8_t leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp;
-bool return_sch_en_dis; uint8_t return_sch_time_hour, return_sch_time_min, return_sch_set_temp;
-bool sleep_sch_en_dis;  uint8_t sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp;
 uint8_t schdule_num = 0;
-uint8_t wday = clock_get_day_of_week();
+ wday = clock_get_day_of_week();
   printf("clock_get_day_of_week: %d",wday);
 
   if((wday == 1) || (wday == 2) ||(wday == 3) || (wday ==4)||(wday == 5))

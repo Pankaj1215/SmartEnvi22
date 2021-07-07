@@ -3695,6 +3695,7 @@ static app_mode_t menu_calendar(app_data_t *data) {
                     if ((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01) { // unpressed
                         switch (m_cal) {
                         case MENU_CALENDAR_CONFIRM_EXIT:
+                        	 send_schedule_packet_from_heater();
                         	 manually_schedule_set_from_heater =1;
                         	 exit = true;
                              break;
@@ -3808,7 +3809,6 @@ static app_mode_t menu_calendar(app_data_t *data) {
                 display_minute(sched[sched_num].minute, DISPLAY_COLOR);
                 break;
             }
-
         }
         vTaskDelay(1 / portTICK_RATE_MS);
     }
