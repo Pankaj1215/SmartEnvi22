@@ -77,7 +77,7 @@ extern unsigned char CommandAck;
 extern char uniqueDeviceID[12];
 #include "heater.h"  // new Added fot Heater OnOff functions..
 
-
+extern unsigned char command_get_schedule_enable;
 extern unsigned char updateDisplayAfterAppCommand;
 
 unsigned char en_anti_freeze;
@@ -963,7 +963,7 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 	  }
 
 	 else if (strcmp(label, REMOTE_CMD_GET_DST_STATUS) == 0) {
-					 CommandAck = SET_TIMER_MODE_MIN_ACK;
+					 CommandAck = GET_DST_STATUS_ACK;
 					 //Put this value in the variable for threshold offset value
 					 printf("REMOTE_CMD_GET_DST_STATUS  Value %s\r\n", value);
 					 sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "type", "get","cmd", "get_dst_status", "status","success",  "value", app_get_day_light_Saving_status());
@@ -973,6 +973,19 @@ int message_label_value_handler(char* label, char* value, char* reply_buff)
 					display_menu_small_font("get_dst_status", DISPLAY_COLOR, value, DISPLAY_COLOR);
 					updateDisplayAfterAppCommand = 1;
 	  }
+	 else if (strcmp(label, REMOTE_CMD_GET_SCHEDULE_FROM_HEATER) == 0) {
+	 					// CommandAck = GET_SCHEDULE_SET_FROM_HEATER_ACK;
+	 					 command_get_schedule_enable = 1;
+	 					 //Put this value in the variable for threshold offset value
+	 					 printf("REMOTE_CMD_GET_SCHEDULE_FROM_HEATER  Value %s\r\n", value);
+	 					// sprintf(reply_buff, "\n \t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%d\" ", "type", "get","cmd", "get_dst_status", "status","success",  "value", app_get_day_light_Saving_status());
+	 					//forAuto_mode_Schedule_set_from_app(atoi(value));
+	 					display_on();
+	 					display_clear_screen();
+	 					display_menu_small_font("get_schedule_set", DISPLAY_COLOR, "from_heater", DISPLAY_COLOR);
+	 					updateDisplayAfterAppCommand = 1;
+	 	  }
+
 
 	 else
 	 {

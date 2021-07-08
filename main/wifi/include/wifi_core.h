@@ -82,6 +82,7 @@ void getIP_address(void);
 #define SECHEDULE_SET_FROM_APP_ACK  21
 #define GET_DST_STATUS_ACK          22
 
+#define GET_SCHEDULE_SET_FROM_HEATER_ACK          23
 
 // #define ACTIVATE_CHILD_LOCK_ACK     8
 

@@ -63,6 +63,7 @@
 
 #include "display.h"   // Added for displaying Pair success on 03march2021
 
+unsigned char command_get_schedule_enable;
 unsigned char deleteHeaterAckSendToServer ;
 bool PairDataRecievedFromAPP;
 unsigned char FlashEraseEnableAPMode;
@@ -2141,82 +2142,82 @@ void aws_iot_task(void *param) {
 				// abort();  // Commneted for testing
 				}
 //
-				const char *topic_Enable_En_Anti_Freeze = "aws/device/command/anti_freeze";  // testing for param key..//12
-				const int topic_Enable_En_Anti_Freeze_Len = strlen(topic_Enable_En_Anti_Freeze);
-				ESP_LOGI(TAG, "12_Subscribing.topic_Enable_En_Anti_Freeze..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Enable_En_Anti_Freeze, topic_Enable_En_Anti_Freeze_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "12_Error topic_Enable_En_Anti_Freeze subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
+//				const char *topic_Enable_En_Anti_Freeze = "aws/device/command/anti_freeze";  // testing for param key..//12
+//				const int topic_Enable_En_Anti_Freeze_Len = strlen(topic_Enable_En_Anti_Freeze);
+//				ESP_LOGI(TAG, "12_Subscribing.topic_Enable_En_Anti_Freeze..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Enable_En_Anti_Freeze, topic_Enable_En_Anti_Freeze_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "12_Error topic_Enable_En_Anti_Freeze subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+//
+//				const char *topic_Enable_En_Anti_Freeze_Response = "aws/device/command/anti_freeze/response";  // testing for param key..//13
+//				const int topic_Enable_En_Anti_Freeze_Response_Len = strlen(topic_Enable_En_Anti_Freeze_Response);
+//				ESP_LOGI(TAG, "13_Subscribing.topic_Enable_En_Anti_Freeze_Response..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "13_Error topic_Enable_En_Anti_Freeze_Response subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
 
-				const char *topic_Enable_En_Anti_Freeze_Response = "aws/device/command/anti_freeze/response";  // testing for param key..//13
-				const int topic_Enable_En_Anti_Freeze_Response_Len = strlen(topic_Enable_En_Anti_Freeze_Response);
-				ESP_LOGI(TAG, "13_Subscribing.topic_Enable_En_Anti_Freeze_Response..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "13_Error topic_Enable_En_Anti_Freeze_Response subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
-
-				const char *topic_Day_Light_State = "aws/device/command/day_light_state";  // testing for param key..//14
-				const int topic_Day_Light_State_Len = strlen(topic_Day_Light_State);
-				ESP_LOGI(TAG, "14_Subscribing.topic_Day_Light_State..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Day_Light_State, topic_Day_Light_State_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "14_Error topic_Day_Light_State subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
-
-				const char *topic_Day_Light_State_Response = "aws/device/command/day_light_state/response";  // testing for param key..//15
-				const int topic_Day_Light_State_Response_Len = strlen(topic_Day_Light_State_Response);
-				ESP_LOGI(TAG, "15_Subscribing.topic_Day_Light_State_Response..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "15_Error topic_Day_Light_State_Response subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
+//				const char *topic_Day_Light_State = "aws/device/command/day_light_state";  // testing for param key..//14
+//				const int topic_Day_Light_State_Len = strlen(topic_Day_Light_State);
+//				ESP_LOGI(TAG, "14_Subscribing.topic_Day_Light_State..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Day_Light_State, topic_Day_Light_State_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "14_Error topic_Day_Light_State subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+//
+//				const char *topic_Day_Light_State_Response = "aws/device/command/day_light_state/response";  // testing for param key..//15
+//				const int topic_Day_Light_State_Response_Len = strlen(topic_Day_Light_State_Response);
+//				ESP_LOGI(TAG, "15_Subscribing.topic_Day_Light_State_Response..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "15_Error topic_Day_Light_State_Response subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
 
 				 // temp unit temp..
-				const char *topic_set_temp_unit = "aws/device/command/set_temp_unit";  // testing for param key..//16
-				const int topic_set_temp_unit_Len = strlen(topic_set_temp_unit);
-				ESP_LOGI(TAG, "16_Subscribing.topic_set_temp_unit..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_set_temp_unit, topic_set_temp_unit_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "16_Error topic_set_temp_unit subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
-
-				const char *topic_set_temp_unit_response = "aws/device/command/set_temp_unit/response";  // testing for param key..//17
-				const int topic_set_temp_unit_response_Len = strlen(topic_set_temp_unit_response);
-				ESP_LOGI(TAG, "17_Subscribing.topic_set_temp_unit_response..");
-				rc = aws_iot_mqtt_subscribe(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "17_Error topic_set_temp_unit_response subscribing : %d ", rc);
-				// abort();  // Commneted for testing
-				}
+//				const char *topic_set_temp_unit = "aws/device/command/set_temp_unit";  // testing for param key..//16
+//				const int topic_set_temp_unit_Len = strlen(topic_set_temp_unit);
+//				ESP_LOGI(TAG, "16_Subscribing.topic_set_temp_unit..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_set_temp_unit, topic_set_temp_unit_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "16_Error topic_set_temp_unit subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
+//
+//				const char *topic_set_temp_unit_response = "aws/device/command/set_temp_unit/response";  // testing for param key..//17
+//				const int topic_set_temp_unit_response_Len = strlen(topic_set_temp_unit_response);
+//				ESP_LOGI(TAG, "17_Subscribing.topic_set_temp_unit_response..");
+//				rc = aws_iot_mqtt_subscribe(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//				if(SUCCESS != rc) {
+//				ESP_LOGE(TAG, "17_Error topic_set_temp_unit_response subscribing : %d ", rc);
+//				// abort();  // Commneted for testing
+//				}
 
 				const char *topic_h_c_s = "aws/device/command/h_cn_s";  // testing for param key..//18
 				const int topic_h_c_s_Len = strlen(topic_h_c_s);
-				ESP_LOGI(TAG, "18_Subscribing.topic_h_c_s..");
+				ESP_LOGI(TAG, "12_Subscribing.topic_h_c_s..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_h_c_s, topic_h_c_s_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "18_Error topic_h_c_s subscribing : %d ", rc);
+				ESP_LOGE(TAG, "12_Error topic_h_c_s subscribing : %d ", rc);
 				// abort();  // Commneted for testing}
 				}
 				const char *topic_h_c_s_response = "aws/device/command/h_cn_s/response";  // testing for param key..//19
 				const int topic_h_c_s_response_Len = strlen(topic_h_c_s_response);
-				ESP_LOGI(TAG, "19_Subscribing.topic_h_c_s_response..");
+				ESP_LOGI(TAG, "13_Subscribing.topic_h_c_s_response..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_h_c_s_response, topic_h_c_s_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "19_Error topic_h_c_s_response subscribing : %d ", rc);
+				ESP_LOGE(TAG, "13_Error topic_h_c_s_response subscribing : %d ", rc);
 				}
 				const char *topic_Manual_Set_Temp_change = "aws/device/event/temp_change";  // testing for param key..//20
 				const int topic_Manual_Set_Temp_change_Len = strlen(topic_Manual_Set_Temp_change);
-				ESP_LOGI(TAG, "20_Subscribing.topic_Manual_Set_Temp_change..");
+				ESP_LOGI(TAG, "14_Subscribing.topic_Manual_Set_Temp_change..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_Manual_Set_Temp_change, topic_Manual_Set_Temp_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "20_Error topic_Manual_Set_Temp_change subscribing : %d ", rc);
+				ESP_LOGE(TAG, "14_Error topic_Manual_Set_Temp_change subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
 
@@ -2251,42 +2252,42 @@ void aws_iot_task(void *param) {
 
 				const char *topic_ambient_temp_change = "aws/device/event/ambient_temp_changed";  // testing for param key..//23
 				const int topic_ambient_temp_change_Len = strlen(topic_ambient_temp_change);
-				ESP_LOGI(TAG, "21_Subscribing.topic_ambient_temp_change..");
+				ESP_LOGI(TAG, "15_Subscribing.topic_ambient_temp_change..");
 				rc = aws_iot_mqtt_subscribe(&client, topic_ambient_temp_change, topic_ambient_temp_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 				if(SUCCESS != rc) {
-				ESP_LOGE(TAG, "21_Error topic_ambient_temp_change subscribing : %d ", rc);
+				ESP_LOGE(TAG, "15_Error topic_ambient_temp_change subscribing : %d ", rc);
 				// abort();  // Commneted for testing
 				}
 
 			// const char *topic_Heater_State_Change = "aws/device/event/heater_state_changed";  // testing for param key..// heater ON_OFF
 			const char *topic_Heater_State_Change = "aws/device/event/from_heater_mode_changed";  // testing for param key..// heater ON_OFF//24
 			const int topic_Heater_State_Change_Len = strlen(topic_Heater_State_Change);
-			ESP_LOGI(TAG, "22_Subscribing.from_heater_mode_changed..");
+			ESP_LOGI(TAG, "16_Subscribing.from_heater_mode_changed..");
 			rc = aws_iot_mqtt_subscribe(&client, topic_Heater_State_Change, topic_Heater_State_Change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 			if(SUCCESS != rc) {
-			ESP_LOGE(TAG, "22_Error topic_Heater_State_Change subscribing : %d ", rc);
+			ESP_LOGE(TAG, "16_Error topic_Heater_State_Change subscribing : %d ", rc);
 			// abort();  // Commneted for testing
 			}
 
 			const char *topic_Thermostat_State_Change = "aws/device/event/thermostat_state_changed";  // testing for param key..// heater ON_OFF//25
 			const int topic_Thermostat_State_Change_Len = strlen(topic_Thermostat_State_Change);
-			ESP_LOGI(TAG, "23_Subscribing.topic_Thermostat_State_Change..");
+			ESP_LOGI(TAG, "17_Subscribing.topic_Thermostat_State_Change..");
 			rc = aws_iot_mqtt_subscribe(&client, topic_Thermostat_State_Change, topic_Thermostat_State_Change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 			if(SUCCESS != rc) {
-			ESP_LOGE(TAG, "23_Error topic_Thermostat_State_Change subscribing : %d ", rc);
+			ESP_LOGE(TAG, "17_Error topic_Thermostat_State_Change subscribing : %d ", rc);
 			// abort();  // Commneted for testing
 			}
 
 			// Last Working position
-//			const char *topic_manually_Reset_SSID_Pass = "aws/device/event/manually_reset_ssid_pass";  // testing for param key..// heater ON_OFF//26
-//			const int topic_manually_Reset_SSID_Pass_Len = strlen(topic_manually_Reset_SSID_Pass);
-//			ESP_LOGI(TAG, "26_Subscribing.topic_Manually_Reset_SSID_Pass..");
-//			rc = aws_iot_mqtt_subscribe(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-//			if(SUCCESS != rc) {
-//			ESP_LOGE(TAG, "26_Error topic_Manually_Reset_SSID_Pass subscribing : %d ", rc);
-//			// abort();  // Commneted for testing
-//			}
-//
+			const char *topic_manually_Reset_SSID_Pass = "aws/device/event/manually_reset_ssid_pass";  // testing for param key..// heater ON_OFF//26
+			const int topic_manually_Reset_SSID_Pass_Len = strlen(topic_manually_Reset_SSID_Pass);
+			ESP_LOGI(TAG, "18_Subscribing.topic_Manually_Reset_SSID_Pass..");
+			rc = aws_iot_mqtt_subscribe(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+			if(SUCCESS != rc) {
+			ESP_LOGE(TAG, "18_Error topic_Manually_Reset_SSID_Pass subscribing : %d ", rc);
+			// abort();  // Commneted for testing
+			}
+
 //			const char *topic_manually_put_heater_under_repair = "aws/device/event/manually_put_heater_under_repair";  // 27 // testing for param key..// heater ON_OFF
 //			const int topic_manually_put_heater_under_repair_Len = strlen(topic_manually_put_heater_under_repair);
 //			ESP_LOGI(TAG, "27_Subscribing.topic_manually_put_heater_under_repair_Len..");
@@ -2296,152 +2297,204 @@ void aws_iot_task(void *param) {
 //			// abort();  // Commneted for testing
 //			}
 
-			const char *topic_DeleteHeater = "aws/device/command/delete_heater";  // testing for param key..//28
-			const int topic_DeleteHeater_Len = strlen(topic_DeleteHeater);
-			ESP_LOGI(TAG, "24_Subscribing.topic_DeleteHeater..");
-			rc = aws_iot_mqtt_subscribe(&client, topic_DeleteHeater, topic_DeleteHeater_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-			if(SUCCESS != rc) {
-			ESP_LOGE(TAG, "24_Error topic_DeleteHeater subscribing : %d ", rc);
-			// abort();  // Commneted for testing
-			}
-
-			const char *topic_DeleteHeater_response = "aws/device/command/delete_heater/response";  // testing for param key..//29
-			const int topic_DeleteHeater_response_Len = strlen(topic_DeleteHeater_response);
-			ESP_LOGI(TAG, "25_Subscribing.topic_DeleteHeater_response..");
-			rc = aws_iot_mqtt_subscribe(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-			if(SUCCESS != rc) {
-			ESP_LOGE(TAG, "25_Error topic_DeleteHeater_response subscribing : %d ", rc);
-			// abort();  // Commneted for testing
-			}
+//			const char *topic_DeleteHeater = "aws/device/command/delete_heater";  // testing for param key..//28
+//			const int topic_DeleteHeater_Len = strlen(topic_DeleteHeater);
+//			ESP_LOGI(TAG, "24_Subscribing.topic_DeleteHeater..");
+//			rc = aws_iot_mqtt_subscribe(&client, topic_DeleteHeater, topic_DeleteHeater_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			if(SUCCESS != rc) {
+//			ESP_LOGE(TAG, "24_Error topic_DeleteHeater subscribing : %d ", rc);
+//			// abort();  // Commneted for testing
+//			}
+//
+//			const char *topic_DeleteHeater_response = "aws/device/command/delete_heater/response";  // testing for param key..//29
+//			const int topic_DeleteHeater_response_Len = strlen(topic_DeleteHeater_response);
+//			ESP_LOGI(TAG, "25_Subscribing.topic_DeleteHeater_response..");
+//			rc = aws_iot_mqtt_subscribe(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//			if(SUCCESS != rc) {
+//			ESP_LOGE(TAG, "25_Error topic_DeleteHeater_response subscribing : %d ", rc);
+//			// abort();  // Commneted for testing
+//			}
 
 
 // 2 new topic added.
 		                	//Ping Device ..
-							const char *topic_ping_device = "aws/device/command/ping_device";  // testing for param key..//30
-							const int topic_ping_device_Len = strlen(topic_ping_device);
-							ESP_LOGI(TAG, "26_Subscribing.topic_ping_device...");
-							rc = aws_iot_mqtt_subscribe(&client, topic_ping_device, topic_ping_device_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "26_Error topic_ping_device subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
-
-							const char *topic_ping_device_response = "aws/device/command/ping_device/response";  // testing for param key..//31
-							const int topic_ping_device_response_Len = strlen(topic_ping_device_response);
-							ESP_LOGI(TAG, "27_Subscribing.topic_ping_device_response...");
-							rc = aws_iot_mqtt_subscribe(&client, topic_ping_device_response, topic_ping_device_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "27_Error topic_ping_device_response subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
+//							const char *topic_ping_device = "aws/device/command/ping_device";  // testing for param key..//30
+//							const int topic_ping_device_Len = strlen(topic_ping_device);
+//							ESP_LOGI(TAG, "26_Subscribing.topic_ping_device...");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_ping_device, topic_ping_device_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "26_Error topic_ping_device subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
+//
+//							const char *topic_ping_device_response = "aws/device/command/ping_device/response";  // testing for param key..//31
+//							const int topic_ping_device_response_Len = strlen(topic_ping_device_response);
+//							ESP_LOGI(TAG, "27_Subscribing.topic_ping_device_response...");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_ping_device_response, topic_ping_device_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "27_Error topic_ping_device_response subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
 
                             // Auto Dim Display and Auto Dim Pliot light Begin
-							const char *topic_dim_pilot_light_en = "aws/device/command/dim_pilot_light_en";  // testing for param key..//32
-							const int topic_dim_pilot_light_en_Len = strlen(topic_dim_pilot_light_en);
-							ESP_LOGI(TAG, "28_Subscribing.topic_dim_pilot_light_en...");
-							rc = aws_iot_mqtt_subscribe(&client, topic_dim_pilot_light_en, topic_dim_pilot_light_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "28_Error topic_dim_pilot_light_en subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
+//							const char *topic_dim_pilot_light_en = "aws/device/command/dim_pilot_light_en";  // testing for param key..//32
+//							const int topic_dim_pilot_light_en_Len = strlen(topic_dim_pilot_light_en);
+//							ESP_LOGI(TAG, "28_Subscribing.topic_dim_pilot_light_en...");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_dim_pilot_light_en, topic_dim_pilot_light_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "28_Error topic_dim_pilot_light_en subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
 
-							const char *topic_dim_pilot_light_en_response = "aws/device/command/dim_pilot_light_en/response";  // testing for param key..//33
-							const int topic_dim_pilot_light_en_response_Len = strlen(topic_dim_pilot_light_en_response);
-							ESP_LOGI(TAG, "29_Subscribing.topic_dim_pilot_light_en_response...");
-							rc = aws_iot_mqtt_subscribe(&client, topic_dim_pilot_light_en_response, topic_dim_pilot_light_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "29_Error topic_dim_pilot_light_en_response subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
-
-							const char *topic_auto_display_brightness_en = "aws/device/command/auto_display_brightness_en";  // testing for param key..//34
-							const int topic_auto_display_brightness_en_Len = strlen(topic_auto_display_brightness_en);
-							ESP_LOGI(TAG, "30_Subscribing.topic_auto_display_brightness_en...");
-							rc = aws_iot_mqtt_subscribe(&client, topic_auto_display_brightness_en, topic_auto_display_brightness_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "30_Error topic_auto_display_brightness_en subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
-
-							const char *topic_auto_display_brightness_en_response = "aws/device/command/auto_display_brightness_en/response"; //35 // testing for param key..
-							const int topic_auto_display_brightness_en_response_Len = strlen(topic_auto_display_brightness_en_response);
-							ESP_LOGI(TAG, "31_Subscribing.topic_auto_display_brightness_en_response...");
-							rc = aws_iot_mqtt_subscribe(&client, topic_auto_display_brightness_en_response, topic_auto_display_brightness_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "31_Error topic_auto_display_brightness_en_response subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
+//							const char *topic_dim_pilot_light_en_response = "aws/device/command/dim_pilot_light_en/response";  // testing for param key..//33
+//							const int topic_dim_pilot_light_en_response_Len = strlen(topic_dim_pilot_light_en_response);
+//							ESP_LOGI(TAG, "29_Subscribing.topic_dim_pilot_light_en_response...");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_dim_pilot_light_en_response, topic_dim_pilot_light_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "29_Error topic_dim_pilot_light_en_response subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
+//
+//							const char *topic_auto_display_brightness_en = "aws/device/command/auto_display_brightness_en";  // testing for param key..//34
+//							const int topic_auto_display_brightness_en_Len = strlen(topic_auto_display_brightness_en);
+//							ESP_LOGI(TAG, "30_Subscribing.topic_auto_display_brightness_en...");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_auto_display_brightness_en, topic_auto_display_brightness_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "30_Error topic_auto_display_brightness_en subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
+//
+//							const char *topic_auto_display_brightness_en_response = "aws/device/command/auto_display_brightness_en/response"; //35 // testing for param key..
+//							const int topic_auto_display_brightness_en_response_Len = strlen(topic_auto_display_brightness_en_response);
+//							ESP_LOGI(TAG, "31_Subscribing.topic_auto_display_brightness_en_response...");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_auto_display_brightness_en_response, topic_auto_display_brightness_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "31_Error topic_auto_display_brightness_en_response subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
 
 
 							// Manual_change_display_brightness
-							const char *topic_manual_change_display_brightness = "aws/device/command/manual_change_display_brightness"; //36 // testing for param key..
-							const int topic_manual_change_display_brightness_Len = strlen(topic_manual_change_display_brightness);
-							ESP_LOGI(TAG, "32_Subscribing.topic_manual_change_display_brightness...");
-							rc = aws_iot_mqtt_subscribe(&client, topic_manual_change_display_brightness, topic_manual_change_display_brightness_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "32_Error topic_manual_change_display_brightness subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
-
-							const char *topic_manual_change_display_brightness_response = "aws/device/command/manual_change_display_brightness/response";//37  // testing for param key..
-							const int topic_manual_change_display_brightness_response_Len = strlen(topic_manual_change_display_brightness_response);
-							ESP_LOGI(TAG, "33_Subscribing.topic_manual_change_display_brightness_response...");
-							rc = aws_iot_mqtt_subscribe(&client, topic_manual_change_display_brightness_response, topic_manual_change_display_brightness_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "33_Error topic_manual_change_display_brightness_response subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
+//							const char *topic_manual_change_display_brightness = "aws/device/command/manual_change_display_brightness"; //36 // testing for param key..
+//							const int topic_manual_change_display_brightness_Len = strlen(topic_manual_change_display_brightness);
+//							ESP_LOGI(TAG, "32_Subscribing.topic_manual_change_display_brightness...");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_manual_change_display_brightness, topic_manual_change_display_brightness_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "32_Error topic_manual_change_display_brightness subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
+//
+//							const char *topic_manual_change_display_brightness_response = "aws/device/command/manual_change_display_brightness/response";//37  // testing for param key..
+//							const int topic_manual_change_display_brightness_response_Len = strlen(topic_manual_change_display_brightness_response);
+//							ESP_LOGI(TAG, "33_Subscribing.topic_manual_change_display_brightness_response...");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_manual_change_display_brightness_response, topic_manual_change_display_brightness_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "33_Error topic_manual_change_display_brightness_response subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
 
 							// Auto Dim Display and Auto Dim Pliot light End..
 
 							 // Auto_Screen_Off_Enable_Disable
-							const char *topic_auto_screen_off_en = "aws/device/command/auto_screen_off_en";  // testing for param key..//38
-							const int topic_auto_screen_off_en_Len = strlen(topic_auto_screen_off_en);
-							ESP_LOGI(TAG, "34_Subscribing.topic_auto_screen_off_en..");
-							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off_en, topic_auto_screen_off_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "34_Error topic_auto_screen_off_en subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
-
-
-							const char *topic_auto_screen_off_en_response = "aws/device/command/auto_screen_off_en/response";  // testing for param key..//39
-							const int topic_auto_screen_off_en_response_Len = strlen(topic_auto_screen_off_en_response);
-							ESP_LOGI(TAG, "35_Subscribing.topic_auto_screen_off_en_response..");
-							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
-							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "35_Error topic_auto_screen_off_en_response subscribing : %d ", rc);
-							// abort();  // Commneted for testing
-							}
+//							const char *topic_auto_screen_off_en = "aws/device/command/auto_screen_off_en";  // testing for param key..//38
+//							const int topic_auto_screen_off_en_Len = strlen(topic_auto_screen_off_en);
+//							ESP_LOGI(TAG, "34_Subscribing.topic_auto_screen_off_en..");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off_en, topic_auto_screen_off_en_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "34_Error topic_auto_screen_off_en subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
+//
+//
+//							const char *topic_auto_screen_off_en_response = "aws/device/command/auto_screen_off_en/response";  // testing for param key..//39
+//							const int topic_auto_screen_off_en_response_Len = strlen(topic_auto_screen_off_en_response);
+//							ESP_LOGI(TAG, "35_Subscribing.topic_auto_screen_off_en_response..");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "35_Error topic_auto_screen_off_en_response subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
 
 							 // Delay for Auto_Screen_Off
-							const char *topic_delay_for_auto_screen_off = "aws/device/command/delay_for_auto_screen_off";  // testing for param key..//40
-							const int topic_delay_for_auto_screen_off_Len = strlen(topic_delay_for_auto_screen_off);
-							ESP_LOGI(TAG, "36_Subscribing.topic_delay_for_auto_screen_off..");
-							rc = aws_iot_mqtt_subscribe(&client, topic_delay_for_auto_screen_off, topic_delay_for_auto_screen_off_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							const char *topic_delay_for_auto_screen_off = "aws/device/command/delay_for_auto_screen_off";  // testing for param key..//40
+//							const int topic_delay_for_auto_screen_off_Len = strlen(topic_delay_for_auto_screen_off);
+//							ESP_LOGI(TAG, "36_Subscribing.topic_delay_for_auto_screen_off..");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_delay_for_auto_screen_off, topic_delay_for_auto_screen_off_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "36_Error topic_delay_for_auto_screen_off subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
+//
+//							const char *topic_delay_for_auto_screen_off_response = "aws/device/command/delay_for_auto_screen_off/response"; //41 // testing for param key..
+//							const int topic_delay_for_auto_screen_off_response_Len = strlen(topic_delay_for_auto_screen_off_response);
+//							ESP_LOGI(TAG, "37_Subscribing.topic_delay_for_auto_screen_off_response..");
+//							rc = aws_iot_mqtt_subscribe(&client, topic_delay_for_auto_screen_off_response, topic_delay_for_auto_screen_off_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+//							if(SUCCESS != rc) {
+//							ESP_LOGE(TAG, "37_Error topic_delay_for_auto_screen_off_response subscribing : %d ", rc);
+//							// abort();  // Commneted for testing
+//							}
+
+
+							//Common Command Topic  // heater_setting_change_from_app  // aws/device/command/heater_setting_change_from_app
+							const char *topic_heater_setting_change_from_app = "aws/device/command/heater_setting_change_from_app";  // testing for param key..//40
+							const int topic_heater_setting_change_from_app_Len = strlen(topic_heater_setting_change_from_app);
+							ESP_LOGI(TAG, "19_Subscribing.topic_heater_setting_change_from_app..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_heater_setting_change_from_app, topic_heater_setting_change_from_app_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "36_Error topic_delay_for_auto_screen_off subscribing : %d ", rc);
+							ESP_LOGE(TAG, "19_Error topic_heater_setting_change_from_app subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
-							const char *topic_delay_for_auto_screen_off_response = "aws/device/command/delay_for_auto_screen_off/response"; //41 // testing for param key..
-							const int topic_delay_for_auto_screen_off_response_Len = strlen(topic_delay_for_auto_screen_off_response);
-							ESP_LOGI(TAG, "37_Subscribing.topic_delay_for_auto_screen_off_response..");
-							rc = aws_iot_mqtt_subscribe(&client, topic_delay_for_auto_screen_off_response, topic_delay_for_auto_screen_off_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							const char *topic_heater_setting_change_from_app_response = "aws/device/command/heater_setting_change_from_app/response"; //41 // testing for param key..
+							const int topic_heater_setting_change_from_app_response_Len = strlen(topic_heater_setting_change_from_app_response);
+							ESP_LOGI(TAG, "19_Subscribing.topic_heater_setting_change_from_app_response..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_heater_setting_change_from_app_response, topic_heater_setting_change_from_app_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "37_Error topic_delay_for_auto_screen_off_response subscribing : %d ", rc);
+							ESP_LOGE(TAG, "19_Error topic_heater_setting_change_from_app_response subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
+
+							// aws/device/cmd/location_level_setting_from_app
+
+							//Common Command Topic  // heater_setting_change_from_app  // aws/device/command/heater_setting_change_from_app
+							const char *topic_location_level_setting_from_app = "aws/device/command/location_level_setting_from_app";  // testing for param key..//40
+							const int topic_location_level_setting_from_app_Len = strlen(topic_location_level_setting_from_app);
+							ESP_LOGI(TAG, "20_Subscribing.topic_location_level_setting_from_app..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_location_level_setting_from_app, topic_location_level_setting_from_app_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "20_Error topic_location_level_setting_from_app subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							const char *topic_location_level_setting_from_app_response = "aws/device/command/location_level_setting_from_app/response"; //41 // testing for param key..
+							const int topic_location_level_setting_from_app_response_Len = strlen(topic_location_level_setting_from_app_response);
+							ESP_LOGI(TAG, "21_Subscribing.topic_location_level_setting_from_app_response..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_location_level_setting_from_app_response, topic_location_level_setting_from_app_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "21_Error topic_location_level_setting_from_app_response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
 
 							// events:: // One common topic for heater setting change
 							const char *topic_manually_heater_setting_change= "aws/device/event/manually_heater_setting_change";  //42 // testing for param key..// heater ON_OFF
 							const int topic_manually_heater_setting_change_Len = strlen(topic_manually_heater_setting_change);
-							ESP_LOGI(TAG, "38_Subscribing.topic_manually_heater_setting_change..");
+							ESP_LOGI(TAG, "22_Subscribing.topic_manually_heater_setting_change..");
 							rc = aws_iot_mqtt_subscribe(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "38_Error topic_manually_heater_setting_change subscribing : %d ", rc);
+							ESP_LOGE(TAG, "22_Error topic_manually_heater_setting_change subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
+
+							const char *topic_manually_rgb_mode_timer_min_change  = "aws/device/event/manually_rgb_mode_timer_min_change ";  //42 // testing for param key..// heater ON_OFF
+							const int topic_manually_rgb_mode_timer_min_change_Len = strlen(topic_manually_rgb_mode_timer_min_change);
+							ESP_LOGI(TAG, "23_Subscribing.topic_manually_rgb_mode_timer_min_change..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_manually_rgb_mode_timer_min_change,topic_manually_rgb_mode_timer_min_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "23_Error topic_manually_rgb_mode_timer_min_change subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
 
                             // The below events are covered in the one commnon topic topic_manually_heater_setting_change_03July2021
 							// New Functionality events.
@@ -2520,10 +2573,10 @@ void aws_iot_task(void *param) {
 							//       Set Timer Time
 							const char *topic_timer_mode_set_min = "aws/device/command/timer_mode_set_min";  // testing for param key..// 50
 							const int topic_timer_mode_set_min_Len = strlen(topic_timer_mode_set_min);
-							ESP_LOGI(TAG, "39_Subscribing.topic_timer_mode_set_min..");
+							ESP_LOGI(TAG, "24_Subscribing.topic_timer_mode_set_min..");
 						    rc = aws_iot_mqtt_subscribe(&client, topic_timer_mode_set_min, topic_timer_mode_set_min_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "39_Error topic_timer_mode_set_min subscribing : %d ", rc);
+							ESP_LOGE(TAG, "24_Error topic_timer_mode_set_min subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
@@ -2531,69 +2584,96 @@ void aws_iot_task(void *param) {
 							//Nw
 							const char *topic_timer_mode_set_min_Response = "aws/device/command/timer_mode_set_min/response";  // 51 // testing for param key..
 							const int topic_timer_mode_set_min_Response_Len = strlen(topic_timer_mode_set_min_Response);
-							ESP_LOGI(TAG, "40_Subscribing.topic_timer_mode_set_min_Response..");
+							ESP_LOGI(TAG, "25_Subscribing.topic_timer_mode_set_min_Response..");
 							 rc = aws_iot_mqtt_subscribe(&client, topic_timer_mode_set_min_Response, topic_timer_mode_set_min_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 						   // rc = aws_iot_mqtt_subscribe(&client, topic_timer_mode_set_min_Response, topic_timer_mode_set_min_Response_Len, QOS1, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "40_Error topic_timer_mode_set_min_Response subscribing : %d ", rc);
+							ESP_LOGE(TAG, "25_Error topic_timer_mode_set_min_Response subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
 							//       Set Schedule from app
 							const char *topic_schedule_set_from_app = "aws/device/command/schedule_set_from_app"; // 52 // testing for param key..
 							const int topic_schedule_set_from_app_Len = strlen(topic_schedule_set_from_app);
-							ESP_LOGI(TAG, "41_Subscribing.topic_schedule_set_from_app..");
+							ESP_LOGI(TAG, "26_Subscribing.topic_schedule_set_from_app..");
 							rc = aws_iot_mqtt_subscribe(&client, topic_schedule_set_from_app, topic_schedule_set_from_app_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "41_Error topic_schedule_set_from_app subscribing : %d ", rc);
+							ESP_LOGE(TAG, "26_Error topic_schedule_set_from_app subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
 							const char *topic_schedule_set_from_app_Response = "aws/device/command/schedule_set_from_app/response";  // 53  // testing for param key..
 							const int topic_schedule_set_from_app_Response_Len = strlen(topic_schedule_set_from_app_Response);
-							ESP_LOGI(TAG, "42_Subscribing.topic_schedule_set_from_app_Response..");
+							ESP_LOGI(TAG, "27_Subscribing.topic_schedule_set_from_app_Response..");
 							rc = aws_iot_mqtt_subscribe(&client, topic_schedule_set_from_app_Response, topic_schedule_set_from_app_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "42_Error topic_schedule_set_from_app_Response subscribing : %d ", rc);
+							ESP_LOGE(TAG, "27_Error topic_schedule_set_from_app_Response subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
 							//       Get dst status of heater
 							const char *topic_get_dst_status = "aws/device/command/get_dst_status";  // 54 // testing for param key..
 							const int topic_get_dst_status_Len = strlen(topic_get_dst_status);
-							ESP_LOGI(TAG, "43_Subscribing.topic_get_dst_status..");
+							ESP_LOGI(TAG, "28_Subscribing.topic_get_dst_status..");
 							rc = aws_iot_mqtt_subscribe(&client, topic_get_dst_status, topic_get_dst_status_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "43_Error topic_get_dst_status subscribing : %d ", rc);
+							ESP_LOGE(TAG, "28_Error topic_get_dst_status subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
 							const char *topic_get_dst_status_Response = "aws/device/command/get_dst_status/response"; // 55  // testing for param key..
 							const int topic_get_dst_status_Response_Len = strlen(topic_get_dst_status_Response);
-							ESP_LOGI(TAG, "44_Subscribing.topic_get_dst_status_Response..");
+							ESP_LOGI(TAG, "29_Subscribing.topic_get_dst_status_Response..");
 							rc = aws_iot_mqtt_subscribe(&client, topic_get_dst_status_Response, topic_get_dst_status_Response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "44_Error topic_get_dst_status_Response subscribing : %d ", rc);
+							ESP_LOGE(TAG, "29_Error topic_get_dst_status_Response subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
 							const char *topic_manually_schedule_set_from_heater = "aws/device/event/manually_schedule_set_from_heater";  // 56 // testing for param key..// heater ON_OFF
 							const int topic_manually_schedule_set_from_heater_Len = strlen(topic_manually_schedule_set_from_heater);
-							ESP_LOGI(TAG, "45_Subscribing.topic_manually_schedule_set_from_heater..");
+							ESP_LOGI(TAG, "30_Subscribing.topic_manually_schedule_set_from_heater..");
 							rc = aws_iot_mqtt_subscribe(&client, topic_manually_schedule_set_from_heater, topic_manually_schedule_set_from_heater_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "45_Error topic_manually_schedule_set_from_heater subscribing : %d ", rc);
+							ESP_LOGE(TAG, "30_Error topic_manually_schedule_set_from_heater subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
 
 							const char *topic_manually_schedule_trigger_from_heater = "aws/device/event/manually_schedule_trigger_from_heater";  // 56 // testing for param key..// heater ON_OFF
 							const int topic_manually_schedule_trigger_from_heater_Len = strlen(topic_manually_schedule_trigger_from_heater);
-							ESP_LOGI(TAG, "46_Subscribing.topic_manually_schedule_trigger_from_heater..");
+							ESP_LOGI(TAG, "31_Subscribing.topic_manually_schedule_trigger_from_heater..");
 							rc = aws_iot_mqtt_subscribe(&client, topic_manually_schedule_trigger_from_heater, topic_manually_schedule_trigger_from_heater_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
 							if(SUCCESS != rc) {
-							ESP_LOGE(TAG, "46_Error topic_manually_schedule_trigger_from_heater subscribing : %d ", rc);
+							ESP_LOGE(TAG, "31_Error topic_manually_schedule_trigger_from_heater subscribing : %d ", rc);
 							// abort();  // Commneted for testing
 							}
+
+							const char *get_schedule_set_from_heater = "aws/device/command/get_schedule_set_from_heater"; // 52 // testing for param key..
+							const int get_schedule_set_from_heater_Len = strlen(get_schedule_set_from_heater);
+							ESP_LOGI(TAG, "32_Subscribing.get_schedule_set_from_heater..");
+							rc = aws_iot_mqtt_subscribe(&client, get_schedule_set_from_heater, get_schedule_set_from_heater_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "32_Error get_schedule_set_from_heater subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
+							char initial_topic_get_schedule_set_from_heater_response[] = "aws/device/command/get_schedule_set_from_heater/response/";  // testing for param key..
+							strcat( initial_topic_get_schedule_set_from_heater_response, uniqueDeviceID );
+							printf(" \n initial_topic_get_schedule_set_from_heater_response  %s", initial_topic_get_schedule_set_from_heater_response );
+							 int Len1 =0; Len1 = strlen(initial_topic_get_schedule_set_from_heater_response);
+							char topic_get_schedule_set_from_heater_response[Len1];
+							strcpy(topic_get_schedule_set_from_heater_response,initial_topic_get_schedule_set_from_heater_response);
+							printf(" \n topicDeviceID_event  %d, %s",Len1, topic_get_schedule_set_from_heater_response );
+
+							// const char *topic_schedule_set_from_app_Response = "aws/device/command/schedule_set_from_app/response";  // 53  // testing for param key..
+							const int topic_get_schedule_set_from_heater_response_Len = strlen(topic_get_schedule_set_from_heater_response);
+							ESP_LOGI(TAG, "33_Subscribing.topic_schedule_set_from_app_Response..");
+							rc = aws_iot_mqtt_subscribe(&client, topic_get_schedule_set_from_heater_response, topic_get_schedule_set_from_heater_response_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
+							if(SUCCESS != rc) {
+							ESP_LOGE(TAG, "33_Error topic_schedule_set_from_app_Response subscribing : %d ", rc);
+							// abort();  // Commneted for testing
+							}
+
 
 		unsigned char count =1;
 
@@ -2700,14 +2780,21 @@ void aws_iot_task(void *param) {
 //				    			     	 break;
 
 				    case EN_ANTI_FREEZE_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     //	 rc = aws_iot_mqtt_publish(&client, topic_Enable_En_Anti_Freeze_Response, topic_Enable_En_Anti_Freeze_Response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_heater_setting_change_from_app_response, topic_heater_setting_change_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
+
 				    			     	 break;
 //				    case RGB_LED_STATE_ACK :
 //				    			     	 rc = aws_iot_mqtt_publish(&client, topic_RGB_LED_STATE_Response, topic_RGB_LED_STATE_Response_Len, &HeaterMeassage); CommandAck = 0;
 //				    			     	 break;
 				    case DAY_LIGHT_TIME_STATE_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	// rc = aws_iot_mqtt_publish(&client, topic_Day_Light_State_Response, topic_Day_Light_State_Response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_location_level_setting_from_app_response, topic_location_level_setting_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
 				    			     	 break;
+
+
 //				    case SET_THRESHOLD_OFFSET_TIME_ACK :
 //				    			     	 rc = aws_iot_mqtt_publish(&client, topic_Set_Threshold_Offset_Time_Response, topic_topic_Set_Threshold_Offset_Time_Response_Len, &HeaterMeassage); CommandAck = 0;
 //				    			     	 break;
@@ -2719,32 +2806,50 @@ void aws_iot_task(void *param) {
 
 
 				    case SET_TEMP_UNIT_ACK :
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     //	 rc = aws_iot_mqtt_publish(&client, topic_set_temp_unit_response, topic_set_temp_unit_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_location_level_setting_from_app_response, topic_location_level_setting_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
+
 				    			     	 break;
 				    case HEATER_CONFIG_SYNCH_ACK :
 				    			     	 rc = aws_iot_mqtt_publish(&client, topic_h_c_s_response, topic_h_c_s_response_Len, &HeaterMeassage); CommandAck = 0;
 				    			     	 break;
 				    case PING_DEVICE_ACK :  printf("\n PING_DEVICE_ACK \n ");
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_ping_device_response,topic_ping_device_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     //	 rc = aws_iot_mqtt_publish(&client, topic_ping_device_response,topic_ping_device_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_heater_setting_change_from_app_response,topic_heater_setting_change_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
 				    			     	 break;
 				    case AUTO_SCREEN_OFF_EN_ACK :  printf("\n AUTO_SCREEN_OFF_EN_ACK \n ");
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	// rc = aws_iot_mqtt_publish(&client, topic_auto_screen_off_en_response, topic_auto_screen_off_en_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_heater_setting_change_from_app_response, topic_heater_setting_change_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
 				    			     	 break;
 				    case DELETE_HEATER_ACK : printf("\n delete heater deleted \n ");
-				    			     	 rc = aws_iot_mqtt_publish(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, &HeaterMeassage); CommandAck = 0;
-				    			     	deleteHeaterAckSendToServer = 1 ;
+				    			     	 // rc = aws_iot_mqtt_publish(&client, topic_DeleteHeater_response, topic_DeleteHeater_response_Len, &HeaterMeassage); CommandAck = 0;
+				    			     	 rc = aws_iot_mqtt_publish(&client, topic_location_level_setting_from_app_response,topic_location_level_setting_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
+				    			     	 deleteHeaterAckSendToServer = 1 ;
 				    			     	break;
 				    case AUTO_DIM_PILOT_EN_ACK :
-										 rc = aws_iot_mqtt_publish(&client, topic_dim_pilot_light_en_response,topic_dim_pilot_light_en_response_Len, &HeaterMeassage); CommandAck = 0;
+										// rc = aws_iot_mqtt_publish(&client, topic_dim_pilot_light_en_response,topic_dim_pilot_light_en_response_Len, &HeaterMeassage); CommandAck = 0;
+										 rc = aws_iot_mqtt_publish(&client, topic_heater_setting_change_from_app_response,topic_heater_setting_change_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
 										 break;
 				    case AUTO_DISPLAY_BRIGHTNESS_EN_ACK :
-										 rc = aws_iot_mqtt_publish(&client, topic_auto_display_brightness_en_response, topic_auto_display_brightness_en_response_Len, &HeaterMeassage); CommandAck = 0;
+										// rc = aws_iot_mqtt_publish(&client, topic_auto_display_brightness_en_response, topic_auto_display_brightness_en_response_Len, &HeaterMeassage); CommandAck = 0;
+										 rc = aws_iot_mqtt_publish(&client, topic_heater_setting_change_from_app_response, topic_heater_setting_change_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
 										 break;
 				    case MANUAL_CHANGE_DISPLAY_BRIGHTNESS_ACK :
-										 rc = aws_iot_mqtt_publish(&client, topic_manual_change_display_brightness_response, topic_manual_change_display_brightness_response_Len, &HeaterMeassage); CommandAck = 0;
+										// rc = aws_iot_mqtt_publish(&client, topic_manual_change_display_brightness_response, topic_manual_change_display_brightness_response_Len, &HeaterMeassage); CommandAck = 0;
+										 rc = aws_iot_mqtt_publish(&client, topic_heater_setting_change_from_app_response, topic_heater_setting_change_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
 										 break;
+
 				    case DELAY_AUTO_SCREEN_OFF_ACK :
-										 rc = aws_iot_mqtt_publish(&client, topic_delay_for_auto_screen_off_response, topic_delay_for_auto_screen_off_response_Len, &HeaterMeassage); CommandAck = 0;
+										// rc = aws_iot_mqtt_publish(&client, topic_delay_for_auto_screen_off_response, topic_delay_for_auto_screen_off_response_Len, &HeaterMeassage); CommandAck = 0;
+										 rc = aws_iot_mqtt_publish(&client, topic_heater_setting_change_from_app_response, topic_heater_setting_change_from_app_response_Len, &HeaterMeassage); CommandAck = 0;
+
 										 break;
 
 					case SECHEDULE_SET_FROM_APP_ACK :
@@ -3024,7 +3129,8 @@ void aws_iot_task(void *param) {
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_night_Light_change", "status","success",  "value", app_data->settings.is_night_light_auto_brightness_en );  // data->settings.is_night_light_auto_brightness_en // app_data
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 			//	rc = aws_iot_mqtt_publish(&client, topic_Manual_Night_Light_State_change, topic_Manual_Night_Light_State_change_Len, &HeaterMeassage);
-				rc = aws_iot_mqtt_publish(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, &HeaterMeassage);
+			//	rc = aws_iot_mqtt_publish(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, &HeaterMeassage);
+				rc = aws_iot_mqtt_publish(&client, topic_manually_rgb_mode_timer_min_change, topic_manually_rgb_mode_timer_min_change_Len, &HeaterMeassage);
 
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
@@ -3163,8 +3269,8 @@ void aws_iot_task(void *param) {
 				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_reset_ssid_pass", "status","success",  "value", 1);//manually_reset_ssid_pass
 				printf("\n manaully_reset_ssid_pass_enable \n ");
 				HeaterMeassage.payloadLen = strlen(cPayload1);
-			//	rc = aws_iot_mqtt_publish(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, &HeaterMeassage);
-				rc = aws_iot_mqtt_publish(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, &HeaterMeassage);
+				rc = aws_iot_mqtt_publish(&client, topic_manually_Reset_SSID_Pass, topic_manually_Reset_SSID_Pass_Len, &HeaterMeassage);
+			//	rc = aws_iot_mqtt_publish(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, &HeaterMeassage);
 
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
@@ -3237,7 +3343,8 @@ void aws_iot_task(void *param) {
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 
 				// rc = aws_iot_mqtt_publish(&client, topic_manually_RGB_Mode_Changed, topic_manually_RGB_Mode_Changed_Len, &HeaterMeassage);   // commented on 05June
-				rc = aws_iot_mqtt_publish(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, &HeaterMeassage);   // commented on 05June
+				// rc = aws_iot_mqtt_publish(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, &HeaterMeassage);   // commented on 05June
+				rc = aws_iot_mqtt_publish(&client, topic_manually_rgb_mode_timer_min_change,topic_manually_rgb_mode_timer_min_change_Len, &HeaterMeassage);   // commented on 05June
 
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
@@ -3383,7 +3490,8 @@ void aws_iot_task(void *param) {
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 
 			//	rc = aws_iot_mqtt_publish(&client, topic_manually_timer_mode_min_changed, topic_manually_timer_mode_min_changed_Len, &HeaterMeassage);   // commented on 05June
-				rc = aws_iot_mqtt_publish(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, &HeaterMeassage);   // commented on 05June
+			//	rc = aws_iot_mqtt_publish(&client, topic_manually_heater_setting_change, topic_manually_heater_setting_change_Len, &HeaterMeassage);   // commented on 05June
+				rc = aws_iot_mqtt_publish(&client, topic_manually_rgb_mode_timer_min_change, topic_manually_rgb_mode_timer_min_change_Len, &HeaterMeassage);   // commented on 05June
 
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
@@ -3399,22 +3507,29 @@ void aws_iot_task(void *param) {
 				} // end of if(manaully_child_Lock_State_change==1){
 
 
-
 				// manually_schedule_Set // topic_manually_schedule_set_from_heater
-				if(manually_schedule_set_from_heater ==1){
+//				if(manually_schedule_set_from_heater ==1)
+                if((manually_schedule_set_from_heater ==1)||(command_get_schedule_enable == 1))
+               {
 				memset(cPayload1,0,sizeof(cPayload1));
 				//sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_schedule_set_from_heater", "status","success",  "value",manually_schedule_set_from_heater);//
 
 				// Working one..
 			  //	sprintf(cPayload1, "{\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n \t\"%s\":\"%s\",\n\t\"%s\":{\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t},\n\t\"%s\":{\n\t\t \"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\",\n\t\t\"%s\":\"%s\"\n\t}\n}", "deviceId", uniqueDeviceID,"cmd","m_s_c","type","event","pack","p1","wd","1","w","a","0","w2","1","w3","30","w4","70","l","a","0","l2","1","l3","30","l4","50");
 
-				// Testing For actual reading ...
+				// working fine after actual reading ..08July2021...
 				sprintf(cPayload1, "{\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n\t\"%s\":\"%s\",\n \t\"%s\":\"%d\",\n\t\"%s\":{\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\"\n\t},\n\t\"%s\":{\n\t\t \"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\",\n\t\t\"%s\":\"%d\"\n\t}\n}", "deviceId", uniqueDeviceID,"cmd","m_s_c","type","event","pack","p1","wd",wday,"w","a",wake_sch_en_dis,"w2",wake_sch_time_hour,"w3",wake_sch_time_min,"w4",wake_sch_set_temp,"l","a",leave_sch_en_dis,"l2",leave_sch_time_hour,"l3",leave_sch_time_min,"l4",leave_sch_set_temp);
+
 
 				printf("\n manually_schedule_set_from_heater changed \n ");
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 
+				if(command_get_schedule_enable == 1)
+					rc = aws_iot_mqtt_publish(&client, topic_get_schedule_set_from_heater_response, topic_get_schedule_set_from_heater_response_Len, &HeaterMeassage);   // commented on 05June
+				else
 				rc = aws_iot_mqtt_publish(&client, topic_manually_schedule_set_from_heater, topic_manually_schedule_set_from_heater_Len, &HeaterMeassage);   // commented on 05June
+
+
 
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
@@ -3426,11 +3541,14 @@ void aws_iot_task(void *param) {
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
 				manually_schedule_set_from_heater = 2;
+			   // command_get_schedule_enable = 2;
 				} // end of if(manaully_child_Lock_State_change==1){
 
 
 				// manually_schedule_Set // topic_manually_schedule_set_from_heater
-				if(manually_schedule_set_from_heater == 2){
+				// if((manually_schedule_set_from_heater == 2) ||(command_get_schedule_enable ==2))
+				if(manually_schedule_set_from_heater == 2)
+				{
 				memset(cPayload1,0,sizeof(cPayload1));
 				// sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_schedule_set_from_heater", "status","success",  "value",manually_schedule_set_from_heater);//
 
@@ -3444,7 +3562,14 @@ void aws_iot_task(void *param) {
 				printf("\n manually_schedule_set_from_heater changed \n ");
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 
-				 rc = aws_iot_mqtt_publish(&client, topic_manually_schedule_set_from_heater, topic_manually_schedule_set_from_heater_Len, &HeaterMeassage);   // commented on 05June
+				// rc = aws_iot_mqtt_publish(&client, topic_manually_schedule_set_from_heater, topic_manually_schedule_set_from_heater_Len, &HeaterMeassage);   // commented on 05June
+
+				if(command_get_schedule_enable == 1)
+					rc = aws_iot_mqtt_publish(&client, topic_get_schedule_set_from_heater_response, topic_get_schedule_set_from_heater_response_Len, &HeaterMeassage);   // commented on 05June
+				else
+				rc = aws_iot_mqtt_publish(&client, topic_manually_schedule_set_from_heater, topic_manually_schedule_set_from_heater_Len, &HeaterMeassage);   // commented on 05June
+
+
 
 				#ifdef TEST_WIFI_STUCK_PROB
 				if(rc!=0)
@@ -3456,10 +3581,11 @@ void aws_iot_task(void *param) {
 				memset(replybuff,0,sizeof(replybuff));
 				memset(cPayload1,0,sizeof(cPayload1));
 				manually_schedule_set_from_heater = 0;
+				command_get_schedule_enable = 0;
 				} // end of if(manaully_child_Lock_State_change==1){
 
 				// schedule trigger
-				unsigned char manually_schedule_trigger_from_heater =1;
+				unsigned char manually_schedule_trigger_from_heater =0;
 				if(manually_schedule_trigger_from_heater == 1){
 				memset(cPayload1,0,sizeof(cPayload1));
 

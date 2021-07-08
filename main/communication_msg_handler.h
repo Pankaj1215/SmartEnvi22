@@ -135,6 +135,7 @@ void CommandResponseOnDisplay(void);
 
 #define REMOTE_CMD_GET_DST_STATUS      "get_dst_status"
 
+#define REMOTE_CMD_GET_SCHEDULE_FROM_HEATER      "get_schedule_set_from_heater"
 /*!
  * \fn int mainflux_msg_handler(char* msg, char* response)
  * \brief format before calling the msg handler
