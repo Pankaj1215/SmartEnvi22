@@ -2486,7 +2486,7 @@ void aws_iot_task(void *param) {
 							// abort();  // Commneted for testing
 							}
 
-							const char *topic_manually_rgb_mode_timer_min_change  = "aws/device/event/manually_rgb_mode_timer_min_change ";  //42 // testing for param key..// heater ON_OFF
+							const char *topic_manually_rgb_mode_timer_min_change  = "aws/device/event/manually_rgb_mode_timer_min_change";  //42 // testing for param key..// heater ON_OFF
 							const int topic_manually_rgb_mode_timer_min_change_Len = strlen(topic_manually_rgb_mode_timer_min_change);
 							ESP_LOGI(TAG, "23_Subscribing.topic_manually_rgb_mode_timer_min_change..");
 							rc = aws_iot_mqtt_subscribe(&client, topic_manually_rgb_mode_timer_min_change,topic_manually_rgb_mode_timer_min_change_Len, QOS0, iot_subscribe_callback_handler, NULL);  // TOPIC1 = "HeaterParameter";
