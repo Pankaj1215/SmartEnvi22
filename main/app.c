@@ -179,6 +179,8 @@ extern unsigned char manually_Dim_Pilot_Light_changed;
 extern unsigned char manually_RGB_Mode_Changed;
 // extern unsigned char manaully_DST_changed;
 
+extern unsigned char manually_schedule_trigger_count;
+extern unsigned char manually_schedule_trigger_from_heater;
 extern unsigned char manually_Timer_Mode_min_changed;
 
 extern unsigned char manually_schedule_set_from_heater;
@@ -305,6 +307,8 @@ void init_Variables(void){
 
  heater_off();//initially heater will be off ..added on 02Dec2020
  printf("init variables app_data->lastHeaterState %d",app_data->lastHeaterState);
+
+// send_schedule_packet_from_heater();
 }
 
 void testFunctionFoFToC(void);
@@ -730,6 +734,7 @@ esp_err_t app_init(void) {
     if ((xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) < APP_WELCOME_SCREEN_DELAY_MS)
         vTaskDelay(APP_WELCOME_SCREEN_DELAY_MS - (xTaskGetTickCount() * portTICK_PERIOD_MS - t_start_ms) / portTICK_RATE_MS);
 
+   // init_Variables(); // New Changed location for the init variables ..
     // start app task
     xTaskCreate(app_task, "app_task", 4096, (void *)app_data, 12, NULL);
     return ret;
@@ -2755,12 +2760,14 @@ static void auto_mode_task(app_data_t *data) {
     bool update_display = true;
 
     int auto_temp_c = -1, auto_temp_f = -1, auto_temp_c_prev= -1;
+    int auto_temp_f_prev= -1;
+
     int hr = -1, min = -1;
     int t_sched_minute = -1, t_now_minute = -1; // time in minute; hour + minute
     int wday = -1;
     int i = -1, j = -1;
-
-    printf("In Auto Mode %d \n ", *mode);
+    unsigned char luchscheduleTriggerCount =0, luchscheduleTriggerCount_prev = 0, luchscheduleTriggerCount_initial = 0;
+   // printf("In Auto Mode %d \n ", *mode);
 
    	display_on();
    	display_clear_screen();
@@ -2780,7 +2787,7 @@ static void auto_mode_task(app_data_t *data) {
 
     	int sched_past_idx = -1;
         int sched_next_idx = -1;
-        //printf("In Auto Mode in while %d\n " , *mode);
+       // printf("In Auto Mode in while %d\n " , *mode);
         wday = clock_get_day_of_week();
 
         auto_mode_sched_t *sched_week[7 * AUTO_MODE_SCHED_NUM];
@@ -2797,7 +2804,7 @@ static void auto_mode_task(app_data_t *data) {
         clock_get_time(&hr, &min, NULL);
 //        printf("AUTO: hr=%d min=%d\r\n", hr, min);
         t_now_minute = hr * 60 + min;
-
+       // printf("AUTO: hr=%d min=%d t_now_minute = %d\r\n", hr, min,t_now_minute);
         // get past sched
         sched_past_idx = -1;
         // check for the nearest schedule before t_now
@@ -2809,13 +2816,11 @@ static void auto_mode_task(app_data_t *data) {
                 if ((t_sched_minute == t_now_minute)
                     || (t_sched_minute < t_now_minute)) {
                     sched_past_idx = j;
+                   // printf("\r\nsched_past_idx %d  t_sched_minute %d:\r\n", sched_past_idx, t_sched_minute);
                     break;
                 }
             }
         }
-
-
-
 
         // if past sched is not found on the current day, search for the first enabled sched from the previous days
         if (sched_past_idx == -1) {
@@ -2826,12 +2831,13 @@ static void auto_mode_task(app_data_t *data) {
 
                 if (sched_week[j]->en) {
                     sched_past_idx = j;
+                  //  printf("\r\nsched_past_idx %d  sched_week[j] %d:\r\n", sched_past_idx, j);
                     break;
                 }
             }
         }
 
-//        printf("\r\nsched_past_idx %d wday %d\r\n", sched_past_idx, sched_past_idx / AUTO_MODE_SCHED_NUM);
+       // printf("\r\nsched_past_idx %d wday %d\r\n", sched_past_idx, sched_past_idx / AUTO_MODE_SCHED_NUM);
 
         // set AUTO temperature
 #if AUTO_MODE_INTERPOLATE == 0
@@ -2852,6 +2858,7 @@ static void auto_mode_task(app_data_t *data) {
                     if ((t_sched_minute == t_now_minute)
                         || (t_sched_minute > t_now_minute)) {
                         sched_next_idx = j;
+                      //  printf("\r\sched_next_idx %d  t_sched_minute %d:\r\n", sched_next_idx, t_sched_minute);
                         break;
                     }
                 }
@@ -2866,15 +2873,17 @@ static void auto_mode_task(app_data_t *data) {
 
                     if (sched_week[j]->en) {
                         sched_next_idx = j;
+                     //   printf("\r\sched_next_idx %d sched_week[j] %d:\r\n", sched_next_idx, j);
                         break;
                     }
                 }
             }
-//            printf("\r\nsched_next_idx %d wday %d\r\n", sched_next_idx, sched_next_idx / AUTO_MODE_SCHED_NUM);
+          //  printf("\r\nsched_next_idx %d wday %d\r\n", sched_next_idx, sched_next_idx / AUTO_MODE_SCHED_NUM);
         }
 
 #define Schedule_setFromAPP_LOGIC
 #ifdef Schedule_setFromAPP_LOGIC
+      //  AutoMode_scheduleFromServer = 1;
       if(AutoMode_scheduleFromServer == 0)   // this flag added on 17June2021
       {
 #endif
@@ -2904,9 +2913,13 @@ static void auto_mode_task(app_data_t *data) {
             temp_next_c = sched_next->temp_c;
             temp_next_f = sched_next->temp_f;
 
-//            printf("\r\nt_now_minute %d", t_now_minute);
-//            printf("\r\ntemp_past_c %d t_past_minute %d", temp_past_c, t_past_minute);
-//            printf("\r\ntemp_next_c %d t_next_minute %d", temp_next_c, t_next_minute);
+          //  printf("\r\nt_now_minute %d", t_now_minute);
+          //  printf("\r\ntemp_past_c %d, temp_past_f %d t_past_minute %d", temp_past_c,temp_past_f, t_past_minute);
+          //  printf("\r\ntemp_next_c %d ,temp_next_f %d, t_next_minute %d", temp_next_c, temp_next_f,t_next_minute);
+
+        //    printf("\r\n  %d t_past_minute %d", temp_past_c, t_past_minute);
+        //    printf("\r\ntemp_next_c %d t_next_minute %d", temp_next_c, t_next_minute);
+
 
             t_now_past_diff_minute = t_now_minute - t_past_minute;
             if (wday < wday_sched_past) {
@@ -2922,8 +2935,8 @@ static void auto_mode_task(app_data_t *data) {
                 t_next_past_diff_minute += (wday_sched_next - wday_sched_past) * 60 * 24;
             }
 
-//            printf("\r\nt_now_past_diff_minute %d", t_now_past_diff_minute);
-//            printf("\r\nt_next_past_diff_minute %d", t_next_past_diff_minute);
+           // printf("\r\nt_now_past_diff_minute %d", t_now_past_diff_minute);
+          //  printf("\r\nt_next_past_diff_minute %d", t_next_past_diff_minute);
 
             if (t_next_minute == t_past_minute) {
                 auto_temp_c = temp_past_c;
@@ -2954,17 +2967,77 @@ static void auto_mode_task(app_data_t *data) {
 #endif
 
 
+       // printf("\r\nAUTO: auto_temp_c=%d auto_temp_f=%d\r\n", auto_temp_c, auto_temp_f);
 
+        // oldd_working_commented on 10 July2021
+//        if (auto_temp_c != auto_temp_c_prev) {
+//            auto_temp_c_prev = auto_temp_c;
+//            update_display = true;
+//        }
 
+        luchscheduleTriggerCount = sched_past_idx;
+        // luchscheduleTriggerCount_prev
+        if(luchscheduleTriggerCount != luchscheduleTriggerCount_prev)
+        {
+           printf("Schedule Trigger %d sched_next_idx %d", luchscheduleTriggerCount+1, sched_next_idx);
+           printf("\r\nAUTO: auto_temp_c=%d auto_temp_f=%d\r\n", auto_temp_c, auto_temp_f);
+           printf("\r\nsched_next_idx %d wday %d\r\n", sched_next_idx, sched_next_idx / AUTO_MODE_SCHED_NUM);
+           printf("\r\nsched_past_idx %d wday %d\r\n", sched_past_idx, sched_past_idx / AUTO_MODE_SCHED_NUM);
+           luchscheduleTriggerCount_initial++;
+           luchscheduleTriggerCount_prev = luchscheduleTriggerCount;
 
-
-//        printf("\r\nAUTO: auto_temp_c=%d auto_temp_f=%d\r\n", auto_temp_c, auto_temp_f);
-
+        // Testing for update isplay on Temp Fahrenniete
         if (auto_temp_c != auto_temp_c_prev) {
-            auto_temp_c_prev = auto_temp_c;
-            update_display = true;
-        }
+             auto_temp_c_prev = auto_temp_c;
+            // update_display = true;
+            // manually_schedule_trigger_from_heater = 1;
+            // manually_schedule_trigger_count =1;
+          }
 
+		// if (auto_temp_f != auto_temp_f_prev)  // Last working
+ 		 if ((auto_temp_f != auto_temp_f_prev) &&( !(luchscheduleTriggerCount_initial == 1)))
+ 		 {
+			 auto_temp_f_prev = auto_temp_f;
+//		     update_display = true;  // with this notification working fine commented for check the if display (Set Temp) also not change in between
+
+		     switch(luchscheduleTriggerCount){
+		     case 0 :
+		     case 4:
+		     case 8:
+		     case 12:
+		     case 16:
+		     case 20:
+		     case 24:  manually_schedule_trigger_count =1; update_display = true;
+		     break;
+
+		             case 1 :
+				     case 5:
+				     case 9:
+				     case 13:
+				     case 17:
+				     case 21:
+				     case 25: manually_schedule_trigger_count =2; update_display = true;
+				     break;
+				             case 2 :
+						     case 6:
+						     case 10:
+						     case 14:
+						     case 18:
+						     case 22:
+						     case 26: manually_schedule_trigger_count = 3; update_display = true;
+						     break;
+						             case 3:
+								     case 7:
+								     case 11:
+								     case 15:
+								     case 19:
+								     case 23:
+								     case 27: manually_schedule_trigger_count =4; update_display = true;
+								     break;
+		     }
+		     manually_schedule_trigger_from_heater = 1;
+		 }
+        }
         // turn off/on the heater based on temperature
         if (*ambient_temp_c < auto_temp_c) {
             if (!is_heater_on) {
@@ -2978,7 +3051,7 @@ static void auto_mode_task(app_data_t *data) {
 				//	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 				#endif
             	// }
-              //  printf("AUTO: heater on ambient=%d target=%d\r\n", *ambient_temp_c, auto_temp_c);
+               // printf("AUTO: heater on ambient=%d target=%d\r\n", *ambient_temp_c, auto_temp_c);
             }
         } else {
             if (*temp_unit == TEMP_UNIT_CELSIUS)
@@ -3140,7 +3213,6 @@ static void auto_mode_task(app_data_t *data) {
 
             display_auto_mode(data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? *ambient_temp_c : ambient_temp_f,
                 data->settings.temperature_unit == TEMP_UNIT_CELSIUS ? auto_temp_c : auto_temp_f, DISPLAY_COLOR);
-
 
             // display AUTO icon
             display_auto_icon(DISPLAY_COLOR);
@@ -4081,7 +4153,6 @@ static app_mode_t menu_time_and_date(app_data_t *data) {
 //							set_integer_to_storage(STORAGE_KEY_EN_DAY_LIGHT_SAVING, (int)app_data->daylightSaving);
 //							manually_day_light_on_off_change_enable = 1;
 //							break;
-
 
 #endif
 

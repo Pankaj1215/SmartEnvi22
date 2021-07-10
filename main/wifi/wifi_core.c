@@ -80,6 +80,8 @@ unsigned char manually_Dim_Pilot_Light_changed;
 unsigned char manually_RGB_Mode_Changed;
 // unsigned char manaully_DST_changed;
 
+unsigned char manually_schedule_trigger_count;
+unsigned char manually_schedule_trigger_from_heater;
 unsigned char manually_Timer_Mode_min_changed;
 unsigned char manually_schedule_set_from_heater;
 
@@ -1072,6 +1074,8 @@ static void http_get_task(void *pvParameters)
 	 char replybuffer[300];  // Json
      char payLoadBuufer[150];
 
+//     send_schedule_packet_from_heater();
+
      ESP_LOGI(TAG, "Subscribe callback");
      ESP_LOGI(TAG, "%.*s\t%.*s", topicNameLen, topicName, (int) params->payloadLen, (char *)params->payload);
 
@@ -1908,7 +1912,6 @@ static void http_get_task(void *pvParameters)
 				// deleteHeaterAckSendToServer = 1 ;
 				} // end of if(manaully_child_Lock_State_change==1){
 
-
 			}// end  of if( oneTimeRegistrationPacketToAWS == 0)
 
 			 oneTimeRegistrationPacketToAWS= 1;   //Added only for Testing only ...otherwise comment this line 1735
@@ -1935,6 +1938,7 @@ static void http_get_task(void *pvParameters)
 
 void aws_iot_task(void *param) {
 
+	send_schedule_packet_from_heater();
      int count = 0, count_DEV = 0;
 	//  while(1){
 	//  unsigned char luchDone = false;
@@ -3585,13 +3589,13 @@ void aws_iot_task(void *param) {
 				} // end of if(manaully_child_Lock_State_change==1){
 
 				// schedule trigger
-				unsigned char manually_schedule_trigger_from_heater =0;
+//				unsigned char manually_schedule_trigger_from_heater =0;
 				if(manually_schedule_trigger_from_heater == 1){
 				memset(cPayload1,0,sizeof(cPayload1));
 
-				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_schedule_trigger_from_heater", "status","success",  "value", count);//
+				sprintf(cPayload1, "{\n\t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%s\",\n\t\"%s\" : \"%s\", \n \t\"%s\" : \"%d\"}", "deviceId", uniqueDeviceID,"type","event","cmd", "manually_schedule_trigger_from_heater", "status","success",  "value", manually_schedule_trigger_count);//
 
-				printf("\n manually_schedule_trigger_from_heater  \n ");
+				printf("\n manually_schedule_trigger_from_heater %d  \n ", manually_schedule_trigger_count);
 				HeaterMeassage.payloadLen = strlen(cPayload1);
 
 			    rc = aws_iot_mqtt_publish(&client, topic_manually_schedule_trigger_from_heater, topic_manually_schedule_trigger_from_heater_Len, &HeaterMeassage);   // commented on 05June
