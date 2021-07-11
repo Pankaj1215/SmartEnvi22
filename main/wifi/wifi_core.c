@@ -3645,7 +3645,6 @@ void aws_iot_task(void *param) {
 #endif // end of AWS Task Multiple Logic #define #define DEVICE_ID_ONE_TOPIC
 
 
-
 void send_schedule_packet_from_heater(void)
 {
 #define WEEK_END 0
@@ -3774,7 +3773,6 @@ while(1){
 //			}
 		    // old logic
 		      //  app_data->lastHeaterState = app_get_mode();
-
 
 		        // new logic:
 
@@ -4261,7 +4259,7 @@ else { // Temperature in Fahranniete
       }
 
 
-// #define DisplayForMalFunction
+#define DisplayForMalFunction
 #ifdef DisplayForMalFunction
 
       if((device_health_status != 0) && (device_health_status != 8))

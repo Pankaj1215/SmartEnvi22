@@ -166,7 +166,9 @@ extern char uniqueDeviceID[12];
 
 #define DIM_PILOT_LIGHT_UPDATE_INTERVAL_MS 1000
 #define AUTO_DIM_PILOT_LIGHT_MAX_BRIGHTNESS 100
-#define AUTO_DIM_PILOT_LIGHT_MIN_BRIGHTNESS 50
+
+// #define AUTO_DIM_PILOT_LIGHT_MIN_BRIGHTNESS 50   // Last working commented on 11July2021
+#define AUTO_DIM_PILOT_LIGHT_MIN_BRIGHTNESS 25 // Change on 11 July 2021..
 
 // night light
 

@@ -471,10 +471,10 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
      display_clear_screen();
-     display_menu("Firm_v7", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+    // display_menu("Firm_v7", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-   // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
     vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
@@ -2920,7 +2920,6 @@ static void auto_mode_task(app_data_t *data) {
         //    printf("\r\n  %d t_past_minute %d", temp_past_c, t_past_minute);
         //    printf("\r\ntemp_next_c %d t_next_minute %d", temp_next_c, t_next_minute);
 
-
             t_now_past_diff_minute = t_now_minute - t_past_minute;
             if (wday < wday_sched_past) {
                 t_now_past_diff_minute += (wday + 6 - wday_sched_past) * 60 * 24;
@@ -3038,6 +3037,8 @@ static void auto_mode_task(app_data_t *data) {
 		     manually_schedule_trigger_from_heater = 1;
 		 }
         }
+
+
         // turn off/on the heater based on temperature
         if (*ambient_temp_c < auto_temp_c) {
             if (!is_heater_on) {
@@ -3047,8 +3048,8 @@ static void auto_mode_task(app_data_t *data) {
                 is_heater_on = true;
 
 				#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-				//	 app_data->lastHeaterState = true;
-				//	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+					 app_data->lastHeaterState = true;
+					 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 				#endif
             	// }
                // printf("AUTO: heater on ambient=%d target=%d\r\n", *ambient_temp_c, auto_temp_c);
@@ -3059,6 +3060,7 @@ static void auto_mode_task(app_data_t *data) {
             else
             {
             	// hysteresis_c = fahr_to_celsius(*temp_hysteresis_f);  // Original Line
+
 //    			float lf_temp =0;         // Testing Line Begin_TEST
 //    			float lf_temp_roundOff =0;
 //    			int l_n_hysteresis_c = 0;
@@ -3066,7 +3068,6 @@ static void auto_mode_task(app_data_t *data) {
 //    			lf_temp_roundOff = round(lf_temp);
 //    			l_n_hysteresis_c = lf_temp_roundOff;
 //    			hysteresis_c = l_n_hysteresis_c ;  // END
-
     			hysteresis_c  = valueRoundOff(*temp_hysteresis_f, CONVERT_F_TO_C);
 
             }
@@ -3080,8 +3081,8 @@ static void auto_mode_task(app_data_t *data) {
 
 					#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
                       //   printf("Heater Off \n ");
-					//	 app_data->lastHeaterState = false;
-					//	 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
+						 app_data->lastHeaterState = false;
+						 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 					//	 printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 					#endif
                 	// }// endof if(heater_On_Off_state_by_command == 1)
