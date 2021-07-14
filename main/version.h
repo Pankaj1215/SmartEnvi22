@@ -26,9 +26,26 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
+// #define DEVELOPMENT_RELEASE
+#define PRODUCTION_RELEASE
+
+#ifdef DEVELOPMENT_RELEASE
+
 #define FW_VERSION_MAJOR               (1)
 #define FW_VERSION_MINOR        (7)//  (6)
 #define FW_VERSION_REVISION  (33)// (32) // (31)//(30)// (29) // 28 // 27 // 26 // 25 // 24 // 23 // 22 // 21 // (20)// (18) // (16)// (15)// (14)  // (13)//(12)// (10) // (9)  // (8)// (7)//(6)// (5)//  (4)// (3)// (9)// (8)// (7)// (6) //  (5)// (4)//(3)// (2)// (0)  // old one was 0, 1 is only for testing ota
+
+#endif
+
+
+#ifdef PRODUCTION_RELEASE
+
+#define FW_VERSION_MAJOR          2
+#define FW_VERSION_MINOR          0
+#define FW_VERSION_REVISION       0
+
+#endif
+
 
 /*!
  * \fn uint32_t get_version_major(void)

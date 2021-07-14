@@ -470,12 +470,12 @@ static void print_fw_version(void)
    //   ESP_LOGI("firmware_version", "%s", fw_version);
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
-     display_clear_screen();
+    //  display_clear_screen();
     // display_menu("Firm_v7", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
-    display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
-    vTaskDelay(2000); //    // wait for at least Firmware version..
+    // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
+   // vTaskDelay(2000); //    // wait for at least Firmware version..
     printf("FIRMWARE VERSION: %s\n",fwVersion);
 }
 
@@ -1539,7 +1539,7 @@ static void manual_temperature_mode_task(app_data_t *data) {
                                 is_target_temp_changed = true;
                                 *temp += 1;
                                 manually_Set_Temp_change = 1; // New Added for manual Set Temp change Notification
-                                send_schedule_packet_from_heater();
+                               // send_schedule_packet_from_heater();
                             }
                         }
                     } else {
