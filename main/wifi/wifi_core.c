@@ -454,7 +454,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
             // This is a workaround as ESP32 WiFi libs don't currently
              //  auto-reassociate.
         	//added by dilpreet for tcp to check wifi is connected or not
-            printf("disconnected\n");
+            //printf("disconnected\n");
 
             app_data->is_connected = false;  // new added for wifi icon
 
@@ -465,11 +465,11 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
             if (s_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY) {
 				esp_wifi_connect();
 				s_retry_num++;
-				printf("retry to connect to the AP\n");
+				//printf("retry to connect to the AP\n");
 			} else {
 				xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
 			}
-            printf("connect to the AP fail");
+            //printf("connect to the AP fail");
             break;
         case SYSTEM_EVENT_STA_AUTHMODE_CHANGE:
             break;
@@ -478,7 +478,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
         	// event = (ip_event_got_ip_t*) event_data; // Original
 		    // ESP_LOGI(TAG, "new got ip:%s",ip4addr_ntoa(&event->ip_info.ip)); // Original
 
-        	 printf("\n SYSTEM_EVENT_STA_GOT_IP \n ");
+        	// printf("\n SYSTEM_EVENT_STA_GOT_IP \n ");
 
               //  = (ip_event_got_ip_t*) event_data; // Original
         	// event_base = (ip_event_got_ip_t*) event_data; //Testing
@@ -490,7 +490,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 #ifdef wifi_AP_STA_COMBINE
 			aws_task_flag= 1;
 #endif
-			printf("\n connected\n");
+			//printf("\n connected\n");
 		    app_data->is_connected = true; // wifi icon
 
             break;
@@ -514,7 +514,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
 // testing only...
         case SYSTEM_EVENT_AP_STACONNECTED:
 
-        	printf("SYSTEM_EVENT_AP_STACONNECTED ip assigned blink wifi\n ");
+        	// printf("SYSTEM_EVENT_AP_STACONNECTED ip assigned blink wifi\n ");
         	if (wifi_conn_stat_callback)
             { wifi_conn_stat_callback(1); // pairON_blinkWifi = 1; printf("ip assigned blink wifi\n ");
             }
@@ -530,7 +530,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
         case SYSTEM_EVENT_AP_STADISCONNECTED:
             if (wifi_conn_stat_callback)
             {  wifi_conn_stat_callback(0); // pairON_blinkWifi = 0;
-               printf("ip disconnected..from AP  wifi\n ");
+              // printf("ip disconnected..from AP  wifi\n ");
               }
             break;
 
@@ -550,7 +550,7 @@ int event_handler(void* arg, esp_event_base_t event_base,int32_t event_id, void*
             // strcpy(username,(char *)(global_wifi_config.sta.ssid));
             // strcpy(password,(char *)(global_wifi_config.sta.password));
 
-            printf("\n I am in SYSTEM_EVENT_STA_WPS_ER_SUCCESS \n ");
+           // printf("\n I am in SYSTEM_EVENT_STA_WPS_ER_SUCCESS \n ");
            // writeEEPROM();
             esp_wifi_connect();
             break;
@@ -3652,7 +3652,7 @@ void send_schedule_packet_from_heater(void)
 
 uint8_t schdule_num = 0;
  wday = clock_get_day_of_week();
-  printf("clock_get_day_of_week: %d",wday);
+ // printf("clock_get_day_of_week: %d",wday);
 
   if((wday == 1) || (wday == 2) ||(wday == 3) || (wday ==4)||(wday == 5))
 	{wday = WEEK_DAY;}
@@ -3721,13 +3721,13 @@ for (schdule_num = 0; schdule_num < 4; schdule_num++)
 	} // end of else
 }// end for (schdule_num = 0; schdule_num > 4; schdule_num++)
 
-    printf("\n wday %d",wday);
-	printf("\n wake_sch_en_dis: %d wake_sch_time_hour :%d wake_sch_time_min : %d, wake_sch_set_temp : %d",wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp );
-	printf("\n leave_sch_en_dis: %d leave_sch_time_hour :%d  leave_sch_time_min : %d,  leave_sch_set_temp: %d",leave_sch_en_dis,  leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp );
-	printf("\n return_sch_en_dis: %d return_sch_time_hour :%d  return_sch_time_min : %d,  return_sch_set_temp : %d",return_sch_en_dis,  return_sch_time_hour, return_sch_time_min, return_sch_set_temp );
-	printf("\n sleep_sch_en_dis: %d sleep_sch_time_hour :%d  sleep_sch_time_min : %d,  sleep_sch_set_temp: %d",sleep_sch_en_dis,  sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
-	printf("\n wd:%d, w1:%d ,w2:%d, w3:%d ,w4:%d ,l1:%d,l2:%d,l3:%d,l4:%d,r1:%d r2:%d,r3:%d,r4:%d, s1:%d s2:%d s3:%d s4:%d",wday,wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp, leave_sch_en_dis,leave_sch_time_hour,leave_sch_time_min,leave_sch_set_temp,
-		  return_sch_en_dis, return_sch_time_hour, return_sch_time_min, return_sch_set_temp, sleep_sch_en_dis, sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
+   // printf("\n wday %d",wday);
+//	printf("\n wake_sch_en_dis: %d wake_sch_time_hour :%d wake_sch_time_min : %d, wake_sch_set_temp : %d",wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp );
+//	printf("\n leave_sch_en_dis: %d leave_sch_time_hour :%d  leave_sch_time_min : %d,  leave_sch_set_temp: %d",leave_sch_en_dis,  leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp );
+//	printf("\n return_sch_en_dis: %d return_sch_time_hour :%d  return_sch_time_min : %d,  return_sch_set_temp : %d",return_sch_en_dis,  return_sch_time_hour, return_sch_time_min, return_sch_set_temp );
+//	printf("\n sleep_sch_en_dis: %d sleep_sch_time_hour :%d  sleep_sch_time_min : %d,  sleep_sch_set_temp: %d",sleep_sch_en_dis,  sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
+//	printf("\n wd:%d, w1:%d ,w2:%d, w3:%d ,w4:%d ,l1:%d,l2:%d,l3:%d,l4:%d,r1:%d r2:%d,r3:%d,r4:%d, s1:%d s2:%d s3:%d s4:%d",wday,wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp, leave_sch_en_dis,leave_sch_time_hour,leave_sch_time_min,leave_sch_set_temp,
+//		  return_sch_en_dis, return_sch_time_hour, return_sch_time_min, return_sch_set_temp, sleep_sch_en_dis, sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
 }
 
 
@@ -3777,10 +3777,12 @@ while(1){
 		        // new logic:
 
 		     if(lPrevGet_mode == 0)
-		     {    app_data->lastHeaterState =0;  printf("standby mode");}
+		     {    app_data->lastHeaterState =0; // printf("standby mode");
+
+		     }
 			else
 			{
-				 app_data->lastHeaterState = 1; printf("working mode");
+				 app_data->lastHeaterState = 1; //printf("working mode");
 			}
 
 		       set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
@@ -3836,16 +3838,16 @@ void Temp_MalfunctionTask(void *param)
     bool *currentHeaterState = &(data->lastHeaterState);
     int *amb_temp_c = &(data->ambient_temperature_celsius);
 
-    int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
+   // int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
     int ltempInFehrenniete = 0, ltempInFehrenniete_prev = 0;
 
     int Prev_SetTemp_F = 0;
     int Prev_SetTemp_C = 0;
-    int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
-    int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
+   // int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
+  //  int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
     int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
     unsigned char hysterisFlag = 0;
-    int prevAmbientTemp_Fahraneite = 0;
+  //  int prevAmbientTemp_Fahraneite = 0;
     int prevAmbientTemp_Calcius = 0;  int lprevAmbientTempForEventTrigger = 0;
    // unsigned char *TimerIntervalThresholdOffset = &(data-> TimerIntervalThresholdOffset);
 
@@ -3856,10 +3858,10 @@ void Temp_MalfunctionTask(void *param)
     int lPrevAmbientTempInCalcius = *amb_temp_c;
     int L_AmbientTempInCalcius =  *amb_temp_c;
 
-    int amb_Temp_three_Degree_logic;
+   // int amb_Temp_three_Degree_logic;
     int c_amb_Temp_three_Degree_logic_Prev = 0;
     int f_amb_Temp_three_Degree_logic_Prev = 0;
-    int set_Temp_three_Degree_logic;
+  //  int set_Temp_three_Degree_logic;
 
     unsigned char malFunOccured = 0;
     unsigned char prev_malFunOccured = 0;
@@ -3889,7 +3891,6 @@ void Temp_MalfunctionTask(void *param)
 
 		ltempInFehrenniete = ambient_temp_f;// Calcius converted to Fehranite..
 
-
      	// printf("ambient_Temp_malFunctionTask L_AmbientTempInCalcius %d ltempInFehrenniete %d \n ", L_AmbientTempInCalcius, ltempInFehrenniete);
         //  L_AmbientTempInCalcius =  *amb_temp_c; // Local variable for calcius
 
@@ -3909,7 +3910,7 @@ void Temp_MalfunctionTask(void *param)
 
       if(ThirtySec_overForAmb_temp_monitor ==1){
     	  ThirtySec_overForAmb_temp_monitor = 0;
-    	  printf("30 Sec over \n ");
+    	  //printf("30 Sec over \n ");
             if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS){
             	if((*target_temp_c  - L_AmbientTempInCalcius ) <= hysteresis_OffSet_For_AmbientTempEventTrigger)
             		 {hysterisFlag = 1; c_amb_Temp_three_Degree_logic_Prev = L_AmbientTempInCalcius; }
@@ -3921,7 +3922,7 @@ void Temp_MalfunctionTask(void *param)
             	  { ambientTempChangeDataToAWS = 1; } }
             }
             else
-            {  printf("target_temp_f %d", *target_temp_f);
+            { // printf("target_temp_f %d", *target_temp_f);
             	if((*target_temp_f  - ltempInFehrenniete ) <= hysteresis_OffSet_For_AmbientTempEventTrigger)
             		{hysterisFlag = 1; f_amb_Temp_three_Degree_logic_Prev = ltempInFehrenniete;}
             	else
@@ -3959,7 +3960,7 @@ void Temp_MalfunctionTask(void *param)
 			     TempChange_ms = 0;
 	        	  time_OneMinuteOver = 0;
 	        	  time_count = 0;
-	        	 printf(" set Temp changed.. \n");
+	        	// printf(" set Temp changed.. \n");
 	         }
 
         // This is for 30 minutes logics
@@ -3970,12 +3971,15 @@ void Temp_MalfunctionTask(void *param)
 			  }
 
 	    	if(time_OneMinuteOver == 1 )
-			{	time_count++; time_OneMinuteOver = 0;  printf("one min over for time_count_60Min time_count: %d \n", time_count); }  // // This is for 30 minutes logics End timing
+			{	time_count++; time_OneMinuteOver = 0;
+			//printf("one min over for time_count_60Min time_count: %d \n", time_count); }  // // This is for 30 minutes logics End timing
+			}
+
 
   //  if(time_count > (TIMER_INTERVAL_THRESHOLD_OFFSET) )  // It should be one hour ..
       if(time_count > (TIMER_INTERVAL_THRESHOLD_OFFSET) )  // It should be one hour ..
       {
-           printf("Target Miniutes over: %d \n", TIMER_INTERVAL_THRESHOLD_OFFSET );
+          // printf("Target Miniutes over: %d \n", TIMER_INTERVAL_THRESHOLD_OFFSET );
 		   time_OneMinuteOver =0;
 		   time_count = 0;
 
@@ -3986,7 +3990,7 @@ void Temp_MalfunctionTask(void *param)
     	     if((L_AmbientTempInCalcius - lPrevAmbientTempInCalcius >= 5)&& (*currentHeaterState == 1)) //
 		       {
 		    	  device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR;
-		    	  printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR \n ");
+		    	 // printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR \n ");
 			   } // end of if(ltempInFehrenniete - ltempInFehrenniete_prev >= 5)
 		      } // end of if( Prev_SetTemp - ltempInFehrenniete_prev > 7){
 
@@ -3996,16 +4000,21 @@ void Temp_MalfunctionTask(void *param)
  //              if(((*amb_temp_c - lPrevAmbientTempInCalcius) == 0 ) || ((lPrevAmbientTempInCalcius - *amb_temp_c) <= 2))
                if((((L_AmbientTempInCalcius - lPrevAmbientTempInCalcius) == 0 ) || ((lPrevAmbientTempInCalcius - L_AmbientTempInCalcius) <= 2))&& (*currentHeaterState == 1))
                {
-            	  device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR;  printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR \n ");
+            	  device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR;
+            	  // printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR \n ");
                }
 		     } // end of if( Prev_SetTemp - ltempInFehrenniete_prev > 5){
+
            }// end of if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET)
+
+
 
       if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR ) // L_AmbientTempInCalcius
 //      {  if(((*currentHeaterState == 0) ) || (*amb_temp_c - lPrevAmbientTempInCalcius >= 5))
 //      {  if(((*currentHeaterState == 0) ) || (L_AmbientTempInCalcius - lPrevAmbientTempInCalcius >= 5))
         {  if((L_AmbientTempInCalcius - lPrevAmbientTempInCalcius >= 5))
            { device_health_status = DEVICE_HEALTH_OK;} }
+
 
       if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR)
 //      {  if(((*currentHeaterState == 0) ) || (*amb_temp_c - lPrevAmbientTempInCalcius == 1))
@@ -4014,51 +4023,67 @@ void Temp_MalfunctionTask(void *param)
         { 	device_health_status = DEVICE_HEALTH_OK;} }
 #endif
 
+
 //      if(*amb_temp_c  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
       if(L_AmbientTempInCalcius  > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) {
       // Mode needed here in Stand by mode -> electronic off
 		 app_set_heater_state(0);
 		 device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED;
-		  printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED \n "); }
+		//  printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED \n ");
+      }
+
+
 
 	   if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED)
 //	   {  if(*amb_temp_c < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX)
 //	   {  if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX) || (*currentHeaterState == 0))
 	   {  if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX))
-	       { device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); }}
+	       { device_health_status = DEVICE_HEALTH_OK; // printf("In DEVICE_HEALTH_OK \n ");
+	       }}
+
+
 
 	  if(en_anti_freeze == 1){
 		//  printf("MalfunctionTaskExcludedFromTempTask en_anti_freeze in calsius minTemperatureThreshold %d\n ",TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN);
 //		  if(*amb_temp_c  < ANTI_FREEZE_LIMIT_CELSIUS) {
-		  device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");
+		  device_health_status = DEVICE_HEALTH_OK; //printf("In DEVICE_HEALTH_OK \n ");
 		  if(L_AmbientTempInCalcius  < ANTI_FREEZE_LIMIT_CELSIUS) {
 			  //// Mode needed here in Manual Temperature Mode  -> electronic ON
 			  app_set_heater_state(1);
 			  device_health_status = DEVICE_FREEZE_ALERT;
-		      printf("\n DEVICE_FREEZE_ALERT \n ");
+		    //  printf("\n DEVICE_FREEZE_ALERT \n ");
 	       }
 			if( device_health_status == DEVICE_FREEZE_ALERT) {
 //			 if(*amb_temp_c  > ANTI_FREEZE_LIMIT_CELSIUS){
 //				 if((L_AmbientTempInCalcius  > ANTI_FREEZE_LIMIT_CELSIUS) || (*currentHeaterState == 0)){
 			   if((L_AmbientTempInCalcius  > ANTI_FREEZE_LIMIT_CELSIUS)){
-				device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); } }
+				device_health_status = DEVICE_HEALTH_OK; //printf("In DEVICE_HEALTH_OK \n ");
+			   } }
+
 	  }// endof  if(en_anti_freeze == 1){
 	  else
-	  {  device_health_status = DEVICE_HEATER_UNDER_REPAIR; printf("In DEVICE_HEATER_UNDER_REPAIR \n ");}
+	  {  device_health_status = DEVICE_HEATER_UNDER_REPAIR; // printf("In DEVICE_HEATER_UNDER_REPAIR \n ");
+
+	  }
+
 
 //        if((*amb_temp_c < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN))
          if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN))
         {
 		   if(*currentHeaterState == 0)
 			{ app_set_heater_state(1);  device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD;
-              printf("DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD\n ");}// malfunction_ambientTemp_underRange_Heater_still_off_triggered  // Need to confirm form that ..
+             // printf("DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD\n ");
+			}// malfunction_ambientTemp_underRange_Heater_still_off_triggered  // Need to confirm form that ..
 		}// end of if
+
+
 
 	   if( device_health_status == DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD)
 //	     { if( (*amb_temp_c > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) ){
 //	     { if((L_AmbientTempInCalcius > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN) || (*currentHeaterState == 0)){
 	     { if((L_AmbientTempInCalcius > TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MIN)){
 		      device_health_status = DEVICE_HEALTH_OK;  } }
+
 
 		//    case 3 part2
 		//    if((ltempInFehrenniete > 100) && (*currentHeaterState == 1))
@@ -4068,14 +4093,19 @@ void Temp_MalfunctionTask(void *param)
 		  if((*currentHeaterState == 1))
 			{  app_set_heater_state(0);
 		     device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD;
-		     printf("DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD\n ");}// malfunction_ambientTemp_overRange_Heater_still_On_triggered
+		    // printf("DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD\n ");
+		     }// malfunction_ambientTemp_overRange_Heater_still_On_triggered
 		}
+
 
 		 if(device_health_status == DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD){
 //		        if( *amb_temp_c < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX ) {
 //		   if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX ) || (*currentHeaterState == 0)) {
 		   if((L_AmbientTempInCalcius < TEMPERATURE_THREHOLD_RANGE_CELSIUS_VAL_MAX )) {
-			 device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");} }
+			 device_health_status = DEVICE_HEALTH_OK; //printf("In DEVICE_HEALTH_OK \n ");
+		   } }
+
+
 
 		// Malfunction Case 4: Ambient temperature is showing 0 deg Fahrenheit and not changing whereas room temperature is 60 deg Fahrenheit.
 //		if(*amb_temp_c <= 0)
@@ -4085,15 +4115,19 @@ void Temp_MalfunctionTask(void *param)
 		    L_AmbientTempInCalcius = 0;
 		    app_set_heater_state(0);
 		     device_health_status = DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY;
-		     printf("DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY \n ");// malfunction_ambientTemp_zero_triggered  //
+		     //printf("DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY \n ");// malfunction_ambientTemp_zero_triggered  //
 		}
+
+
 		if(device_health_status == DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY){
 //	       if( *amb_temp_c >  0)
 //		    if(( L_AmbientTempInCalcius >  0) || (*currentHeaterState == 0))
 		   if(( L_AmbientTempInCalcius >  0))
-			{	device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n "); }}
+			{	device_health_status = DEVICE_HEALTH_OK; // printf("In DEVICE_HEALTH_OK \n ");
+			}}
 
     }// end of if (app_data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+
 else { // Temperature in Fahranniete
 
 #define MAL_FUNCTIONS_NOT_TESTED_FAHRENEITE
@@ -4105,18 +4139,20 @@ else { // Temperature in Fahranniete
 	              TempChange_ms = 0;
 	        	  time_OneMinuteOver = 0;
 	        	  time_count = 0;
-	        	 printf("\n set Temp changed.. \n");
+	        	// printf("\n set Temp changed.. \n");
 	         }
 
         // This is for 30 minutes logics
 		int cur_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 			if ((cur_ms - TempChange_ms) >= KEEP_ALIVE_DATA__PACKET_DUR_MS) {
 				TempChange_ms = cur_ms;
-				time_OneMinuteOver = 1;  printf("one min over.. \n");
+				time_OneMinuteOver = 1; // printf("one min over.. \n");
 			  }
 
 	   	if(time_OneMinuteOver == 1 )
-		  {	time_count++; time_OneMinuteOver = 0;  printf("one min over for time_count_60Min time_count %d:\n",time_count ); }  // // This is for 30 minutes logics End timing
+		  {	time_count++; time_OneMinuteOver = 0;  // printf("one min over for time_count_60Min time_count %d:\n",time_count );
+		  }  // // This is for 30 minutes logics End timing
+
 
 // #define TESTING_MALFUNCTION_SIMULATON
 #ifdef TESTING_MALFUNCTION_SIMULATON
@@ -4132,7 +4168,7 @@ else { // Temperature in Fahranniete
   //  if(time_count > (TIMER_INTERVAL_THRESHOLD_OFFSET) )  // It should be one hour ..
       if(time_count > (TIMER_INTERVAL_THRESHOLD_OFFSET) )  // It should be one hour ..
       {
-           printf(" Target Miniutes over :%d \n",TIMER_INTERVAL_THRESHOLD_OFFSET);
+         //  printf(" Target Miniutes over :%d \n",TIMER_INTERVAL_THRESHOLD_OFFSET);
 		   time_OneMinuteOver =0;
 		   time_count = 0;
 
@@ -4143,7 +4179,7 @@ else { // Temperature in Fahranniete
 	          if((ltempInFehrenniete - ltempInFehrenniete_prev >= 5) && (*currentHeaterState == 1)) //
 			   {
 		    	 device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR;
-		    	 printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR \n ");
+		    	// printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR \n ");
 			   } // end of if(ltempInFehrenniete - ltempInFehrenniete_prev >= 5)
 		      } // end of if( Prev_SetTemp - ltempInFehrenniete_prev > 7){
 
@@ -4153,7 +4189,7 @@ else { // Temperature in Fahranniete
               if((((ltempInFehrenniete - ltempInFehrenniete_prev) == 0 ) || ((ltempInFehrenniete_prev - ltempInFehrenniete) <= 2)) && (*currentHeaterState == 1))
                {
             	  device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR;
-            	  printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR \n ");
+            	//  printf("DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR \n ");
                }
 		     } // end of if( Prev_SetTemp - ltempInFehrenniete_prev > 5){
         }// end of if(time_count >= TIMER_INTERVAL_THRESHOLD_OFFSET)
@@ -4162,7 +4198,9 @@ else { // Temperature in Fahranniete
       {
  //   	 if(((*currentHeaterState == 0) ) || (ltempInFehrenniete - ltempInFehrenniete_prev >= 5))
        	 if(ltempInFehrenniete - ltempInFehrenniete_prev >= 5)
-          { 	device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");}
+          { 	device_health_status = DEVICE_HEALTH_OK; //printf("\n In DEVICE_HEALTH_OK \n ");
+          }
+
 //        else
 //         { device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_FIVE_DEG_AFTER_ONE_HOUR ;}
       }
@@ -4170,7 +4208,9 @@ else { // Temperature in Fahranniete
      if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR)
 //     {  if(((*currentHeaterState == 0) ) || (ltempInFehrenniete - ltempInFehrenniete_prev == 1))
       {  if((ltempInFehrenniete - ltempInFehrenniete_prev == 1))
-      { 	device_health_status = DEVICE_HEALTH_OK;printf("\n In DEVICE_HEALTH_OK \n ");}
+      { 	device_health_status = DEVICE_HEALTH_OK;   //printf("\n In DEVICE_HEALTH_OK \n ");
+      }
+
 //        else
 //         { device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_NOT_CHANGING_AFTER_ONE_HOUR ;}
       }
@@ -4182,21 +4222,23 @@ else { // Temperature in Fahranniete
  	      	// heater_off();
  		      app_set_heater_state(0);
  		      device_health_status = DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED;
- 		     printf("\n In DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED \n ");
+ 		   //  printf("\n In DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED \n ");
  	     }
 
  	   if(device_health_status == DEVICE_MALFUNCTION_AMBIENT_TEMP_MAX_THRESHOLD_REACHED)
 // 	   {  if((ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX) || (*currentHeaterState == 0))
  	   {  if((ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX))
-          { device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");}}
+          { device_health_status = DEVICE_HEALTH_OK; //printf("\n In DEVICE_HEALTH_OK \n ");
+          }}
+
 
  	  // ltempInFehrenniete = 30;
  	   if(en_anti_freeze == 1){
- 		   device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");
+ 		   device_health_status = DEVICE_HEALTH_OK; //printf("In DEVICE_HEALTH_OK \n ");
  		   if(ltempInFehrenniete  < ANTI_FREEZE_LIMIT_FEHRANEITE)  {
  	      	  // only super admin and admin can enable this other wise only heater will in last state..need a check for anti freeze enable by authorised user..
  	         // heater_on();
- 		       printf("\n In en_anti_freeze matches \n ");
+ 		      // printf("\n In en_anti_freeze matches \n ");
  			   app_set_heater_state(1);
  			   device_health_status = DEVICE_FREEZE_ALERT;
  	        }
@@ -4204,10 +4246,13 @@ else { // Temperature in Fahranniete
  	 	   if( device_health_status == DEVICE_FREEZE_ALERT) {
 // 	 	      if((ltempInFehrenniete  > ANTI_FREEZE_LIMIT_FEHRANEITE)||(*currentHeaterState == 0)){
   	 	      if((ltempInFehrenniete  > ANTI_FREEZE_LIMIT_FEHRANEITE)){
- 	 		   device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");} }
+ 	 		   device_health_status = DEVICE_HEALTH_OK; //printf("\n In DEVICE_HEALTH_OK \n ");
+  	 	      } }
  	     } // end of  if(en_anti_freeze ==1){
  	   else
- 	   {  device_health_status = DEVICE_HEATER_UNDER_REPAIR;printf("\n In DEVICE_HEATER_UNDER_REPAIR \n ");}
+ 	   {  device_health_status = DEVICE_HEATER_UNDER_REPAIR;  // printf("\n In DEVICE_HEATER_UNDER_REPAIR \n ");
+ 	   }
+
 
      // Malfunction case 4 – Heater not starting even if the ambient temperature reaches freezing point of 50 deg Fahrenheit
      // or heater not turning off if the ambient temperature reaches 100 deg Fahrenheit
@@ -4215,14 +4260,16 @@ else { // Temperature in Fahranniete
        {
     	   if(*currentHeaterState == 0)
         	{ app_set_heater_state(1);  device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD;
-        	printf("DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD\n ");}// malfunction_ambientTemp_underRange_Heater_still_off_triggered  // Need to confirm form that ..
+        	// printf("DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD\n ");
+        	}// malfunction_ambientTemp_underRange_Heater_still_off_triggered  // Need to confirm form that ..
        }// end of if
 
        if( device_health_status == DEVICE_MALFUNCTION_HEATER_STILL_OFF_AMBIENT_TEMP_REACHES_MIN_THRESHOLD)
        {
 //    	   if( (ltempInFehrenniete > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN) || (*currentHeaterState == 0)){
     	   if( (ltempInFehrenniete > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MIN)){
-    	        device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n "); }
+    	        device_health_status = DEVICE_HEALTH_OK; // printf("\n In DEVICE_HEALTH_OK \n ");
+    	   }
        }
 
 //    case 3 part2
@@ -4230,13 +4277,15 @@ else { // Temperature in Fahranniete
       if((ltempInFehrenniete > TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX))  //  TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX - 100
        {
     	  if((*currentHeaterState == 1))
-        	{  app_set_heater_state(0); device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD;  printf("in malfunction case 3 ltempInFehrenniete-DEVICE_MALFUNCTION_HEATER_ON_AMBIENT_TEMP_REACHES_100F \n ");}// malfunction_ambientTemp_overRange_Heater_still_On_triggered
+        	{  app_set_heater_state(0); device_health_status = DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD;  //printf("in malfunction case 3 ltempInFehrenniete-DEVICE_MALFUNCTION_HEATER_ON_AMBIENT_TEMP_REACHES_100F \n ");
+        	}// malfunction_ambientTemp_overRange_Heater_still_On_triggered
         }
 
       if(device_health_status == DEVICE_MALFUNCTION_HEATER_STILL_ON_AMBIENT_TEMP_REACHES_MAX_THRESHOLD){
 //        if((ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX ) || (*currentHeaterState == 0)) {
           if((ltempInFehrenniete < TEMPERATURE_THREHOLD_RANGE_FAHRENHEIT_VAL_MAX )) {
-    	      device_health_status = DEVICE_HEALTH_OK; printf("\n In DEVICE_HEALTH_OK \n ");} }
+    	      device_health_status = DEVICE_HEALTH_OK; // printf("\n In DEVICE_HEALTH_OK \n ");
+          } }
 
       // ltempInFehrenniete = -10;
        // Malfunction Case 4: Ambient temperature is showing 0 deg Fahrenheit and not changing whereas room temperature is 60 deg Fahrenheit.
@@ -4244,19 +4293,25 @@ else { // Temperature in Fahranniete
        {
       	   ltempInFehrenniete = 0;
     	   app_set_heater_state(0); device_health_status = DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY;
-    	   printf("DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY \n ");// malfunction_ambientTemp_zero_triggered  //
-       }  }// end of else  // temp_in_faherniete
+    	 //  printf("DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY \n ");// malfunction_ambientTemp_zero_triggered  //
+       }
+     }// end of else  // temp_in_faherniete
+
 
         if(device_health_status == DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY){
 //        if((ltempInFehrenniete > 0) || (*currentHeaterState == 0))
           if((ltempInFehrenniete > 0))
-        	{	device_health_status = DEVICE_HEALTH_OK; printf("In DEVICE_HEALTH_OK \n ");}}
+        	{	device_health_status = DEVICE_HEALTH_OK; // printf("In DEVICE_HEALTH_OK \n ");
+        	}}
+
 
         } // manually_put_heater_under_repair_status_for_malfunctionMonitor  // Disable malfunctions when manually disabled heater control.
-      else
-      {
-    	  printf("Heater malfunction disable from manual mode \n ");
-      }
+
+		// Commented on 19July
+//	else
+//      {
+//    	  printf("Heater malfunction disable from manual mode \n ");
+//      }
 
 
 #define DisplayForMalFunction
@@ -4617,7 +4672,8 @@ void tcpServer_main()
     // New added for for wifi - mac address.
     unsigned char ap_mac[6];
     esp_efuse_mac_get_default(ap_mac);
-    printf("\nMAC ADRESS = %02x:%02x:%02x:%02x:%02x:%02x \n\n",ap_mac[0],ap_mac[1],ap_mac[2],ap_mac[3],ap_mac[4],ap_mac[5]);
+
+    // printf("\nMAC ADRESS = %02x:%02x:%02x:%02x:%02x:%02x \n\n",ap_mac[0],ap_mac[1],ap_mac[2],ap_mac[3],ap_mac[4],ap_mac[5]);
 
 //    sprintf(comm_wifi_dev.wifi_ap_ssid, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
 //
@@ -4633,7 +4689,7 @@ void tcpServer_main()
     strcpy(uniqueDeviceID, comm_wifi_dev -> wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid*/
 
     sprintf(uniqueDeviceID, "%s-%02x%02x%02x", WIFI_AP_MODE_SSID_BASE, ap_mac[3], ap_mac[4], ap_mac[5]);
-    printf("uniqueDeviceID in TCP_server_main   %s\n", uniqueDeviceID);
+   // printf("uniqueDeviceID in TCP_server_main   %s\n", uniqueDeviceID);
 
     // initFlash();  //
 	readEEPROM();
@@ -4745,11 +4801,11 @@ void initSoftAP()
     strcpy((char *)wifi_config.ap.ssid, uniqueDeviceID );  // New Added after mac address receiving //For changing the ssid
     //strcpy(uniqueDeviceID, comm_wifi_dev->wifi_ap_ssid );  // New Added after mac address receiving //For changing the ssid
 
-    printf("(char *)wifi_config.ap.ssid:  %s\n", (char *)wifi_config.ap.ssid);
-    printf("uniqueDeviceID in initSoftAP  %s\n", uniqueDeviceID);
+   // printf("(char *)wifi_config.ap.ssid:  %s\n", (char *)wifi_config.ap.ssid);
+   // printf("uniqueDeviceID in initSoftAP  %s\n", uniqueDeviceID);
 
     wifi_config.ap.ssid_len = strlen(uniqueDeviceID);
-    printf("(char *)wifi_config.ap.ssid_len:  %d\n",   wifi_config.ap.ssid_len);
+   // printf("(char *)wifi_config.ap.ssid_len:  %d\n",   wifi_config.ap.ssid_len);
 
 
     // Last working SSID
@@ -4767,9 +4823,9 @@ void initSoftAP()
 		wifi_config.ap.authmode = WIFI_AUTH_OPEN;
 	}
 
-	printf("IN init softAP function before condition check \n ");
+	//printf("IN init softAP function before condition check \n ");
 //	if(FlashEraseEnableAPMode ==0){  // This condition Added only for testing .. 04MArch2021
-		printf("IN init softAP function after condition check \n ");
+	//	printf("IN init softAP function after condition check \n ");
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
 #ifdef  wifi_AP_STA_COMBINE
@@ -4802,7 +4858,7 @@ void initFlash()
 	}
 	ESP_ERROR_CHECK( err );
 
-	printf("Opening Non-Volatile Storage (NVS) handle... ");
+	//printf("Opening Non-Volatile Storage (NVS) handle... ");
 	err = nvs_open("storage", NVS_READWRITE, &my_handle);
 	if (err != ESP_OK) {
 		printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
@@ -4977,21 +5033,22 @@ void writeEEPROM()
 void readEEPROM()
 {
 	// username[0]='a';
-	get_string_from_storage(NVS_LUCIDTRON_SSID_KEY, username); printf("Username 1st time  = %s",username);
+	get_string_from_storage(NVS_LUCIDTRON_SSID_KEY, username);
+	//printf("Username 1st time  = %s",username);
 	// Original
 //	if(strlen(username)<=0)
 //	    strcpy(username,"asdf");
     // Testing
 	if(strlen(username)<=0)
-	{   FlashEraseEnableAPMode =1; printf("Flash erased and enable AP Mode \n ");
+	{   FlashEraseEnableAPMode =1; //printf("Flash erased and enable AP Mode \n ");
 		strcpy(username,"asdf");}
 
-	get_string_from_storage(NVS_LUCIDTRON_PW_KEY, password); printf("Password = %s",password);
-	get_string_from_storage(NVS_DEVICE_ID, id); printf("DeviceID = %s",id);
-	get_string_from_storage(NVS_LOC_ID, locID); printf("LocID = %s",locID);
-	get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
+	get_string_from_storage(NVS_LUCIDTRON_PW_KEY, password); //printf("Password = %s",password);
+	get_string_from_storage(NVS_DEVICE_ID, id); //printf("DeviceID = %s",id);
+	get_string_from_storage(NVS_LOC_ID, locID); // printf("LocID = %s",locID);
+	get_string_from_storage(NVS_DEVICE_NAME, name);  // printf("DeviceName = %s",name);
 
-	get_string_from_storage(NVS_TIMEZONE, timeZone); printf("TimeZone = %s",timeZone);  // New added for Time Zone
+	get_string_from_storage(NVS_TIMEZONE, timeZone); // printf("TimeZone = %s",timeZone);  // New added for Time Zone
 }
 #else
 

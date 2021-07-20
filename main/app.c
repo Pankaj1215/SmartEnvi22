@@ -366,97 +366,64 @@ void testFunctionFoFToC(void){
 }
 #endif
 
-//
-//
-//void send_schedule_packet_from_heater(void)
+
+//void debug_switches_testing(app_data_t *data)
 //{
-//  #define WEEK_END 0
-//  #define WEEK_DAY 1
+//	int *btn = &(data->button_status);
+//	if ((!((*btn >> BUTTON_UP_STAT) & 0x01))&& (((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01)))
+//	  {
+//		while(1){
+//		   display_clear_screen();
+//		   // display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
+//		  // display_menu_pair_Heater("", DISPLAY_COLOR, uniqueDeviceID, DISPLAY_COLOR);
+//		   printf("Display SSID up ");
+//		}
+// }
+//}// end of void debug_switches_testing(void)
+
 //
-//	bool wake_sch_en_dis;   uint8_t wake_sch_time_hour, wake_sch_time_min, wake_sch_set_temp;
-//	bool leave_sch_en_dis;  uint8_t leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp;
-//	bool return_sch_en_dis; uint8_t return_sch_time_hour, return_sch_time_min, return_sch_set_temp;
-//	bool sleep_sch_en_dis;  uint8_t sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp;
-//	uint8_t schdule_num = 0;
-//	uint8_t wday = clock_get_day_of_week();
-//    printf("clock_get_day_of_week: %d",wday);
 //
-//    if((wday == 1) || (wday == 2) ||(wday == 3) || (wday ==4)||(wday == 5))
-//    	{wday = WEEK_DAY;}
-//    else
-//    	{wday = WEEK_END;}
+//void button_testing(app_data_t *data)
+//{
+//	int *btn = &(data->button_status);
+//	unsigned char button_count = 0;
+//	display_clear_screen();
+//	display_menu_pair_small_font("button", DISPLAY_COLOR, "testing", DISPLAY_COLOR);
+//	while(1){
 //
-//	for (schdule_num = 0; schdule_num < 4; schdule_num++)
-//	{
-//	  if(wday == WEEK_DAY)
-//	   {
-//	    switch(schdule_num)
-//	    {
-//	     case 0 :
-//		       wake_sch_en_dis= sched_weekday[schdule_num].en ;
-//		       wake_sch_time_hour = sched_weekday[schdule_num].hour ;
-//		       wake_sch_time_min = sched_weekday[schdule_num].minute;
-//		       wake_sch_set_temp = sched_weekday[schdule_num].temp_f;
-//		       break;
-//	     case 1:
-//			   leave_sch_en_dis= sched_weekday[schdule_num].en ;
-//			   leave_sch_time_hour = sched_weekday[schdule_num].hour ;
-//			   leave_sch_time_min = sched_weekday[schdule_num].minute;
-//			   leave_sch_set_temp = sched_weekday[schdule_num].temp_f;
-//			   break;
-//	    case 2:
-//			   return_sch_en_dis= sched_weekday[schdule_num].en ;
-//			   return_sch_time_hour = sched_weekday[schdule_num].hour ;
-//			   return_sch_time_min = sched_weekday[schdule_num].minute;
-//			   return_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
-//	    case 3:
-//			   sleep_sch_en_dis= sched_weekday[schdule_num].en ;
-//			   sleep_sch_time_hour = sched_weekday[schdule_num].hour ;
-//			   sleep_sch_time_min = sched_weekday[schdule_num].minute;
-//			   sleep_sch_set_temp = sched_weekday[schdule_num].temp_f;break;
-//	    default: break;
-//	    } // end of switch
-//	   }// if(day == WEEKDAY){
-//	   else
-//	   {
-//	      switch(schdule_num)
+//			if(!((*btn >> BUTTON_UP_STAT) & 0x01))
+//			{ button_count =1; display_clear_screen(); }
+//
+//			if(!((*btn >> BUTTON_DOWN_STAT) & 0x01))
+//			{ button_count = 2; display_clear_screen(); }
+//
+//			if(!((*btn >> BUTTON_POWER_BACK_STAT) & 0x01))
+//			{button_count = 3; display_clear_screen(); }
+//
+//			if(!((*btn >> BUTTON_TIMER_FORWARD_STAT) & 0x01))
+//			{ button_count = 4; display_clear_screen(); }
+//
+//			switch(button_count)
 //			{
-//			 case 0 :
-//				   wake_sch_en_dis= sched_weekend[schdule_num].en ;
-//				   wake_sch_time_hour = sched_weekend[schdule_num].hour ;
-//				   wake_sch_time_min = sched_weekend[schdule_num].minute;
-//				   wake_sch_set_temp = sched_weekend[schdule_num].temp_f;
-//				   break;
-//			 case 1:
-//				   leave_sch_en_dis= sched_weekend[schdule_num].en ;
-//				   leave_sch_time_hour = sched_weekend[schdule_num].hour ;
-//				   leave_sch_time_min = sched_weekend[schdule_num].minute;
-//				   leave_sch_set_temp = sched_weekend[schdule_num].temp_f;
-//				   break;
-//			case 2:
-//				   return_sch_en_dis= sched_weekend[schdule_num].en ;
-//				   return_sch_time_hour = sched_weekend[schdule_num].hour ;
-//				   return_sch_time_min = sched_weekend[schdule_num].minute;
-//				   return_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
-//			case 3:
-//				   sleep_sch_en_dis= sched_weekend[schdule_num].en ;
-//				   sleep_sch_time_hour = sched_weekend[schdule_num].hour ;
-//				   sleep_sch_time_min = sched_weekend[schdule_num].minute;
-//				   sleep_sch_set_temp = sched_weekend[schdule_num].temp_f;break;
+//
+//			case 1:  display_menu_pair_Heater("up", DISPLAY_COLOR, "button", DISPLAY_COLOR);
+//					break;
+//
+//			case 2:  display_menu_pair_Heater("down", DISPLAY_COLOR, "button", DISPLAY_COLOR);
+//					break;
+//
+//			case 3:  display_menu_pair_Heater("power", DISPLAY_COLOR, "button", DISPLAY_COLOR);
+//					 break;
+//
+//			case 4:  display_menu_pair_Heater("forward", DISPLAY_COLOR, "button", DISPLAY_COLOR);
+//					  break;
+//
 //			default: break;
+//
 //			} // end of switch
-//		} // end of else
-//	}// end for (schdule_num = 0; schdule_num > 4; schdule_num++)
-//
-//	  printf("\n wday %d",wday);
-//      printf("\n wake_sch_en_dis: %d wake_sch_time_hour :%d wake_sch_time_min : %d, wake_sch_set_temp : %d",wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp );
-//      printf("\n leave_sch_en_dis: %d leave_sch_time_hour :%d  leave_sch_time_min : %d,  leave_sch_set_temp: %d",leave_sch_en_dis,  leave_sch_time_hour, leave_sch_time_min, leave_sch_set_temp );
-//      printf("\n return_sch_en_dis: %d return_sch_time_hour :%d  return_sch_time_min : %d,  return_sch_set_temp : %d",return_sch_en_dis,  return_sch_time_hour, return_sch_time_min, return_sch_set_temp );
-//      printf("\n sleep_sch_en_dis: %d sleep_sch_time_hour :%d  sleep_sch_time_min : %d,  sleep_sch_set_temp: %d",sleep_sch_en_dis,  sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
-//      printf("\n wd:%d, w1:%d ,w2:%d, w3:%d ,w4:%d ,l1:%d,l2:%d,l3:%d,l4:%d,r1:%d r2:%d,r3:%d,r4:%d, s1:%d s2:%d s3:%d s4:%d",wday,wake_sch_en_dis, wake_sch_time_hour,wake_sch_time_min,wake_sch_set_temp, leave_sch_en_dis,leave_sch_time_hour,leave_sch_time_min,leave_sch_set_temp,
-//    		  return_sch_en_dis, return_sch_time_hour, return_sch_time_min, return_sch_set_temp, sleep_sch_en_dis, sleep_sch_time_hour, sleep_sch_time_min, sleep_sch_set_temp );
-//}
-//
+//	}// end of while
+//} // end of void button_testing()
+
 
 
 // #define Test_Storage
@@ -509,7 +476,8 @@ void Display_uniqueID_onbootup(void)
 {
 	 display_clear_screen();
 	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
-	 vTaskDelay(3000); // vTaskDelay(10000);
+	 // vTaskDelay(3000); // vTaskDelay(10000);
+	 vTaskDelay(2000); // vTaskDelay(10000);
 }
 
 // Testing one
@@ -599,14 +567,21 @@ esp_err_t app_init(void) {
     app_data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
 
     app_data->settings.is_child_lock_en = true;
-    app_data->settings.is_dim_pilot_light_en = false;
-    app_data->settings.is_night_light_auto_brightness_en = false;
+
+   // app_data->settings.is_dim_pilot_light_en = false; // earlier code default value
+    app_data->settings.is_dim_pilot_light_en = true;  // new changed value as per client.20July2021
+
+   // app_data->settings.is_night_light_auto_brightness_en = false; // earlier code default value
+    app_data->settings.is_night_light_auto_brightness_en = true;  // new changed value as per client.20July2021
+
     app_data->settings.temperature_hysteresis_celsius = TEMPERATURE_HYSTERESIS_CELSIUS_DEFAULT;
     app_data->settings.temperature_hysteresis_fahrenheit = TEMPERATURE_HYSTERESIS_FAHRENHEIT_DEFAULT;
     app_data->display_settings.display_brightness = DISPLAY_BRIGHTNESS_MAX;
-    app_data->display_settings.is_auto_display_brightness_en = false;
 
-     app_data->display_settings.is_auto_screen_off_en = true; // Original or old firmware
+   //  app_data->display_settings.is_auto_display_brightness_en = false;  // earlier code default value
+    app_data->display_settings.is_auto_display_brightness_en = true;  // new changed value as per client.20July2021
+
+    app_data->display_settings.is_auto_screen_off_en = true; // Original or old firmware
     // app_data->display_settings.is_auto_screen_off_en = false; //CR not yet Approved. asked by client to change to never dispaly mode by default.
 
     app_data->display_settings.auto_screen_off_delay_sec = AUTO_SCREEN_OFF_DELAY_SEC_DEFAULT;
@@ -645,11 +620,11 @@ esp_err_t app_init(void) {
     get_integer_from_storage(STORAGE_KEY_THRESHOLD_OFFSET_TIME, (int *) &(app_data-> TimerIntervalThresholdOffset));
 
     TimerIntervalThresholdOffset = app_data-> TimerIntervalThresholdOffset;
-    printf("TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset);
+  //  printf("TimerIntervalThresholdOffset %d \n",app_data-> TimerIntervalThresholdOffset);
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     get_integer_from_storage(STORAGE_KEY_LAST_HEATER_STATE, (int *) &(app_data->lastHeaterState));
-    printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+  //  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 #endif
 
     init_Variables();
@@ -659,12 +634,12 @@ esp_err_t app_init(void) {
     // app_data->night_light_cfg = 16711888; // Only For testing ..
 
     get_data_from_storage(STORAGE_KEY_SETTINGS, &(app_data->settings));
-    printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
+   // printf("\n app_data->settings.is_child_lock_en %d \n",    app_data->settings.is_child_lock_en);
 
     get_data_from_storage(STORAGE_KEY_DISPLAY_SETTINGS, &(app_data->display_settings));
-    printf("\n\n  app_data->settings.is_night_light_auto_brightness_en  %d \n",   app_data->settings.is_night_light_auto_brightness_en );
+   // printf("\n\n  app_data->settings.is_night_light_auto_brightness_en  %d \n",   app_data->settings.is_night_light_auto_brightness_en );
 
-    printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",app_data->display_settings.auto_screen_off_delay_sec );
+   // printf("data->display_settings.auto_screen_off_delay_sec  %d\n ",app_data->display_settings.auto_screen_off_delay_sec );
 
 //     if(app_data->daylightSaving == 1)
 //        printf("daylightSaving  is One %d \n",app_data->daylightSaving);
@@ -756,6 +731,7 @@ static void app_task(void *param) {
     app_data_t *data = (app_data_t *) param;
     app_mode_t *mode = &(data->mode);
 
+    // button_testing(data);
     // start at default mode
     //  *mode = APP_MODE_ON_STARTUP;   // original ...// commented only for testing...
 
@@ -5312,18 +5288,26 @@ static app_mode_t menu_settings(app_data_t *data) {
                         	  break;
 #endif
 
-
   // // Below lines commented as per manav sir suggestion for hiding Temperature unit control at Heater level.
-//                        case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
-//                            is_settings_changed = true;
-//                            manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
-//                            // Fahrenheit <--> Celsius
-//                            if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-//                                data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
-//                            else
-//                                data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
-//                            break;
+                        case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
 
+                        	if(FlashEraseEnableAPMode == 1){
+                            	is_settings_changed = true;
+                               // manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
+                                // Fahrenheit <--> Celsius
+                                if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+                                    data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
+                                else
+                                    data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
+                        	}
+                        	else{
+								display_on();
+								display_clear_screen();
+								display_menu_small_font("Temp unit set", DISPLAY_COLOR, "from app", DISPLAY_COLOR);
+								vTaskDelay(2000);
+								update_display = true;
+                        	}
+                            break;
 
                             // It was commented for earlier-- uncommented on 16MArch 2021 again..
                         case MENU_SETTINGS_CHILD_LOCK_EN:
@@ -5458,15 +5442,43 @@ static app_mode_t menu_settings(app_data_t *data) {
 
 //  // Below lines commented as per manav sir suggestion for hiding Temperature unit change control at Heater level.
 
-//                        case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
-//                            is_settings_changed = true;
-//                            manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
-//                            // Fahrenheit <--> Celsius
-//                            if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
-//                                data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
-//                            else
-//                                data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
-//                            break;
+                        case MENU_SETTINGS_TEMPERATURE_UNIT_CHANGE:
+
+//                        	if(oneTimeRegistrationPacketToAWS == 0){
+//									display_on();
+//									display_clear_screen();
+//									display_menu_small_font("Temp unit set", DISPLAY_COLOR, "from app", DISPLAY_COLOR);
+//									vTaskDelay(2000);
+//									update_display = true;
+//								}
+//                        	else{
+//									is_settings_changed = true;
+//									manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
+//									// Fahrenheit <--> Celsius
+//									if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+//										data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
+//									else
+//										data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
+//                        	}
+
+							if(FlashEraseEnableAPMode == 1){
+								is_settings_changed = true;
+								// manually_Temp_unit_change =1;  // New added for event for manually temp unit change..24Nov2020
+								// Fahrenheit <--> Celsius
+								if (data->settings.temperature_unit == TEMP_UNIT_CELSIUS)
+									data->settings.temperature_unit = TEMP_UNIT_FAHRENHEIT;
+								else
+									data->settings.temperature_unit =  TEMP_UNIT_CELSIUS;
+							}
+							else{
+								display_on();
+								display_clear_screen();
+								display_menu_small_font("Temp unit set", DISPLAY_COLOR, "from app", DISPLAY_COLOR);
+								vTaskDelay(2000);
+								update_display = true;
+							}
+
+                            break;
 
 
                             // It was commented for earlier-- uncommented on 16MArch 2021 again..
@@ -5683,8 +5695,9 @@ static app_mode_t menu_settings(app_data_t *data) {
 #ifdef HeaterUnderReapir
              case  MENU_SETTINGS_HEATER_UNDER_REPAIR:
 					printf("MENU_SETTINGS_HEATER_UNDER_REPAIR \r\n");
-					display_menu("Under", DISPLAY_COLOR, "Repair", DISPLAY_COLOR);
-                   	 break;
+				//	display_menu("Under", DISPLAY_COLOR, "Repair", DISPLAY_COLOR);
+					display_menu("Service", DISPLAY_COLOR, "Mode", DISPLAY_COLOR);
+					break;
              case  MENU_SETTINGS_HEATER_UNDER_REPAIR_EN:
 					printf("MENU_SETTINGS_HEATER_UNDER_REPAIR_EN \r\n");
       		    	display_menu(heater_underControl_status ? "ON" : "OFF", DISPLAY_COLOR, NULL, !DISPLAY_COLOR);
@@ -6183,26 +6196,26 @@ static app_mode_t menu_update(app_data_t *data) {
     return next_mode;
 }
 
-
+// commented unused local variable of Temp_sensor Task_19July2021
 static void temp_sensor_task(void *param) {
     app_data_t *data = (app_data_t *) param;
-    bool *currentHeaterState = &(data->lastHeaterState);
+ //   bool *currentHeaterState = &(data->lastHeaterState);
 
     int *ambient_temp_c = &(data->ambient_temperature_celsius);
     int *temp_offset_c = &(data->ambient_temperature_offset_celsius);
-    int tempInFehrenniete = 0;
-    int Prev_SetTemp = 0;
-    int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
-    int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
-    int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
-    unsigned char hysterisFlag = 0;
-    int prevAmbientTemp_Fahraneite = 0;
+ //   int tempInFehrenniete = 0;
+ //   int Prev_SetTemp = 0;
+ //   int *temp_hysteresis_c = &(data->settings.temperature_hysteresis_celsius);
+ //   int *temp_hysteresis_f = &(data->settings.temperature_hysteresis_fahrenheit);
+ //   int *target_temp_c = &(data->manual_temperature_celsius), *target_temp_f = &(data->manual_temperature_fahrenheit);
+//    unsigned char hysterisFlag = 0;
+//    int prevAmbientTemp_Fahraneite = 0;
     int prevAmbientTemp_Calcius = 0;  int lprevAmbientTempForEventTrigger = 0;
    // unsigned char *TimerIntervalThresholdOffset = &(data-> TimerIntervalThresholdOffset);
 	#define TIMER_INTERVAL_THRESHOLD_OFFSET 2 // 30 Minute original for logic implementation
     lprevAmbientTempForEventTrigger = *ambient_temp_c;
 
-    int count = 0, lint_temp = 0; float lf_temp =0 ;
+ //   int count = 0, lint_temp = 0; float lf_temp =0 ;
 
     while(1) {
 
@@ -6314,13 +6327,14 @@ static void pilot_light_task(void *param) {
 				if ((ping_cur_ms - ping_Dur_ms) >= 20000)
 				{
 					ping_Dur_ms = ping_cur_ms;
-					ping_TwentySecFirstIterationOver = 1;  printf("first time.ping Device.. \n");
+					ping_TwentySecFirstIterationOver = 1;  //printf("first time.ping Device.. \n");
 				  }
 
 				if(ping_TwentySecFirstIterationOver  == 1)
 				{   ping_TwentySecOver ++;ping_TwentySecFirstIterationOver = 0;
 				    if(ping_TwentySecOver == 2){
-					pingDeviceOnFlag = 0; ping_TwentySecOver = 0; printf("20Secover.ping Device.. \n");}
+					pingDeviceOnFlag = 0; ping_TwentySecOver = 0; // printf("20Secover.ping Device.. \n");
+				  }
 				}
           // pairOnPilotLedBlinking();
            lchLed_ON_OFF = !lchLed_ON_OFF;
@@ -6331,7 +6345,9 @@ static void pilot_light_task(void *param) {
 //          display_clear_screen();
 //        //   display_menu("Firm_ver", DISPLAY_COLOR, fw_version, DISPLAY_COLOR);
 //         display_menu("ping", DISPLAY_COLOR, "Device", DISPLAY_COLOR);
-         printf(".ping Device.. \n");
+       // printf(".ping Device.. \n"); // Commented on 19July2021
+
+        vTaskDelay(1000); // New added here on 19July2021
     	}
        	else{
        		        if (*mode == APP_MODE_STANDBY) {
@@ -6359,11 +6375,11 @@ static void pilot_light_task(void *param) {
        		            }
        		            on = true;
        		        }
-
-    	}// else of if
+       		        vTaskDelay(1 / portTICK_RATE_MS);  // New Added here on 19July2021
+    	     }// else of if
 
       //  vTaskDelay(1 / portTICK_RATE_MS);  // Original
-        vTaskDelay(1000);
+      //  vTaskDelay(1000);
     }
 }
 #endif
@@ -6390,7 +6406,7 @@ static void night_light_task(void *param) {
                     int nlight_br;
                     if (*ambient_light >= NIGHT_LIGHT_BRIGHTNESS_OFF_THS) {
                         nlight_br = 0;
-                        printf("Zero nlight_br \n");
+                       // printf("Zero nlight_br \n");
                     } else {
                     // brighter in dark
                         nlight_br = NIGHT_LIGHT_BRIGHTNESS_MAX - (*ambient_light * (NIGHT_LIGHT_BRIGHTNESS_MAX - NIGHT_LIGHT_BRIGHTNESS_MIN) / NIGHT_LIGHT_BRIGHTNESS_MAX + NIGHT_LIGHT_BRIGHTNESS_MIN);
@@ -6405,7 +6421,7 @@ static void night_light_task(void *param) {
 #define AUTO_ON_OFF_MODE
 #ifdef AUTO_ON_OFF_MODE
                     night_light_set_br((int)r_br, (int)g_br, (int)b_br);  // Original Line..
-                    printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
+                   // printf("\n\n night light %d %d  %d %d %d %d %d\r\n\n", *ambient_light, *nlight_auto_en,*nlight_cfg, nlight_br,(int)r_br,(int) g_br, (int)b_br);
 
 #else
 			if(rgb_led_state == 1)
@@ -6469,7 +6485,7 @@ static void display_brightness_task(void *param) {
                 if (*ambient_light != prev_ambient_light) {
                     prev_ambient_light = *ambient_light;
                     *display_brightness = *ambient_light;
-                    printf("change screen brightness br=%d\r\n", *display_brightness);
+                   // printf("change screen brightness br=%d\r\n", *display_brightness);
                     display_set_brightness(*display_brightness);
                     prev_display_brightness = *display_brightness;
                 }
@@ -6478,7 +6494,7 @@ static void display_brightness_task(void *param) {
             }
         } else {
             if (*display_brightness != prev_display_brightness) {
-                printf("change screen brightness disable mode \r\n");
+               // printf("change screen brightness disable mode \r\n");
                 // set screen brightness
                 display_set_brightness(*display_brightness);
                 prev_display_brightness = *display_brightness;

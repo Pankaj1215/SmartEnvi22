@@ -29,7 +29,11 @@
 #include "esp_err.h"
 
 #define MANUFACTURING_YEAR 2018
-#define APP_WELCOME_SCREEN_DELAY_MS 5000
+
+
+// #define APP_WELCOME_SCREEN_DELAY_MS 5000  // delay for 5 sec
+#define APP_WELCOME_SCREEN_DELAY_MS 2000
+
 #define HEATER_OFF_LONG_PRESS_DUR_MS 2500
 #define TEMP_OFFSET_LONG_PRESS_DUR_MS 2500
 #define CHILD_LOCK_LONG_PRESS_DUR_MS 2500
@@ -775,6 +779,9 @@ void forAuto_mode_Schedule_set_from_app(bool en);
 void send_schedule_packet_from_heater(void);
 
 //extern unsigned char manually_schedule_set_from_heater;
+
+void button_testing(app_data_t *data);
+void debug_switches_testing(app_data_t *data);
 
 #define CONVERT_C_TO_F  0
 #define CONVERT_F_TO_C  1
