@@ -306,7 +306,7 @@ void init_Variables(void){
  // heater_On_Off_state_by_command = app_data->lastHeaterState; //by default OFF
 
  heater_off();//initially heater will be off ..added on 02Dec2020
- printf("init variables app_data->lastHeaterState %d",app_data->lastHeaterState);
+// printf("init variables app_data->lastHeaterState %d",app_data->lastHeaterState);
 
 // send_schedule_packet_from_heater();
 }
@@ -503,7 +503,7 @@ void Display_uniqueID_onbootup(void)
 // void WatchDogSOftReset_app_main(void);
 // #define Test_Storage
 esp_err_t app_init(void) {
-    print_fw_version();  // Comment FW_version...
+   // print_fw_version();  // Comment FW_version...
    // test_Display_wifi_strenth();
    // pairOnPilotLedBlinking();
 

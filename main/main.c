@@ -132,17 +132,17 @@ void app_main(void) {
 #endif
 
     nvs_storage_init();
-    display_init();
+
+   // display_init(); // Old position of init Display_init()// Same as the Longhorn Code..
+
     button_init();
     tempsensor_init();
     lightsensor_init();
     heater_init();
+
     /* Hardware peripherals init end */
-//while(1)
-//{
-	printf(" I am in Main \n ");
-//
-//}
+
+    display_init();   // Position here for testing only ..
     /* app proper */
     app_init();
 }

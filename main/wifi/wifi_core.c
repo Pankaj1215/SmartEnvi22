@@ -63,6 +63,8 @@
 
 #include "display.h"   // Added for displaying Pair success on 03march2021
 
+#define KEEP_ALIVE_MESSAGES_INTERVAL  10  // internal
+
 unsigned char command_get_schedule_enable;
 unsigned char deleteHeaterAckSendToServer ;
 bool PairDataRecievedFromAPP;
@@ -2892,10 +2894,11 @@ void aws_iot_task(void *param) {
 			 {
 			    keepAliveSendDataToAWS_OneMinuteOver = 0;
 			    Count_Minutes_keepAlivePacket++;
-			    if (Count_Minutes_keepAlivePacket >= 5)
+//			    if (Count_Minutes_keepAlivePacket >= 5)
+			    if (Count_Minutes_keepAlivePacket >= KEEP_ALIVE_MESSAGES_INTERVAL)   // #define KEEP_ALIVE_MESSAGES_INTERVAL  10
 			    {  Count_Minutes_keepAlivePacket = 0;
 			       keepAliveSendDataToAWS = 1; }
-    	     }
+    	        }
 
 			// if(keepAliveSendDataToAWS==1)
 			 if((keepAliveSendDataToAWS==1)&&( CommandAck == 0))
