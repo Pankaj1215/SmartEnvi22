@@ -224,6 +224,8 @@ extern char uniqueDeviceID[12];
 #define NVS_DEVICE_ID				"id"
 #define NVS_LOC_ID					"locID"
 #define NVS_DEVICE_NAME				"name"
+#define NVS_DEVICE_GROUP_ID				"gpID"
+
 
 #endif
 
