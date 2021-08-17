@@ -224,7 +224,7 @@ extern char uniqueDeviceID[12];
 #define NVS_DEVICE_ID				"id"
 #define NVS_LOC_ID					"locID"
 #define NVS_DEVICE_NAME				"name"
-// #define NVS_DEVICE_GROUP_ID				"gpID"
+#define NVS_DEVICE_GROUP_ID				"gpID"
 
 
 #endif
@@ -477,7 +477,11 @@ extern app_data_t *app_data; // TESTING // changed for wifi Icon
  */
 esp_err_t app_init(void);
 extern int esp32_wifi_status;
-extern char username[32],password[64];
+
+
+// extern char username[32],password[64]; //commented on 17Aug21
+
+extern char username[20],password[64];
 /*!
  * \fn int app_set_mode(int mode)
  * \brief application set device mode

@@ -239,11 +239,13 @@ int web_server_status = WEB_SVR_STAT_UNKNOWN;
 // Short Packet Size..
 // char username[32],password[64],id[30],locID[30],name[30],timeZone[20]; // Original
 
- char username[32],password[64],id[30],locID[30],name[30],timeZone[20]; // Working fine commented on the 13Aug
+// char username[32],password[64],id[30],locID[30],name[30],timeZone[20]; // Working fine commented on the 13Aug
 
 // testing group //
-// char username[32],password[64],id[30],locID[30],name[30],timeZone[20],groupID[26];
+// char username[32],password[64],id[30],locID[30],name[30],timeZone[20],groupID[9];
 
+// loc ID - 8, Gp -8 , TimeZone 6
+char username[20],password[64],id[9],locID[9],name[15],timeZone[6],groupID[9];
 
 char WifiCreditialValidFlag;
 
@@ -2734,14 +2736,21 @@ void aws_iot_task(void *param) {
 				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion);
 
 				 // IP address sending to server ..// working fine commented on 13Aug.21
-				 sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip);
+				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip);
 
 
 				 // Group ID included in Registration packet..//Testing on 13Aug
 				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId","6116532a9656e35e22a0b999");
 
+
 				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
 
+
+				// testing max size...working fine .. 17Aug2021
+				// sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn","012345678901234" ,"ssid", "01234567890123456789" , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId","12345678");
+
+				// working with group ID
+				 sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
 
 				// Testing one ..
 				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"st", app_get_target_temp(),"tu",app_get_temp_unit(), "hs", app_get_heater_state());
@@ -4965,16 +4974,15 @@ void saveDetails(char *eusart1RxBuffer)
 #endif
 
 	// group ID Added..begin.
-//		j=0;
-//		startPos=cmpString(eusart1RxBuffer, "G:<");
-//		endPos=cmpString(eusart1RxBuffer, ">G");
-//		for(int i=startPos;i<endPos-2;i++)
-//		{
-//			groupID[j]=eusart1RxBuffer[i];
-//			j++;
-//			flag=1;
-//		}
-
+		j=0;
+		startPos=cmpString(eusart1RxBuffer, "G:<");
+		endPos=cmpString(eusart1RxBuffer, ">G");
+		for(int i=startPos;i<endPos-2;i++)
+		{
+			groupID[j]=eusart1RxBuffer[i];
+			j++;
+			flag=1;
+		}
 
 		//end Group ID
 
@@ -5038,7 +5046,7 @@ void writeEEPROM()
 	set_string_to_storage(NVS_DEVICE_NAME, name);
 
 	// GroupID Added
-	// set_string_to_storage(NVS_DEVICE_GROUP_ID, groupID);
+	 set_string_to_storage(NVS_DEVICE_GROUP_ID, groupID);
 
 	PairDataRecievedFromAPP = 1;
 	// data->display_settings.is_auto_screen_off_en = 0;
@@ -5083,7 +5091,8 @@ void readEEPROM()
 	get_string_from_storage(NVS_DEVICE_NAME, name);  // printf("DeviceName = %s",name);
 
 	get_string_from_storage(NVS_TIMEZONE, timeZone); // printf("TimeZone = %s",timeZone);  // New added for Time Zone
-	// get_string_from_storage(NVS_DEVICE_GROUP_ID, groupID); printf("groupID = %s",groupID);
+   get_string_from_storage(NVS_DEVICE_GROUP_ID, groupID);
+   printf("groupID = %s",groupID);
 }
 #else
 

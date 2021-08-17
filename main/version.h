@@ -42,7 +42,7 @@
 
 #define FW_VERSION_MAJOR          2
 #define FW_VERSION_MINOR          0
-#define FW_VERSION_REVISION    5 // 4 // 3 // 2 // 1 // 0
+#define FW_VERSION_REVISION    6 //5 // 4 // 3 // 2 // 1 // 0
 
 #endif
 

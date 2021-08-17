@@ -285,7 +285,11 @@ int ping_TwentySecFirstIterationOver = 0;
 int ping_TwentySecOver = 0;
 
  extern bool pingDeviceOnFlag;
- extern char name[30];
+
+
+// extern char name[30];  // commented on 17Aug21
+ extern char name[15];
+
  extern char WifiCreditialValidFlag;
 char ValidCreditentialCountForDisplay = 0;
 
