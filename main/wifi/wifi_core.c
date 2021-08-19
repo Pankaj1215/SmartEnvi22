@@ -63,6 +63,8 @@
 
 #include "display.h"   // Added for displaying Pair success on 03march2021
 
+// unsigned char ap_mac[6];  // New added for six digit mac ID.. on 19 Aug2021
+
 #define KEEP_ALIVE_MESSAGES_INTERVAL  10  // internal
 
 unsigned char command_get_schedule_enable;
@@ -114,6 +116,8 @@ void aws_iot_task(void *param);
 #endif
 unsigned char tcpServerTask=1;
 char uniqueDeviceID[12];
+
+char unique_DeviceID_Six[6];
 
 time_t keepAlive_ms = 0;
 
@@ -2723,6 +2727,7 @@ void aws_iot_task(void *param) {
 
 #define SEPERATE_TOPIC_LOGIC
 #ifdef SEPERATE_TOPIC_LOGIC
+
 			if(oneTimeRegistrationPacketToAWS==1)
 			{
 				memset(cPayload1,0,sizeof(cPayload1));
@@ -2749,8 +2754,15 @@ void aws_iot_task(void *param) {
 				// testing max size...working fine .. 17Aug2021
 				// sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn","012345678901234" ,"ssid", "01234567890123456789" , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId","12345678");
 
-				// working with group ID
-				 sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
+				// working with group ID // commented on 19Aug2021..last working..
+				//  sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
+
+
+				 // Testing for zix character DEvice ID // 19Aug
+				 getSubString(uniqueDeviceID,unique_DeviceID_Six,5,10);
+
+				 sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", unique_DeviceID_Six,"dn",name ,"ssid", username , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
+
 
 				// Testing one ..
 				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"\n\"%s\":\"%d\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone,"fw",fwVersion,"st", app_get_target_temp(),"tu",app_get_temp_unit(), "hs", app_get_heater_state());
@@ -4694,7 +4706,11 @@ void tcpServer_main()
     //ESP_ERROR_CHECK(example_connect());
 
     // New added for for wifi - mac address.
-    unsigned char ap_mac[6];
+
+    // MAC_ADDRESS
+    unsigned char ap_mac[6];  // 19Aug2021 commented here and made gobal for unique ID of Six character for Data registration ...
+
+
     esp_efuse_mac_get_default(ap_mac);
 
     // printf("\nMAC ADRESS = %02x:%02x:%02x:%02x:%02x:%02x \n\n",ap_mac[0],ap_mac[1],ap_mac[2],ap_mac[3],ap_mac[4],ap_mac[5]);
