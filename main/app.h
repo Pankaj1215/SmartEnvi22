@@ -198,6 +198,7 @@ extern char uniqueDeviceID[12];
 
 // Storage key
 #define STORAGE_KEY_TEMP_SENSOR_OFFSET_CELSIUS "temp_off_c"
+
 #define STORAGE_KEY_MANUAL_TEMP_CELSIUS "temp_celsius"
 #define STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT "temp_fahr"
 #define STORAGE_KEY_SETTINGS "settings"
@@ -480,8 +481,9 @@ extern int esp32_wifi_status;
 
 
 // extern char username[32],password[64]; //commented on 17Aug21
+// extern char username[20],password[64];  // commented on 26Aug21
+extern char username[26],password[64];
 
-extern char username[20],password[64];
 /*!
  * \fn int app_set_mode(int mode)
  * \brief application set device mode
@@ -788,6 +790,7 @@ void send_schedule_packet_from_heater(void);
 
 void button_testing(app_data_t *data);
 void debug_switches_testing(app_data_t *data);
+void Soft_Reset_SSID_Pass(void);
 
 #define CONVERT_C_TO_F  0
 #define CONVERT_F_TO_C  1

@@ -289,6 +289,7 @@ int ping_TwentySecOver = 0;
 
 // extern char name[30];  // commented on 17Aug21
  extern char name[15];
+ extern char id[6],locID[6],groupID[6],timeZone[6];
 
  extern char WifiCreditialValidFlag;
 char ValidCreditentialCountForDisplay = 0;
@@ -442,12 +443,13 @@ static void print_fw_version(void)
     ESP_LOGI("firmware_version", "%s", fwVersion);
     // Added For testing only ..
     //  display_clear_screen();
-    // display_menu("Firm_v7", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
+    // display_menu("Firm_v1", DISPLAY_COLOR, "Test", DISPLAY_COLOR);
     // get_string_from_storage(NVS_DEVICE_NAME, name); printf("DeviceName = %s",name);
     // display_menu_pair_Heater(name, DISPLAY_COLOR, "Connected !!!!", DISPLAY_COLOR);
     // display_menu("Firm_ver", DISPLAY_COLOR, fwVersion, DISPLAY_COLOR);
-   // vTaskDelay(2000); //    // wait for at least Firmware version..
-    printf("FIRMWARE VERSION: %s\n",fwVersion);
+   // vTaskDelay(4000); //    // wait for at least Firmware version..
+   // printf("FIRMWARE VERSION: %s\n",fwVersion);
+    printf("FIRMWARE VERSION: SoftReset Firmware ..\n");
 }
 
 void test_Display_wifi_strenth(void)
@@ -477,7 +479,7 @@ void test_Display_wifi_strenth(void)
 void Display_uniqueID_onbootup(void);
 // Original One..
 void Display_uniqueID_onbootup(void)
-{
+{    printf("FIRMWARE VERSION: SoftReset Firmware ..\n");
 	 display_clear_screen();
 	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
 	 // vTaskDelay(3000); // vTaskDelay(10000);
@@ -601,6 +603,9 @@ esp_err_t app_init(void) {
 
     // set initial values from the saved configuration from flash
     get_integer_from_storage(STORAGE_KEY_TEMP_SENSOR_OFFSET_CELSIUS, &(app_data->ambient_temperature_offset_celsius));
+
+    printf(" in begining app_data->ambient_temperature_offset_celsius: %d",app_data->ambient_temperature_offset_celsius);
+
     get_integer_from_storage(STORAGE_KEY_MANUAL_TEMP_CELSIUS, &(app_data->manual_temperature_celsius));
     get_integer_from_storage(STORAGE_KEY_MANUAL_TEMP_FAHRENHEIT, &(app_data->manual_temperature_fahrenheit));
     get_integer_from_storage(STORAGE_KEY_LAST_TIMER_SETTING, &(app_data->last_timer_setting_min));
@@ -5079,10 +5084,11 @@ static app_mode_t menu_communications(app_data_t *data) {
 				 display_menu("Reset", DISPLAY_COLOR, "confirmed!", DISPLAY_COLOR);
 				 manually_reset_ssid_pass_enable = 1;
 				//esp_wifi_start();
-				 vTaskDelay(5000);
+				// vTaskDelay(5000);
+				 vTaskDelay(7000);
 
-				 erase_storage_all(); // erase flash..
-
+				 // erase_storage_all(); // erase flash..// Last working ... on comment 26Aug21
+				  Soft_Reset_SSID_Pass();
 				 esp_restart();
 				break;
 #endif
@@ -6778,7 +6784,6 @@ bool app_get_rgb_state(void) {
       return rgb_led_state;
 }
 
-
 void app_delete_heater(bool value)
 {
 	if(value == 1){
@@ -6787,12 +6792,35 @@ void app_delete_heater(bool value)
 	}
 }
 
+void Soft_Reset_SSID_Pass(void)
+{
+	memset(username, 0, sizeof(username));
+	memset(password, 0, sizeof(password));
+	memset(id, 0, sizeof(id));
+	memset(locID, 0, sizeof(locID));
+	memset(name, 0, sizeof(name));
+	memset(groupID, 0, sizeof(groupID));
+
+	memset(timeZone, 0, sizeof(timeZone));
+
+	set_string_to_storage(NVS_LUCIDTRON_SSID_KEY, username);
+	set_string_to_storage(NVS_LUCIDTRON_PW_KEY, password);
+	set_string_to_storage(NVS_DEVICE_ID, id);
+	set_string_to_storage(NVS_LOC_ID, locID);
+	set_string_to_storage(NVS_DEVICE_NAME, name);
+	set_string_to_storage(NVS_DEVICE_GROUP_ID, groupID); 	// GroupID Added
+	set_string_to_storage(NVS_TIMEZONE, timeZone);
+}
+
 void DeleteHeater(void)
 {   display_on();
 	display_clear_screen();
 	display_menu("heater", DISPLAY_COLOR, "deleted!", DISPLAY_COLOR);
-	vTaskDelay(5000);
-	erase_storage_all(); // erase flash..
+	vTaskDelay(7000);
+
+	Soft_Reset_SSID_Pass();
+	// erase_storage_all(); // erase flash.. // Commented on 26Aug21
+
 	esp_restart();
 }
 

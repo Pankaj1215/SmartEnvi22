@@ -249,7 +249,9 @@ int web_server_status = WEB_SVR_STAT_UNKNOWN;
 // char username[32],password[64],id[30],locID[30],name[30],timeZone[20],groupID[9];
 
 // loc ID - 8, Gp -8 , TimeZone 6
-char username[20],password[64],id[9],locID[9],name[15],timeZone[6],groupID[9];
+// char username[20],password[64],id[9],locID[9],name[15],timeZone[6],groupID[9];   // Last working ..commented on 26Aug
+
+char username[26],password[64],id[6],locID[6],name[15],timeZone[6],groupID[6];
 
 char WifiCreditialValidFlag;
 
@@ -2755,13 +2757,16 @@ void aws_iot_task(void *param) {
 				// sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn","012345678901234" ,"ssid", "01234567890123456789" , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId","12345678");
 
 				// working with group ID // commented on 19Aug2021..last working..
-				//  sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
+				  sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
 
 
-				 // Testing for zix character DEvice ID // 19Aug
-				 getSubString(uniqueDeviceID,unique_DeviceID_Six,5,10);
 
-				 sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", unique_DeviceID_Six,"dn",name ,"ssid", username , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
+				  // Testing for zix character DEvice ID // 19Aug
+				// getSubString(uniqueDeviceID,unique_DeviceID_Six,5,10);
+
+				// sprintf(cPayload1, "{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}", "dId", unique_DeviceID_Six,"dn",name ,"ssid", username , "aId",id , "lId",locID, "tz",timeZone,"fw",fwVersion,"dIP",dip,"gId",groupID);
+
+
 
 
 				// Testing one ..
