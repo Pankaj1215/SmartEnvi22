@@ -284,12 +284,13 @@ time_t ping_Dur_ms= 0;
 int ping_TwentySecFirstIterationOver = 0;
 int ping_TwentySecOver = 0;
 
- extern bool pingDeviceOnFlag;
+extern bool pingDeviceOnFlag;
 
 
 // extern char name[30];  // commented on 17Aug21
- extern char name[15];
- extern char id[6],locID[6],groupID[6],timeZone[6];
+ extern char name[16];
+// extern char id[6],locID[6],groupID[6],timeZone[6]; // 29Aug21
+ extern char id[7],locID[7],groupID[7],timeZone[6];
 
  extern char WifiCreditialValidFlag;
 char ValidCreditentialCountForDisplay = 0;
@@ -479,7 +480,7 @@ void test_Display_wifi_strenth(void)
 void Display_uniqueID_onbootup(void);
 // Original One..
 void Display_uniqueID_onbootup(void)
-{    printf("FIRMWARE VERSION: SoftReset Firmware ..\n");
+{   // printf("FIRMWARE VERSION: SoftReset Firmware ..\n");
 	 display_clear_screen();
 	 display_ssid(uniqueDeviceID, DISPLAY_COLOR);   //Testing
 	 // vTaskDelay(3000); // vTaskDelay(10000);

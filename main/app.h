@@ -482,7 +482,7 @@ extern int esp32_wifi_status;
 
 // extern char username[32],password[64]; //commented on 17Aug21
 // extern char username[20],password[64];  // commented on 26Aug21
-extern char username[26],password[64];
+extern char username[27],password[64];
 
 /*!
  * \fn int app_set_mode(int mode)

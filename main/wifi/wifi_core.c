@@ -251,7 +251,11 @@ int web_server_status = WEB_SVR_STAT_UNKNOWN;
 // loc ID - 8, Gp -8 , TimeZone 6
 // char username[20],password[64],id[9],locID[9],name[15],timeZone[6],groupID[9];   // Last working ..commented on 26Aug
 
-char username[26],password[64],id[6],locID[6],name[15],timeZone[6],groupID[6];
+// char username[26],password[64],id[6],locID[6],name[15],timeZone[6],groupID[6];  // Commented on 29Aug
+
+// char username[26],password[64],id[6],locID[6],name[15],timeZone[6],groupID[6];
+
+char username[27],password[64],id[7],locID[7],name[16],timeZone[6],groupID[7];
 
 char WifiCreditialValidFlag;
 
@@ -2733,9 +2737,9 @@ void aws_iot_task(void *param) {
 			if(oneTimeRegistrationPacketToAWS==1)
 			{
 				memset(cPayload1,0,sizeof(cPayload1));
-				printf("One Time Registration \n");
+				// printf("One Time Registration \n");
 				//Original Line
-				printf("account ID : %s\n",id);
+				 printf("\n \n account ID : %s\n",id);
 			   // Adviced to Amit..
 				// sprintf(cPayload1, "{\n\"%s\":\"%s\",\n\"%s\":\"%s\", \n\"%s\":\"%s\", \n\"%s\":\"%s\",\n\"%s\":\"%s\",\n\"%s\":\"%s\"}", "dId", uniqueDeviceID,"dn",name ,"ssid", username , "aId", id, "lId",locID, "tz",timeZone);
 
@@ -5107,7 +5111,7 @@ void readEEPROM()
 		strcpy(username,"asdf");}
 
 	get_string_from_storage(NVS_LUCIDTRON_PW_KEY, password); //printf("Password = %s",password);
-	get_string_from_storage(NVS_DEVICE_ID, id); //printf("DeviceID = %s",id);
+	get_string_from_storage(NVS_DEVICE_ID, id); printf("\n \n AccountID = %s\n",id);
 	get_string_from_storage(NVS_LOC_ID, locID); // printf("LocID = %s",locID);
 	get_string_from_storage(NVS_DEVICE_NAME, name);  // printf("DeviceName = %s",name);
 
