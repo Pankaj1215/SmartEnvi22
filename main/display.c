@@ -620,7 +620,10 @@ esp_err_t display_timer_mode_normal(int ambient_temp, int target_temp, int timer
     ret |= sh1106_set_font(sh1106, font);
     str_width = sh1106_get_string_width(sh1106, str);
     ret |= sh1106_set_xy(sh1106, OLED_WIDTH - display_icon_timer->width - str_width - 4, OLED_HEIGHT - font[FONT_HEIGHT_POS]);
-    ret |= sh1106_draw_string(sh1106, str, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
+    // commented below line to remove count down in timer mode as per manav sir requirement..23Sept2021
+   // ret |= sh1106_draw_string(sh1106, str, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
     // timer value
     font = DejaVu_Sans_16;
     ret |= sh1106_set_font(sh1106, font);
@@ -630,8 +633,9 @@ esp_err_t display_timer_mode_normal(int ambient_temp, int target_temp, int timer
         sprintf(str, "%d", timer_min);
     str_width += sh1106_get_string_width(sh1106, str);
     ret |= sh1106_set_xy(sh1106, OLED_WIDTH - display_icon_timer->width - str_width - 4, OLED_HEIGHT - font[FONT_HEIGHT_POS]);
-    ret |= sh1106_draw_string(sh1106, str, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
 
+    // commented below line to remove count down in timer mode as per manav sir requirement..23Sept2021
+    // ret |= sh1106_draw_string(sh1106, str, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
 
     ret |= sh1106_update_display(sh1106);
 
@@ -666,11 +670,17 @@ esp_err_t display_timer_mode_changed(int timer_min, int color) {
     font = DejaVu_Sans_32;
     ret |= sh1106_set_font(sh1106, font);
     ret |= sh1106_set_xy(sh1106, (str_width < OLED_WIDTH) ? (OLED_WIDTH - str_width) / 2 : 0, (OLED_HEIGHT - font[FONT_HEIGHT_POS]) / 2);
+
+    // Commented the below line for removing count down from the Timer Screen..
     ret |= sh1106_draw_string(sh1106, str, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+
     font = DejaVu_Sans_16;
     ret |= sh1106_set_font(sh1106, font);
     ret |= sh1106_set_xy(sh1106, sh1106->current_x, sh1106->current_y + 15);
+
+    // Commented the below line for removing count down from the Timer Screen..
     ret |= sh1106_draw_string(sh1106, timer_hr ? "hr" : "min", color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
+    // printf("Commented in Timer countdown\n");
     // timer icon at the bottom right corner
     ret |= sh1106_draw_image(sh1106, OLED_WIDTH - display_icon_timer->width, OLED_HEIGHT - display_icon_timer->height, display_icon_timer->width, display_icon_timer->height, display_icon_timer->image, color ? SH1106_COLOR_WHITE : SH1106_COLOR_BLACK);
 

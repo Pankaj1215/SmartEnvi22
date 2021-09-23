@@ -2670,7 +2670,8 @@ static void timer_increment_mode_task(app_data_t *data) {
             display_clear_screen();
 
             if (display_timer) {
-                display_timer_mode_changed(*timer_min, DISPLAY_COLOR);
+               display_timer_mode_changed(*timer_min, DISPLAY_COLOR); // Commented only for testing...
+            	//printf("");
             } else if (display_target_temp) {
             	display_temperature(*temp, DISPLAY_COLOR);  // original line
             } else {
