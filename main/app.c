@@ -63,6 +63,8 @@
 #define pilot_light_off() led1_off(); led2_off();
 #define pilot_light_set_brightness(x) led1_set_brightness(x); led2_set_brightness(x);
 
+#define Last_Heater_State_AUTO   2   // For storing last state of heater if power went off in Auto mode of heater
+
 // night light  // Original Line
 //#define LED_R_POS 0
 //#define LED_G_POS 8
@@ -558,6 +560,7 @@ esp_err_t app_init(void) {
     app_data->manual_temperature_celsius = TEMPERATURE_OPERATING_RANGE_CELSIUS_VAL_DEF;
     app_data->manual_temperature_fahrenheit = TEMPERATURE_OPERATING_RANGE_FAHRENEIT_VAL_DEF;
     app_data->lastHeaterState = DEFAULT_LAST_HEATER_STATE;   // New Added for storing last status of Heater
+
 #else
     app_data->manual_temperature_celsius = TEMPERATURE_CELSIUS_VAL_DEF;
     app_data->manual_temperature_fahrenheit = TEMPERATURE_FAHRENHEIT_VAL_DEF;
@@ -634,7 +637,7 @@ esp_err_t app_init(void) {
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
     get_integer_from_storage(STORAGE_KEY_LAST_HEATER_STATE, (int *) &(app_data->lastHeaterState));
-  //  printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
+    printf("app_data->lastHeaterState %d \n",app_data->lastHeaterState);
 #endif
 
     init_Variables();
@@ -747,10 +750,19 @@ static void app_task(void *param) {
 
     // Added for testing..
  //  if( heater_On_Off_state_by_command == 0)
-   if( app_data->lastHeaterState == 0)
-     *mode = APP_MODE_ON_STARTUP;
-   else
-	   *mode = APP_MODE_MANUAL_TEMPERATURE;
+
+//   if( app_data->lastHeaterState == 0)  // Last working ..
+//     *mode = APP_MODE_ON_STARTUP;
+//   else
+//	   *mode = APP_MODE_MANUAL_TEMPERATURE;
+
+    if( app_data->lastHeaterState == 0)
+      *mode = APP_MODE_ON_STARTUP;
+    else if( app_data->lastHeaterState == Last_Heater_State_AUTO)
+    	 *mode = APP_MODE_AUTO;
+    else
+ 	   *mode = APP_MODE_MANUAL_TEMPERATURE;
+
 
     // start task that reads ambient temperature
      xTaskCreate(temp_sensor_task, "tsensor_task", 4096, (void *)app_data, 12, NULL);
@@ -3035,7 +3047,8 @@ static void auto_mode_task(app_data_t *data) {
                 is_heater_on = true;
 
 				#ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-					 app_data->lastHeaterState = true;
+					 // app_data->lastHeaterState = true;  // Last working logic commented on 02OCt2021
+					 app_data->lastHeaterState = Last_Heater_State_AUTO;
 					 set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 				#endif
             	// }
@@ -6940,15 +6953,17 @@ void app_set_heater_state(int heater_state)
        //AutoMode_scheduleFromServer = 1;
                 break;
        default : break;
-
     } // end of switch()
-
    if(( menuModeKeypressedFlag ==0) && (device_health_status == DEVICE_MALFUNCTION_ZERO_AMBIENT_TEMP_ON_DISPLAY))
    	{  app_data->mode  = APP_MODE_MANUAL_TEMPERATURE;
   	   AutoMode_scheduleFromServer = 0;
   	}
+//    if(heater_state !=0) {heaterSaveState = 1;} else{heaterSaveState = 0;}
+   if((heater_state !=0) &&(heater_state != 3))
+      {heaterSaveState = 1;}
+   else if(heater_state == 3){heaterSaveState = Last_Heater_State_AUTO;}
+       else{heaterSaveState = 0;}
 
-    if(heater_state !=0) {heaterSaveState = 1;} else{heaterSaveState = 0;}
 	  app_data->lastHeaterState = heaterSaveState;
 	  set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
   }// end of if(app_data)

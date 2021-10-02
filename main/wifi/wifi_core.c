@@ -3818,17 +3818,22 @@ while(1){
 //			}
 		    // old logic
 		      //  app_data->lastHeaterState = app_get_mode();
-
-		        // new logic:
+// old logic Commented on 02 Oct2021
+//		     if(lPrevGet_mode == 0)
+//		     {    app_data->lastHeaterState =0; // printf("standby mode");
+//
+//		     }
+//			else
+//			{
+//				 app_data->lastHeaterState = 1; //printf("working mode");
+//			}
 
 		     if(lPrevGet_mode == 0)
-		     {    app_data->lastHeaterState =0; // printf("standby mode");
-
-		     }
-			else
-			{
-				 app_data->lastHeaterState = 1; //printf("working mode");
-			}
+		     { app_data->lastHeaterState =0;  }// printf("standby mode");
+		     else if (lPrevGet_mode == 3)
+		     {app_data->lastHeaterState = 2;}
+		     else
+    		 { app_data->lastHeaterState = 1; } //printf("working mode");
 
 		       set_integer_to_storage(STORAGE_KEY_LAST_HEATER_STATE, (int)app_data->lastHeaterState);
 		       HeaterStateChangeDataToAWS = 1;

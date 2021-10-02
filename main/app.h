@@ -460,7 +460,9 @@ typedef struct {
     int daylightSaving;
 
 #ifdef P_TESTING_TEMP_OPERATING_RANGE_TESTING
-    bool lastHeaterState; // New Added for storing the last heater status in the Flash.
+   // bool lastHeaterState; // New Added for storing the last heater status in the Flash.
+    unsigned char lastHeaterState;  // Changed to involve Auto Mode in Heater last state data tyoe changed to unsigned char from bool // 02O Oct
+
     unsigned char TimerIntervalThresholdOffset;
 
 #endif
